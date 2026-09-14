@@ -1,0 +1,6 @@
+{
+  "name": "MMBA",
+  "description": "Customer-centered Business Management & Operations Platform (CRM, Calls, Tasks, Contracts, Payments, SIM & Repairs)",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

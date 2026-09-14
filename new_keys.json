@@ -1,0 +1,662 @@
+{
+  "common.selectOption": {
+    "fa": "انتخاب کنید",
+    "en": "Select option"
+  },
+  "common.allCustomers": {
+    "fa": "همه مخاطبان",
+    "en": "All Customers"
+  },
+  "common.allCategories": {
+    "fa": "همه دسته‌ها",
+    "en": "All Categories"
+  },
+  "common.allStatuses": {
+    "fa": "همه وضعیت‌ها",
+    "en": "All Statuses"
+  },
+  "common.recordsCount": {
+    "fa": "{count} مورد",
+    "en": "{count} items"
+  },
+  "common.customerFiles": {
+    "fa": "{count} پرونده",
+    "en": "{count} records"
+  },
+  "common.saveSuccess": {
+    "fa": "اطلاعات با موفقیت ذخیره شد",
+    "en": "Changes saved successfully"
+  },
+  "common.deleteSuccess": {
+    "fa": "مورد با موفقیت حذف شد",
+    "en": "Record deleted successfully"
+  },
+  "common.deleteConfirm": {
+    "fa": "آیا از حذف این مورد اطمینان دارید؟",
+    "en": "Are you sure you want to delete this item?"
+  },
+  "common.irreversibleAction": {
+    "fa": "این عملیات غیرقابل بازگشت است.",
+    "en": "This action is irreversible."
+  },
+  "common.unauthorized": {
+    "fa": "شما مجوز انجام این عملیات را ندارید.",
+    "en": "You are not authorized to perform this action."
+  },
+  "common.copied": {
+    "fa": "کپی شد",
+    "en": "Copied"
+  },
+  "common.copyToClipboard": {
+    "fa": "کپی در حافظه",
+    "en": "Copy to Clipboard"
+  },
+  "common.sortBy": {
+    "fa": "مرتب‌سازی:",
+    "en": "Sort by:"
+  },
+  "common.newest": {
+    "fa": "جدیدترین",
+    "en": "Newest"
+  },
+  "common.oldest": {
+    "fa": "قدیمی‌ترین",
+    "en": "Oldest"
+  },
+  "common.selectAll": {
+    "fa": "انتخاب همه",
+    "en": "Select All"
+  },
+  "common.deselectAll": {
+    "fa": "لغو انتخاب همه",
+    "en": "Deselect All"
+  },
+  "common.selectedCount": {
+    "fa": "{count} مورد انتخاب شده",
+    "en": "{count} items selected"
+  },
+  "common.bulkDelete": {
+    "fa": "حذف گروهی",
+    "en": "Bulk Delete"
+  },
+  "common.bulkExport": {
+    "fa": "خروجی گروهی",
+    "en": "Bulk Export"
+  },
+  "common.tag": {
+    "fa": "برچسب",
+    "en": "Tag"
+  },
+  "common.tags": {
+    "fa": "برچسب‌ها",
+    "en": "Tags"
+  },
+  "common.note": {
+    "fa": "یادداشت",
+    "en": "Note"
+  },
+  "common.notes": {
+    "fa": "یادداشت‌ها",
+    "en": "Notes"
+  },
+  "common.creator": {
+    "fa": "ثبت‌کننده",
+    "en": "Created By"
+  },
+  "common.createdAt": {
+    "fa": "زمان ثبت",
+    "en": "Created At"
+  },
+  "common.updatedAt": {
+    "fa": "آخرین به‌روزرسانی",
+    "en": "Updated At"
+  },
+  "common.dueDate": {
+    "fa": "سررسید / مهلت",
+    "en": "Due Date"
+  },
+  "common.phoneCall": {
+    "fa": "تماس تلفنی",
+    "en": "Phone Call"
+  },
+  "common.task": {
+    "fa": "وظیفه",
+    "en": "Task"
+  },
+  "common.payment": {
+    "fa": "دریافت وجه",
+    "en": "Payment"
+  },
+  "common.check": {
+    "fa": "چک صیادی",
+    "en": "Sayad Check"
+  },
+  "common.contract": {
+    "fa": "قرارداد",
+    "en": "Contract"
+  },
+  "common.sim": {
+    "fa": "سیم‌کارت",
+    "en": "SIM Card"
+  },
+  "common.repair": {
+    "fa": "تعمیرات",
+    "en": "Repair"
+  },
+  "common.document": {
+    "fa": "سند / پیوست",
+    "en": "Document"
+  },
+  "customers.managementTitle": {
+    "fa": "مدیریت و پرونده‌های مخاطبان",
+    "en": "Customer Directory & Profiles"
+  },
+  "customers.managementDesc": {
+    "fa": "پرونده ۳۶۰ درجه، عدم تکرار شماره تماس، سوابق مذاکره، انتخاب چندگانه و عملیات گروهی",
+    "en": "360° Profile, unique mobile enforcement, negotiation logs, multi-select and bulk actions"
+  },
+  "customers.totalCustomers": {
+    "fa": "کل مخاطبان",
+    "en": "Total Customers"
+  },
+  "customers.vipCustomers": {
+    "fa": "مخاطبان VIP",
+    "en": "VIP Customers"
+  },
+  "customers.activeCustomers": {
+    "fa": "مشتریان فعال",
+    "en": "Active Customers"
+  },
+  "customers.prospectCustomers": {
+    "fa": "لید و در حال مذاکره",
+    "en": "Leads & Prospects"
+  },
+  "customers.newCustomerBtn": {
+    "fa": "ثبت مخاطب جدید",
+    "en": "New Customer Profile"
+  },
+  "customers.searchBarPlaceholder": {
+    "fa": "جستجو بر اساس نام، شماره موبایل یکتا، تلفن، کدملی، کد یا شرکت...",
+    "en": "Search by name, unique phone, landline, national ID or company..."
+  },
+  "customers.sortNewest": {
+    "fa": "جدیدترین پرونده‌ها",
+    "en": "Newest Records"
+  },
+  "customers.sortName": {
+    "fa": "حروف الفبا (نام)",
+    "en": "Alphabetical (A-Z)"
+  },
+  "customers.sortCredit": {
+    "fa": "بیشترین اعتبار مالی",
+    "en": "Highest Credit Limit"
+  },
+  "customers.sortNewestDesc": {
+    "fa": "بر اساس تاریخ ثبت پرونده",
+    "en": "By profile creation date"
+  },
+  "customers.sortNameDesc": {
+    "fa": "ترتیب صعودی الفبای فارسی",
+    "en": "Alphabetical order"
+  },
+  "customers.sortCreditDesc": {
+    "fa": "سقف اعتبار و توان تراکنش",
+    "en": "By financial credit ceiling"
+  },
+  "customers.deleteSinglePrompt": {
+    "fa": "آیا از حذف پرونده مخاطب «{name}» اطمینان دارید؟",
+    "en": "Are you sure you want to delete customer \"{name}\"?"
+  },
+  "customers.deleteMultiplePrompt": {
+    "fa": "آیا از حذف {count} پرونده مخاطب انتخاب‌شده اطمینان دارید؟",
+    "en": "Are you sure you want to delete {count} selected customer profiles?"
+  },
+  "customers.deleteWarnText": {
+    "fa": "کلیه سوابق تماس، پیگیری‌ها و پیوست‌های متصل به این پرونده‌ها پاک خواهند شد.",
+    "en": "All associated calls, timeline events, and attachments will be deleted."
+  },
+  "customers.noCustomersFound": {
+    "fa": "هیچ پرونده مخاطبی با این مشخصات یافت نشد.",
+    "en": "No customer records matched your query."
+  },
+  "customers.clearFilters": {
+    "fa": "پاکسازی فیلترها",
+    "en": "Clear Filters"
+  },
+  "customers.company": {
+    "fa": "شرکت / سازمان",
+    "en": "Company / Organization"
+  },
+  "customers.nationalId": {
+    "fa": "کد ملی / شناسه ملی",
+    "en": "National / Tax ID"
+  },
+  "customers.address": {
+    "fa": "نشانی پستی",
+    "en": "Address"
+  },
+  "customers.city": {
+    "fa": "شهر",
+    "en": "City"
+  },
+  "customers.postalCode": {
+    "fa": "کد پستی",
+    "en": "Postal Code"
+  },
+  "customers.timeline": {
+    "fa": "تاریخچه و خط زمانی",
+    "en": "Timeline & History"
+  },
+  "customers.callsTab": {
+    "fa": "تماس‌ها و مذاکرات",
+    "en": "Calls & Logs"
+  },
+  "customers.tasksTab": {
+    "fa": "اقدامات و وظایف",
+    "en": "Tasks & Actions"
+  },
+  "customers.financialsTab": {
+    "fa": "امور مالی و چک‌ها",
+    "en": "Financials & Checks"
+  },
+  "customers.contractsTab": {
+    "fa": "قراردادها",
+    "en": "Contracts"
+  },
+  "customers.repairsTab": {
+    "fa": "تعمیرات و خدمات",
+    "en": "Repairs & Service"
+  },
+  "customers.attachmentsTab": {
+    "fa": "اسناد و مدارک",
+    "en": "Attachments"
+  },
+  "customers.shareLink": {
+    "fa": "اشتراک‌گذاری پرونده",
+    "en": "Share Profile Link"
+  },
+  "customers.dateSuggestion": {
+    "fa": "پیشنهاد و تثبیت تاریخ جلسه",
+    "en": "Schedule Meeting"
+  },
+  "customers.dateSuggestionDesc": {
+    "fa": "ارسال لینک اختصاصی انتخاب زمان به مشتری جهت ثبت تاریخ جلسه",
+    "en": "Send meeting scheduler link to customer"
+  },
+  "calls.managementTitle": {
+    "fa": "تماس‌ها و مذاکرات تلفنی",
+    "en": "Calls & Communications"
+  },
+  "calls.managementDesc": {
+    "fa": "ثبت هوشمند مکالمات صوتی، متن‌نگاری خودکار، پیگیری سررسیدها و تحلیل احساسات",
+    "en": "AI voice transcription, call logging, automated follow-ups and sentiment analysis"
+  },
+  "calls.newCallBtn": {
+    "fa": "ثبت تماس جدید",
+    "en": "Log New Call"
+  },
+  "calls.totalCalls": {
+    "fa": "کل مکالمات",
+    "en": "Total Calls"
+  },
+  "calls.followUpRequired": {
+    "fa": "نیازمند پیگیری",
+    "en": "Follow-up Required"
+  },
+  "calls.positiveSentiment": {
+    "fa": "مذاکرات مثبت",
+    "en": "Positive Tone"
+  },
+  "calls.avgDuration": {
+    "fa": "میانگین مدت مکالمه",
+    "en": "Avg Call Duration"
+  },
+  "calls.minutes": {
+    "fa": "دقیقه",
+    "en": "mins"
+  },
+  "calls.seconds": {
+    "fa": "ثانیه",
+    "en": "secs"
+  },
+  "calls.sentimentPositive": {
+    "fa": "مثبت و راضی",
+    "en": "Positive / Satisfied"
+  },
+  "calls.sentimentNeutral": {
+    "fa": "خنثی / رسمی",
+    "en": "Neutral / Standard"
+  },
+  "calls.sentimentNegative": {
+    "fa": "ناراضی / چالشی",
+    "en": "Negative / Dissatisfied"
+  },
+  "voicenotes.managementTitle": {
+    "fa": "یادداشت‌های صوتی و مکالمات",
+    "en": "Voice Notes & Audio Memos"
+  },
+  "voicenotes.managementDesc": {
+    "fa": "آرشیو کامل مکالمات ضبط شده، آپلود فایل‌های صوتی جلسات و دستور کارهای پیوست به پرونده‌ها",
+    "en": "Complete archive of recorded calls, uploaded audio files, and attached voice memos"
+  },
+  "voicenotes.totalDuration": {
+    "fa": "مجموع زمان صوت",
+    "en": "Total Audio Time"
+  },
+  "voicenotes.linkedRecords": {
+    "fa": "پرونده‌های صوتی",
+    "en": "Linked Records"
+  },
+  "voicenotes.uploadBtn": {
+    "fa": "آپلود فایل صوتی",
+    "en": "Upload Audio File"
+  },
+  "voicenotes.recordBtn": {
+    "fa": "ضبط یادداشت جدید",
+    "en": "Record New Note"
+  },
+  "voicenotes.transcription": {
+    "fa": "متن پیاده‌شده گفتار",
+    "en": "AI Voice Transcript"
+  },
+  "voicenotes.copyTranscript": {
+    "fa": "کپی متن یادداشت",
+    "en": "Copy Transcript"
+  },
+  "voicenotes.catCustomer": {
+    "fa": "یادداشت مشتری",
+    "en": "Customer Note"
+  },
+  "voicenotes.catCall": {
+    "fa": "مذاکره تلفنی",
+    "en": "Call Memo"
+  },
+  "voicenotes.catTask": {
+    "fa": "دستور وظیفه",
+    "en": "Task Instruction"
+  },
+  "voicenotes.catRepair": {
+    "fa": "عیب‌یابی تعمیرات",
+    "en": "Repair Diagnosis"
+  },
+  "voicenotes.catPayment": {
+    "fa": "تاییدیه مالی",
+    "en": "Payment Approval"
+  },
+  "voicenotes.catInternal": {
+    "fa": "یادداشت سازمانی",
+    "en": "Internal Memo"
+  },
+  "tasks.managementTitle": {
+    "fa": "مدیریت وظایف و پیگیری‌ها",
+    "en": "Tasks & Action Items"
+  },
+  "tasks.managementDesc": {
+    "fa": "تقویم کاری پرسنل، سررسید هوشمند، هشدار تاخیر، یادآورها و ماتریس اولویت",
+    "en": "Staff agenda, smart deadlines, overdue alerts, reminders, and priority matrix"
+  },
+  "tasks.newTaskBtn": {
+    "fa": "تعریف اقدام / وظیفه",
+    "en": "New Action / Task"
+  },
+  "tasks.overdueTasks": {
+    "fa": "وظایف دارای تاخیر",
+    "en": "Overdue Tasks"
+  },
+  "tasks.todayTasks": {
+    "fa": "اقدامات امروز",
+    "en": "Today Actions"
+  },
+  "tasks.inProgressTasks": {
+    "fa": "در حال اقدام",
+    "en": "In Progress"
+  },
+  "tasks.completedTasks": {
+    "fa": "تکمیل‌شده",
+    "en": "Completed"
+  },
+  "tasks.markComplete": {
+    "fa": "علامت‌گذاری به عنوان انجام‌شده",
+    "en": "Mark as Complete"
+  },
+  "tasks.markTodo": {
+    "fa": "بازگردانی به انجام‌نشده",
+    "en": "Reopen Task"
+  },
+  "tasks.shareTask": {
+    "fa": "اشتراک و تفویض وظیفه",
+    "en": "Share / Delegate Task"
+  },
+  "tasks.assignedTo": {
+    "fa": "ارجاع به",
+    "en": "Assigned To"
+  },
+  "tasks.priorityUrgent": {
+    "fa": "بسیار فوری (ضروری)",
+    "en": "Urgent (Critical)"
+  },
+  "tasks.priorityHigh": {
+    "fa": "اولویت بالا",
+    "en": "High Priority"
+  },
+  "tasks.priorityMedium": {
+    "fa": "اولویت متوسط",
+    "en": "Medium Priority"
+  },
+  "tasks.priorityLow": {
+    "fa": "عادی / پایین",
+    "en": "Low / Routine"
+  },
+  "finances.managementTitle": {
+    "fa": "دریافت‌ها و گردش نقدینگی",
+    "en": "Payments & Cash Inflow"
+  },
+  "finances.managementDesc": {
+    "fa": "ثبت دقیق دریافتی‌های نقدی، کارتخوان پوز، انتقال شبا/پایا و بررسی تاییدیه‌ها",
+    "en": "Cash receipts, POS terminal slips, bank wires, and supervisor approvals"
+  },
+  "finances.newPaymentBtn": {
+    "fa": "ثبت دریافت وجه جدید",
+    "en": "Record Payment"
+  },
+  "finances.totalCollected": {
+    "fa": "کل واریزی‌های تاییدشده",
+    "en": "Total Verified Inflow"
+  },
+  "finances.pendingVerification": {
+    "fa": "در انتظار تایید حسابداری",
+    "en": "Pending Accounting Review"
+  },
+  "finances.todayInflow": {
+    "fa": "دریافتی‌های امروز",
+    "en": "Today Receipts"
+  },
+  "finances.posTransactions": {
+    "fa": "تراکنش‌های دستگاه پوز",
+    "en": "POS Reader Total"
+  },
+  "checks.managementTitle": {
+    "fa": "خزانه چک‌های صیادی",
+    "en": "Sayad Check Vault & Treasury"
+  },
+  "checks.managementDesc": {
+    "fa": "مدیریت چک‌های دریافتی، استعلام صیاد، راس‌گیری، واگذاری به بانک و وصولی‌ها",
+    "en": "Check depository, Sayad verification, maturity tracking, and bank clearance"
+  },
+  "checks.newCheckBtn": {
+    "fa": "ثبت چک جدید",
+    "en": "Register Sayad Check"
+  },
+  "checks.totalInSafe": {
+    "fa": "چک‌های نزد صندوق",
+    "en": "Checks in Custody"
+  },
+  "checks.totalDeposited": {
+    "fa": "واگذارشده به بانک",
+    "en": "Deposited to Bank"
+  },
+  "checks.totalCleared": {
+    "fa": "وصول‌شده",
+    "en": "Cleared Checks"
+  },
+  "checks.totalBounced": {
+    "fa": "برگشتی / مشکل‌دار",
+    "en": "Bounced / Dishonored"
+  },
+  "contracts.managementTitle": {
+    "fa": "قراردادها و اسناد حقوقی",
+    "en": "Legal Contracts & Agreements"
+  },
+  "contracts.managementDesc": {
+    "fa": "تنظیم مبایعه‌نامه‌ها، چاپ رسمی، بایگانی نسخه‌های امضاشده و تعهدات",
+    "en": "Sales agreements, official contract printing, signed archives and obligations"
+  },
+  "contracts.newContractBtn": {
+    "fa": "تنظیم قرارداد جدید",
+    "en": "Draft New Contract"
+  },
+  "sims.managementTitle": {
+    "fa": "انبار سیم‌کارت‌های رند و اختصاصی",
+    "en": "SIM Card Inventory & VIP Lines"
+  },
+  "sims.managementDesc": {
+    "fa": "مدیریت موجودی خطوط، طبقه‌بندی الگوهای رند، قیمت‌گذاری خرید/فروش و واگذاری به مشتریان",
+    "en": "Stock management, pattern categorization, buy/sell pricing and assignment"
+  },
+  "sims.newSimBtn": {
+    "fa": "ثبت سیم‌کارت جدید",
+    "en": "Add SIM Card"
+  },
+  "sims.totalStock": {
+    "fa": "کل خطوط موجود",
+    "en": "Total In Stock"
+  },
+  "sims.totalSold": {
+    "fa": "خطوط فروخته‌شده",
+    "en": "Sold Lines"
+  },
+  "sims.totalValue": {
+    "fa": "ارزش موجودی انبار",
+    "en": "Stock Valuation"
+  },
+  "repairs.managementTitle": {
+    "fa": "تعمیرات و خدمات سخت‌افزار",
+    "en": "Repairs & Service Center"
+  },
+  "repairs.managementDesc": {
+    "fa": "پذیرش دستگاه، صدور رسید، ثبت شرح ایراد، اعلام هزینه، فرآیند تعمیر و تحویل به مشتری",
+    "en": "Intake receipt, issue diagnosis, quotation, repair process and customer pickup"
+  },
+  "repairs.newRepairBtn": {
+    "fa": "پذیرش دستگاه جدید",
+    "en": "New Repair Ticket"
+  },
+  "repairs.inProgress": {
+    "fa": "در حال تعمیر",
+    "en": "In Diagnostic / Repair"
+  },
+  "repairs.ready": {
+    "fa": "تعمیرشده و آماده تحویل",
+    "en": "Repaired & Ready"
+  },
+  "repairs.delivered": {
+    "fa": "تحویل مشتری شد",
+    "en": "Delivered to Customer"
+  },
+  "documents.managementTitle": {
+    "fa": "بایگانی اسناد و پیوست‌ها",
+    "en": "Document & Media Archive"
+  },
+  "documents.managementDesc": {
+    "fa": "مدیریت مدارک هویتی، تصاویر قراردادها، فیش‌های واریزی و فایل‌های ضمیمه",
+    "en": "Identity documents, contract scans, payment receipts and file attachments"
+  },
+  "documents.uploadBtn": {
+    "fa": "بارگذاری سند جدید",
+    "en": "Upload New Document"
+  },
+  "reports.managementTitle": {
+    "fa": "گزارش‌های مدیریتی و هوش تجاری",
+    "en": "Management Reports & Analytics"
+  },
+  "reports.managementDesc": {
+    "fa": "تحلیل آماری عملکرد پرسنل، روند مالی، نرخ موفقیت تماس‌ها و بهره‌وری سازمانی",
+    "en": "Team performance metrics, cash trend, call conversion and business intelligence"
+  },
+  "users.managementTitle": {
+    "fa": "مدیریت کاربران و دسترسی‌ها (RBAC)",
+    "en": "User Management & RBAC Matrix"
+  },
+  "users.managementDesc": {
+    "fa": "تعریف پرسنل، تخصیص نقش‌های سیستمی، تنظیم ماتریس اختیارات و نظارت بر نشست‌ها",
+    "en": "Staff accounts, system role assignment, permission matrix and session control"
+  },
+  "users.newUserBtn": {
+    "fa": "تعریف کاربر جدید",
+    "en": "Add New User"
+  },
+  "audit.managementTitle": {
+    "fa": "لاگ و ردپای امنیتی فعالیت‌ها",
+    "en": "System Security & Audit Trail"
+  },
+  "audit.managementDesc": {
+    "fa": "ثبت تغییرات، حذف و اضافه رکوردها، لاگین‌ها و دسترسی‌های کاربران با جزئیات زمان و IP",
+    "en": "Comprehensive record of changes, deletions, logins and user actions with IP trails"
+  },
+  "backups.managementTitle": {
+    "fa": "پشتیبان‌گیری، بازیابی و سلامت داده‌ها",
+    "en": "Backups, Restore & Data Health"
+  },
+  "backups.managementDesc": {
+    "fa": "تهیه فایل پشتیبان کامل JSON، بازیابی امن، زمان‌بندی خودکار و تست ساختار پایگاه داده",
+    "en": "Full JSON backup creation, safe restore, auto-scheduling and DB structure checks"
+  },
+  "ui.issueReport": {
+    "fa": "گزارش مشکل و بازخورد",
+    "en": "Report Issue & Feedback"
+  },
+  "ui.issueReportDesc": {
+    "fa": "ثبت گزارش باگی یا مشکل سیستمی به همراه لاگ‌های تشخیصی",
+    "en": "Submit bug report or system feedback with diagnostic logs"
+  },
+  "ui.quickSearch": {
+    "fa": "جستجو در مشتریان، تماس‌ها، وظایف، چک‌ها...",
+    "en": "Search customers, calls, tasks, checks..."
+  },
+  "ui.jalaliPickerPrompt": {
+    "fa": "انتخاب تاریخ شمسی...",
+    "en": "Select date..."
+  },
+  "ui.jalaliPickerPromptTime": {
+    "fa": "انتخاب تاریخ و ساعت...",
+    "en": "Select date and time..."
+  },
+  "ui.offlineBannerText": {
+    "fa": "ارتباط اینترنت قطع است — حالت آفلاین فعال است. تغییرات شما محلی ذخیره می‌شوند.",
+    "en": "No internet connection — Offline mode active. Changes are saved locally."
+  },
+  "ui.onlineBannerText": {
+    "fa": "اتصال اینترنت برقرار شد — همگام‌سازی اطلاعات در پس‌زمینه انجام گردید.",
+    "en": "Internet reconnected — Background data synchronization completed."
+  },
+  "ui.audioNotSupported": {
+    "fa": "امکان رمزگشایی یا پخش صوت در این دستگاه وجود ندارد.",
+    "en": "Audio playback or decoding is not supported on this device."
+  },
+  "ui.audioConvertRetry": {
+    "fa": "تبدیل و تلاش مجدد",
+    "en": "Convert & Retry"
+  },
+  "ui.voiceMicHold": {
+    "fa": "جهت صحبت دکمه را نگه دارید یا کلیک کنید",
+    "en": "Hold or click to speak"
+  },
+  "ui.voiceListening": {
+    "fa": "در حال گوش دادن به صحبت شما...",
+    "en": "Listening to your voice..."
+  },
+  "ui.voiceMicPermission": {
+    "fa": "درخواست دسترسی به میکروفون...",
+    "en": "Requesting microphone permission..."
+  }
+}

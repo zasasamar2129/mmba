@@ -1,0 +1,167 @@
+import React from 'react';
+import { LayoutGrid, List, ChevronRight, ChevronLeft, ChevronsRight, ChevronsLeft } from 'lucide-react';
+import { Button } from './Button';
+
+export type ViewMode = 'card' | 'list';
+
+export interface ListViewControlsProps {
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
+  pageSizeOptions?: number[];
+  className?: string;
+  showViewToggle?: boolean;
+}
+
+export function usePersistentViewMode(key: string, defaultMode: ViewMode = 'list'): [ViewMode, (mode: ViewMode) => void] {
+  const storageKey = `mmba_view_pref_${key}`;
+  const [mode, setMode] = React.useState<ViewMode>(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'card' || saved === 'list') return saved;
+    } catch {}
+    return defaultMode;
+  });
+
+  const updateMode = (newMode: ViewMode) => {
+    setMode(newMode);
+    try {
+      localStorage.setItem(storageKey, newMode);
+    } catch {}
+  };
+
+  return [mode, updateMode];
+}
+
+export const ListViewControls: React.FC<ListViewControlsProps> = ({
+  viewMode,
+  onViewModeChange,
+  currentPage,
+  totalPages,
+  totalItems,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+  pageSizeOptions = [10, 25, 50, 100],
+  className = '',
+  showViewToggle = true,
+}) => {
+  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+  const endItem = Math.min(currentPage * pageSize, totalItems);
+
+  return (
+    <div className={`flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs ${className}`}>
+      {/* Left: View Mode Toggle & Total Count */}
+      <div className="flex items-center gap-3">
+        {showViewToggle && (
+          <div className="flex items-center bg-white dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => onViewModeChange('list')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                viewMode === 'list'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+              title="نمای جدولی و ردیفی (List / Table View)"
+            >
+              <List className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">نمای ردیفی</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onViewModeChange('card')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                viewMode === 'card'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+              title="نمای کارتی (Card View)"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">نمای کارتی</span>
+            </button>
+          </div>
+        )}
+
+        <div className="text-slate-500 dark:text-slate-400 text-xs">
+          نمایش <span className="font-bold text-slate-800 dark:text-slate-200">{startItem}</span> تا{' '}
+          <span className="font-bold text-slate-800 dark:text-slate-200">{endItem}</span> از{' '}
+          <span className="font-bold text-slate-800 dark:text-slate-200">{totalItems}</span> رکورد
+        </div>
+      </div>
+
+      {/* Right: Page Size & Pagination Buttons */}
+      <div className="flex items-center gap-2.5">
+        {/* Page Size Select */}
+        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+          <span className="hidden md:inline">تعداد در صفحه:</span>
+          <select
+            value={pageSize}
+            onChange={(e) => {
+              onPageSizeChange(Number(e.target.value));
+              onPageChange(1);
+            }}
+            className="h-8 px-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
+          >
+            {pageSizeOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt} رکورد
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+          <button
+            type="button"
+            onClick={() => onPageChange(1)}
+            disabled={currentPage <= 1}
+            className="p-1 rounded text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+            title="صفحه اول"
+          >
+            <ChevronsRight className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+            className="p-1 rounded text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+            title="صفحه قبل"
+          >
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+
+          <span className="px-2 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            {currentPage} از {Math.max(1, totalPages)}
+          </span>
+
+          <button
+            type="button"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+            className="p-1 rounded text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+            title="صفحه بعد"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onPageChange(totalPages)}
+            disabled={currentPage >= totalPages}
+            className="p-1 rounded text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 disabled:opacity-30 disabled:pointer-events-none"
+            title="صفحه آخر"
+          >
+            <ChevronsLeft className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -1,0 +1,294 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-vazir: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', var(--font-vazir), sans-serif;
+
+    /* Semantic Design Tokens - Light Mode (High Contrast Full Black) */
+    --bg-page: #f8fafc;
+    --bg-surface: #ffffff;
+    --bg-surface-subtle: #f1f5f9;
+    --bg-surface-elevated: #ffffff;
+    --border-primary: #cbd5e1;
+    --border-subtle: #e2e8f0;
+    --border-focus: #4f46e5;
+    --text-primary: #000000;
+    --text-secondary: #0f172a;
+    --text-muted: #1e293b;
+    --accent-primary: #4338ca;
+    --accent-hover: #3730a3;
+    --accent-light: #eef2ff;
+  }
+
+  .dark {
+    /* Semantic Design Tokens - Dark Mode */
+    --bg-page: #030712;
+    --bg-surface: #0f172a;
+    --bg-surface-subtle: #1e293b;
+    --bg-surface-elevated: #1e293b;
+    --border-primary: #1e293b;
+    --border-subtle: #334155;
+    --border-focus: #818cf8;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --accent-primary: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-light: rgba(99, 102, 241, 0.15);
+  }
+
+  body {
+    font-family: var(--font-vazir);
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+  }
+
+  /* Global Light Mode High Contrast Text Rules */
+  html:not(.dark) h1,
+  html:not(.dark) h2,
+  html:not(.dark) h3,
+  html:not(.dark) h4,
+  html:not(.dark) h5,
+  html:not(.dark) h6 {
+    color: #000000 !important;
+  }
+
+  html:not(.dark) label,
+  html:not(.dark) th {
+    color: #000000 !important;
+  }
+
+  html:not(.dark) .text-slate-900,
+  html:not(.dark) .text-slate-800 {
+    color: #000000 !important;
+  }
+
+  html:not(.dark) .text-slate-700 {
+    color: #0f172a !important;
+  }
+
+  html:not(.dark) .text-slate-600,
+  html:not(.dark) .text-slate-500 {
+    color: #1e293b !important;
+  }
+
+  [dir="ltr"] body {
+    font-family: var(--font-sans);
+  }
+}
+
+/* RTL and BiDi Numeric Presets */
+.bidi-isolate, [data-bidi-isolate] {
+  unicode-bidi: isolate;
+  direction: ltr;
+  display: inline-block;
+  text-align: right;
+}
+
+.phone-bidi {
+  unicode-bidi: isolate;
+  direction: ltr;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.num-fa {
+  font-feature-settings: "ss01", "tnum";
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: isolate;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Glass and Surface Utilities */
+.liquid-glass-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-primary);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.dark .liquid-glass-card {
+  background-color: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.liquid-glass-subtle {
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-primary);
+}
+
+.dark .liquid-glass-subtle {
+  background-color: rgba(30, 41, 59, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Modal Backdrops */
+.app-modal-backdrop {
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.dark .app-modal-backdrop {
+  background-color: rgba(2, 6, 23, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes blurFadeUp {
+  0% {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.animate-blur-fade-up {
+  animation: blurFadeUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* Speech Recording Pulse */
+@keyframes pulseWave {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.3;
+  }
+}
+
+.recording-pulse {
+  animation: pulseWave 1.4s ease-in-out infinite;
+}
+
+/* Checkbox Styles */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 0.375rem;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.15s ease-in-out;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.dark input[type="checkbox"] {
+  border-color: #475569;
+  background-color: #0f172a;
+}
+
+input[type="checkbox"]:hover {
+  border-color: #6366f1;
+}
+
+input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #6366f1;
+}
+
+.dark input[type="checkbox"]:focus-visible {
+  box-shadow: 0 0 0 2px #0f172a, 0 0 0 4px #818cf8;
+}
+
+input[type="checkbox"]:checked {
+  background: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.dark input[type="checkbox"]:checked {
+  background: #6366f1;
+  border-color: #6366f1;
+}
+
+input[type="checkbox"]:checked::after {
+  content: '';
+  display: block;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-top: -1.5px;
+}

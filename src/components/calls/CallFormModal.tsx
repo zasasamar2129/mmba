@@ -1,0 +1,765 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Modal } from '../ui/Modal';
+import { Call, CallType, CallResult, Customer, Lead, LeadStatus, User, InteractionType } from '../../types';
+import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
+import { Select } from '../ui/Select';
+import { Button } from '../ui/Button';
+import { Checkbox } from '../ui/Checkbox';
+import { Badge } from '../ui/Badge';
+import { JalaliDatePicker } from '../ui/JalaliDatePicker';
+import { VoiceInputButton } from '../ui/VoiceInputButton';
+import { storage } from '../../services/storage';
+import { api } from '../../services/api';
+import { useToast } from '../ui/Toast';
+import {
+  PhoneCall,
+  User as UserIcon,
+  Calendar,
+  Check,
+  CheckSquare,
+  Mic,
+  MessageSquare,
+  FileText,
+  Clock,
+  Sparkles,
+  HelpCircle,
+  Search,
+  UserPlus,
+  UserCheck,
+  Building2,
+  ChevronDown,
+  ChevronUp,
+  ArrowUpRight
+} from 'lucide-react';
+import { LeadConvertModal } from '../leads/LeadConvertModal';
+
+export interface CallFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialCustomer?: Customer | null;
+  initialLead?: Lead | null;
+  initialMobile?: string;
+  allCustomers?: Customer[];
+  allUsers?: User[];
+  onSaved: (call: Call) => void;
+  onOpenCustomerDetail?: (customerId: string) => void;
+}
+
+export const CallFormModal: React.FC<CallFormModalProps> = ({
+  isOpen,
+  onClose,
+  initialCustomer,
+  initialLead,
+  initialMobile = '',
+  allCustomers = [],
+  allUsers = [],
+  onSaved,
+  onOpenCustomerDetail,
+}) => {
+  const { success, error } = useToast();
+  const currentUser = storage.getCurrentUser();
+  const availableUsers = (allUsers && allUsers.length > 0) ? allUsers : (storage.getUsers() || []);
+
+  // Contact resolution state
+  const [contactQuery, setContactQuery] = useState('');
+  const [resolvedContactType, setResolvedContactType] = useState<'CUSTOMER' | 'LEAD' | 'UNKNOWN'>('UNKNOWN');
+  const [resolvedCustomer, setResolvedCustomer] = useState<Customer | null>(null);
+  const [resolvedLead, setResolvedLead] = useState<Lead | null>(null);
+  const [resolvedStats, setResolvedStats] = useState<any>({});
+  const [showOptionalLeadFields, setShowOptionalLeadFields] = useState(false);
+  const [leadName, setLeadName] = useState('');
+  const [leadCompany, setLeadCompany] = useState('');
+  const [leadSource, setLeadSource] = useState('تماس ورودی');
+
+  // Call / Interaction details
+  const [callType, setCallType] = useState<string>(InteractionType.INCOMING_CALL);
+  const [subject, setSubject] = useState('');
+  const [customerRequest, setCustomerRequest] = useState('');
+  const [outcome, setOutcome] = useState('');
+  const [notes, setNotes] = useState('');
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [durationSeconds, setDurationSeconds] = useState('180');
+  const [result, setResult] = useState<CallResult>(CallResult.ANSWERED);
+
+  // Follow-up details
+  const [followUpRequired, setFollowUpRequired] = useState(false);
+  const [followUpDate, setFollowUpDate] = useState('');
+  const [followUpUserId, setFollowUpUserId] = useState(currentUser.id);
+  const [createTaskForFollowUp, setCreateTaskForFollowUp] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Convert Lead Modal state
+  const [leadToConvert, setLeadToConvert] = useState<Lead | null>(null);
+
+  // Debounced Contact Lookup
+  const lookupTimerRef = useRef<any>(null);
+
+  const performLookup = async (query: string) => {
+    if (!query.trim()) {
+      setResolvedContactType('UNKNOWN');
+      setResolvedCustomer(null);
+      setResolvedLead(null);
+      setResolvedStats({});
+      return;
+    }
+
+    try {
+      const res = await storage.lookupContact(query.trim());
+      setResolvedContactType(res.contactType);
+      setResolvedCustomer(res.customer);
+      setResolvedLead(res.lead);
+      setResolvedStats(res.stats || {});
+      if (res.lead?.name) setLeadName(res.lead.name);
+    } catch (err) {
+      console.warn('Contact lookup error:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      setFollowUpUserId(currentUser.id);
+      if (initialCustomer) {
+        setContactQuery(initialCustomer.mobile || initialCustomer.name || initialCustomer.id);
+        setResolvedContactType('CUSTOMER');
+        setResolvedCustomer(initialCustomer);
+        setResolvedLead(null);
+      } else if (initialLead) {
+        setContactQuery(initialLead.mobile || initialLead.leadCode);
+        setResolvedContactType('LEAD');
+        setResolvedLead(initialLead);
+        setResolvedCustomer(null);
+        if (initialLead.name) setLeadName(initialLead.name);
+      } else if (initialMobile) {
+        setContactQuery(initialMobile);
+        performLookup(initialMobile);
+      } else {
+        setContactQuery('');
+        setResolvedContactType('UNKNOWN');
+        setResolvedCustomer(null);
+        setResolvedLead(null);
+        setLeadName('');
+        setLeadCompany('');
+      }
+    }
+  }, [isOpen, initialCustomer, initialLead, initialMobile, currentUser.id]);
+
+  const handleContactQueryChange = (val: string) => {
+    setContactQuery(val);
+    if (lookupTimerRef.current) clearTimeout(lookupTimerRef.current);
+    lookupTimerRef.current = setTimeout(() => {
+      performLookup(val);
+    }, 250);
+  };
+
+  const handleSelectCustomerDirect = (cust: Customer) => {
+    setContactQuery(cust.mobile || cust.name);
+    setResolvedContactType('CUSTOMER');
+    setResolvedCustomer(cust);
+    setResolvedLead(null);
+  };
+
+  const handleSubmit = async (e?: React.FormEvent, forceFollowUp = false) => {
+    if (e) e.preventDefault();
+
+    const effectiveQuery = contactQuery.trim();
+    if (!effectiveQuery) {
+      error('لطفاً شماره تماس، نام یا کد مخاطب را وارد کنید');
+      return;
+    }
+
+    if (!subject.trim()) {
+      error('لطفاً موضوع مکالمه را مشخص کنید');
+      return;
+    }
+
+    const isFollowUp = forceFollowUp || followUpRequired;
+    if (isFollowUp) {
+      if (!followUpDate) {
+        error('در صورت تنظیم پیگیری، تعیین تاریخ و ساعت الزامی است');
+        return;
+      }
+      if (!followUpUserId) {
+        error('در صورت تنظیم پیگیری، انتخاب کارشناس مسئول الزامی است');
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
+    try {
+      let targetCustomerId: string | undefined = resolvedCustomer?.id;
+      let targetCustomerName = resolvedCustomer?.name || '';
+      let targetCustomerMobile = resolvedCustomer?.mobile || effectiveQuery;
+      let targetLeadId: string | undefined = resolvedLead?.id;
+
+      // If Unknown number, auto-create Lead without forcing full customer registration
+      if (resolvedContactType === 'UNKNOWN') {
+        const newLead = storage.saveLead({
+          mobile: effectiveQuery,
+          name: leadName.trim() || undefined,
+          company: leadCompany.trim() || undefined,
+          source: leadSource || 'تماس ورودی',
+          notes: notes.trim() || customerRequest.trim() || undefined,
+          status: isFollowUp ? LeadStatus.FOLLOW_UP : LeadStatus.CONTACTED,
+          assignedUserId: currentUser.id,
+          assignedUserName: currentUser.name,
+        });
+        targetLeadId = newLead.id;
+        targetCustomerName = newLead.name || `سرنخ ${newLead.leadCode}`;
+      } else if (resolvedContactType === 'LEAD' && resolvedLead) {
+        // Update existing lead status & note
+        storage.saveLead({
+          id: resolvedLead.id,
+          mobile: resolvedLead.mobile,
+          name: leadName.trim() || resolvedLead.name,
+          company: leadCompany.trim() || resolvedLead.company,
+          status: isFollowUp ? LeadStatus.FOLLOW_UP : LeadStatus.CONTACTED,
+        });
+        targetLeadId = resolvedLead.id;
+        targetCustomerName = resolvedLead.name || `سرنخ ${resolvedLead.leadCode}`;
+      }
+
+      const assignedUser = availableUsers.find((u) => u.id === followUpUserId);
+
+      // Construct Call record
+      const callPayload: Call = {
+        id: '',
+        customerId: targetCustomerId || targetLeadId || '',
+        customerName: targetCustomerName || effectiveQuery,
+        customerMobile: targetCustomerMobile,
+        userId: currentUser.id,
+        userName: currentUser.name,
+        callType,
+        dateTime: new Date().toISOString(),
+        durationSeconds: Number(durationSeconds) || 0,
+        subject: subject.trim(),
+        customerRequest: customerRequest.trim(),
+        outcome: outcome.trim(),
+        notes: notes.trim(),
+        voiceTranscript: voiceTranscript.trim(),
+        transcript: voiceTranscript.trim(),
+        result,
+        followUpRequired: isFollowUp,
+        followUpDate: isFollowUp && followUpDate ? followUpDate : undefined,
+        followUpUserId: isFollowUp ? followUpUserId : undefined,
+        followUpUserName: isFollowUp ? (assignedUser?.name || currentUser.name) : undefined,
+        followUpCompleted: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      const savedCall = storage.saveCall(callPayload);
+
+      // Record Unified Interaction via API / Central Storage
+      try {
+        await api.saveInteraction({
+          id: savedCall.id,
+          customer_id: targetCustomerId || undefined,
+          lead_id: targetLeadId || undefined,
+          user_id: currentUser.id,
+          interaction_type: callType,
+          started_at: callPayload.dateTime,
+          duration_seconds: callPayload.durationSeconds,
+          subject: callPayload.subject,
+          customer_request: callPayload.customerRequest,
+          outcome: callPayload.outcome,
+          note: callPayload.notes,
+          voice_transcript: callPayload.voiceTranscript,
+          follow_up_required: isFollowUp,
+          follow_up_at: followUpDate || undefined,
+          follow_up_user_id: followUpUserId || undefined,
+          createTask: createTaskForFollowUp,
+        });
+      } catch (apiErr) {
+        console.warn('API Interaction call fallback notice:', apiErr);
+      }
+
+      // If follow-up required, create Task in Central Storage
+      if (isFollowUp && createTaskForFollowUp) {
+        storage.saveTask({
+          id: '',
+          title: `پیگیری تماس: ${subject.trim()} (${targetCustomerName || effectiveQuery})`,
+          description: `درخواست مخاطب: ${customerRequest.trim() || '—'}\nنتیجه مذاکره: ${outcome.trim() || '—'}\nیادداشت: ${notes.trim() || '—'}`,
+          customerId: targetCustomerId || targetLeadId,
+          customerName: targetCustomerName || effectiveQuery,
+          assignedUserId: followUpUserId || currentUser.id,
+          assignedUserName: assignedUser?.name || currentUser.name,
+          creatorUserId: currentUser.id,
+          creatorUserName: currentUser.name,
+          priority: 'HIGH' as any,
+          status: 'PENDING' as any,
+          dueDate: followUpDate || new Date(Date.now() + 86400000 * 2).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      success(
+        resolvedContactType === 'UNKNOWN'
+          ? 'سرنخ و تعامل ورودی با موفقیت در سامانه ثبت گردید'
+          : 'مکالمه و تعامل با موفقیت در پرونده ثبت شد'
+      );
+
+      onSaved(savedCall);
+      onClose();
+    } catch (err: any) {
+      console.error(err);
+      error(err.message || 'خطا در ثبت تعامل');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const subjectPresets = [
+    'استعلام قیمت سیم‌کارت',
+    'پیگیری سفارش و تحویل',
+    'درخواست پیش‌فاکتور',
+    'پشتیبانی و رفع مشکل',
+    'مشاوره بسته و خدمات',
+  ];
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      maxWidth="3xl"
+      title={
+        <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
+          <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+            <PhoneCall className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="font-bold text-base">ثبت تماس و تعامل جدید (Incoming & Outgoing Center)</h3>
+            <p className="text-xs text-slate-500 font-normal">
+              پشتیبانی از ثبت فوری شماره‌های ناشناس (سرنخ) و مشتریان دائمی
+            </p>
+          </div>
+        </div>
+      }
+    >
+      <form onSubmit={(e) => handleSubmit(e)} className="space-y-4 text-right">
+        {/* Contact Lookup Bar */}
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-between">
+            <span>شماره تماس، نام مخاطب یا کد پرونده *</span>
+            {resolvedContactType === 'CUSTOMER' && <Badge variant="success">مشتری دائمی</Badge>}
+            {resolvedContactType === 'LEAD' && <Badge variant="warning">سرنخ موجود</Badge>}
+            {resolvedContactType === 'UNKNOWN' && contactQuery.trim() && (
+              <Badge variant="info">تماس ناشناس (ثبت به عنوان سرنخ)</Badge>
+            )}
+          </label>
+
+          <div className="relative">
+            <input
+              type="text"
+              value={contactQuery}
+              onChange={(e) => handleContactQueryChange(e.target.value)}
+              placeholder="شماره موبایل (مثال: 09121234567) یا نام مشتری..."
+              className="w-full h-11 px-4 pr-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 text-sm font-medium shadow-xs"
+              dir="auto"
+              autoFocus
+            />
+            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+              <Search className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Context Card based on Lookup */}
+        {resolvedContactType === 'CUSTOMER' && resolvedCustomer && (
+          <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-emerald-950 dark:text-emerald-200">
+                  {resolvedCustomer.name}
+                </span>
+                <span className="text-[11px] font-mono bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300">
+                  {resolvedCustomer.code}
+                </span>
+                <Badge variant="success">{resolvedCustomer.status || 'فعال'}</Badge>
+              </div>
+              <p className="text-[11px] text-emerald-800 dark:text-emerald-400">
+                {resolvedCustomer.companyName ? `${resolvedCustomer.companyName} | ` : ''}
+                موبایل: {resolvedCustomer.mobile || '—'}
+                {resolvedStats.interactionCount ? ` | سوابق تعاملات: ${resolvedStats.interactionCount} بار` : ''}
+              </p>
+            </div>
+
+            {onOpenCustomerDetail && (
+              <Button
+                variant="outline"
+                size="xs"
+                type="button"
+                onClick={() => onOpenCustomerDetail(resolvedCustomer.id)}
+                leftIcon={<ArrowUpRight className="w-3.5 h-3.5" />}
+                className="shrink-0 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
+              >
+                مشاهده پرونده مشتری
+              </Button>
+            )}
+          </div>
+        )}
+
+        {resolvedContactType === 'LEAD' && resolvedLead && (
+          <div className="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fadeIn">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-amber-950 dark:text-amber-200">
+                  {resolvedLead.name || 'سرنخ بدون نام'}
+                </span>
+                <span className="text-[11px] font-mono bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/80 text-amber-700 dark:text-amber-300">
+                  {resolvedLead.leadCode}
+                </span>
+                <Badge variant="warning">{resolvedLead.status}</Badge>
+              </div>
+              <p className="text-[11px] text-amber-800 dark:text-amber-400">
+                شماره: {resolvedLead.mobile} | منبع: {resolvedLead.source || 'تماس ورودی'}
+                {resolvedStats.interactionCount ? ` | سابقه: ${resolvedStats.interactionCount} تعامل` : ''}
+              </p>
+            </div>
+
+            <Button
+              variant="success"
+              size="xs"
+              type="button"
+              onClick={() => setLeadToConvert(resolvedLead)}
+              leftIcon={<UserCheck className="w-3.5 h-3.5" />}
+              className="shrink-0"
+            >
+              تبدیل به پرونده مشتری
+            </Button>
+          </div>
+        )}
+
+        {resolvedContactType === 'UNKNOWN' && contactQuery.trim() && (
+          <div className="p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/60 text-xs space-y-2.5 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+                <UserPlus className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                این شماره در بانک اطلاعاتی موجود نیست و به صورت خودکار به عنوان «سرنخ جدید (Lead)» ثبت می‌شود.
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setShowOptionalLeadFields(!showOptionalLeadFields)}
+                className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+              >
+                {showOptionalLeadFields ? (
+                  <>
+                    بستن فیلدهای تکمیلی <ChevronUp className="w-3 h-3" />
+                  </>
+                ) : (
+                  <>
+                    تکمیل نام و مشخصات اختیاری <ChevronDown className="w-3 h-3" />
+                  </>
+                )}
+              </button>
+            </div>
+
+            {showOptionalLeadFields && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-indigo-100 dark:border-indigo-900/60 animate-fadeIn">
+                <Input
+                  label="نام یا عنوان مخاطب"
+                  value={leadName}
+                  onChange={(e) => setLeadName(e.target.value)}
+                  placeholder="مثال: آقای حسینی"
+                  size="sm"
+                />
+                <Input
+                  label="نام شرکت / مجموعه"
+                  value={leadCompany}
+                  onChange={(e) => setLeadCompany(e.target.value)}
+                  placeholder="مثال: بازرگانی پارس"
+                  size="sm"
+                />
+                <Input
+                  label="منبع ارجاع"
+                  value={leadSource}
+                  onChange={(e) => setLeadSource(e.target.value)}
+                  placeholder="تماس ورودی، وبسایت..."
+                  size="sm"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Interaction Type, Result, Duration */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <Select
+            label="نوع تعامل"
+            value={callType}
+            onChange={(e) => setCallType(e.target.value)}
+            options={[
+              { value: InteractionType.INCOMING_CALL, label: 'تماس ورودی (Incoming)' },
+              { value: InteractionType.OUTGOING_CALL, label: 'تماس خروجی (Outgoing)' },
+              { value: InteractionType.VISIT, label: 'مراجعه / جلسه حضوری (Visit)' },
+              { value: InteractionType.MESSAGE, label: 'پیام‌رسان / پیامک (Message)' },
+              { value: InteractionType.OTHER, label: 'سایر موارد (Other)' },
+            ]}
+          />
+
+          <Select
+            label="نتیجه مکالمه"
+            value={result}
+            onChange={(e) => setResult(e.target.value as CallResult)}
+            options={[
+              { value: CallResult.ANSWERED, label: 'پاسخ داده شد / مذاکره کامل' },
+              { value: CallResult.MEETING_SCHEDULED, label: 'جلسه تنظیم شد' },
+              { value: CallResult.ORDER_PLACED, label: 'سفارش / قرارداد ثبت شد' },
+              { value: CallResult.BUSY, label: 'اشغال بود' },
+              { value: CallResult.NO_ANSWER, label: 'پاسخ نداد' },
+              { value: CallResult.LEFT_VOICEMAIL, label: 'پیام ارسال شد' },
+            ]}
+          />
+
+          <div>
+            <Input
+              label="مدت مکالمه (ثانیه)"
+              type="number"
+              value={durationSeconds}
+              onChange={(e) => setDurationSeconds(e.target.value)}
+            />
+            <div className="flex items-center gap-1 mt-1 justify-end">
+              {[
+                { label: '۱ دقیقه', val: '60' },
+                { label: '۳ دقیقه', val: '180' },
+                { label: '۵ دقیقه', val: '300' },
+              ].map((chip) => (
+                <button
+                  key={chip.val}
+                  type="button"
+                  onClick={() => setDurationSeconds(chip.val)}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-700/60"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Subject with Quick Presets */}
+        <div className="space-y-1.5">
+          <Input
+            label="موضوع اصلی مکالمه *"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            placeholder="مثال: استعلام قیمت سیم‌کارت و شرایط پرداخت اقساطی"
+            isRequired
+          />
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] text-slate-400">عناوین متداول:</span>
+            {subjectPresets.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => setSubject(preset)}
+                className="text-[11px] px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors border border-slate-200 dark:border-slate-700/60"
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Request & Outcome Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
+                درخواست و نیاز تماس‌گیرنده (Request)
+              </label>
+              <VoiceInputButton
+                onTranscript={(transcript) => {
+                  setCustomerRequest((prev) => (prev ? `${prev} ${transcript}` : transcript));
+                }}
+              />
+            </div>
+            <textarea
+              value={customerRequest}
+              onChange={(e) => setCustomerRequest(e.target.value)}
+              rows={3}
+              className="w-full text-xs p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none leading-relaxed resize-none"
+              placeholder="تماس‌گیرنده چه درخواستی داشت؟ (استعلام قیمت، فعال‌سازی بسته، تغییر نام، ...)"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                نتیجه مذاکره و توافق (Outcome)
+              </label>
+              <VoiceInputButton
+                onTranscript={(transcript) => {
+                  setOutcome((prev) => (prev ? `${prev} ${transcript}` : transcript));
+                }}
+              />
+            </div>
+            <textarea
+              value={outcome}
+              onChange={(e) => setOutcome(e.target.value)}
+              rows={3}
+              className="w-full text-xs p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none leading-relaxed resize-none"
+              placeholder="نتیجه گفتگو چه شد؟ (توضیحات داده شد، پیش‌فاکتور ارسال شد، مهلت بررسی خواسته شد...)"
+            />
+          </div>
+        </div>
+
+        {/* General Notes */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-indigo-500" />
+              یادداشت‌های تکمیلی و نکات مهم
+            </label>
+            <VoiceInputButton
+              onTranscript={(transcript) => {
+                setNotes((prev) => (prev ? `${prev} ${transcript}` : transcript));
+              }}
+            />
+          </div>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={2}
+            className="w-full text-xs p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none leading-relaxed resize-none"
+            placeholder="هرگونه یادداشت تکمیلی، ترجیحات تماس‌گیرنده، سقف بودجه و..."
+          />
+        </div>
+
+        {/* Voice Transcript (Speech Recognition) */}
+        <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Mic className="w-3.5 h-3.5 text-purple-500" />
+              متن پیاده‌سازی شده صوتی (Voice Transcript)
+            </span>
+            <VoiceInputButton
+              onTranscript={(transcript) => {
+                setVoiceTranscript((prev) => (prev ? `${prev} ${transcript}` : transcript));
+              }}
+            />
+          </div>
+          <textarea
+            value={voiceTranscript}
+            onChange={(e) => setVoiceTranscript(e.target.value)}
+            rows={2}
+            className="w-full text-xs p-2 rounded-lg bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 text-slate-800 dark:text-slate-300 focus:border-purple-500 focus:outline-none font-mono resize-none"
+            placeholder="متن تبدیل شده از صوت به نوشتار به صورت زنده در این قسمت قرار می‌گیرد..."
+          />
+        </div>
+
+        {/* Follow-up Section */}
+        <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 space-y-3">
+          <Checkbox
+            checked={followUpRequired}
+            onChange={(e) => setFollowUpRequired(e.target.checked)}
+            label="این تعامل نیازمند پیگیری بعدی (Follow-up) است"
+            colorScheme="indigo"
+            size="md"
+          />
+
+          {followUpRequired && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2.5 border-t border-slate-200 dark:border-slate-800 animate-fadeIn">
+              <JalaliDatePicker
+                label="تاریخ و ساعت دقیق پیگیری بعدی *"
+                value={followUpDate}
+                onChange={(val) => setFollowUpDate(val)}
+                showTime
+                isRequired
+              />
+
+              <Select
+                label="کارشناس مسئول پیگیری *"
+                value={followUpUserId}
+                onChange={(e) => setFollowUpUserId(e.target.value)}
+                isRequired
+                options={(availableUsers || []).map((u) => ({
+                  value: u.id,
+                  label: `${u.name} (${u.role || 'کارشناس'})`,
+                }))}
+              />
+
+              <div className="sm:col-span-2 flex items-center pt-1">
+                <Checkbox
+                  checked={createTaskForFollowUp}
+                  onChange={(e) => setCreateTaskForFollowUp(e.target.checked)}
+                  label="ایجاد خودکار وظیفه (Task) دارای مهلت در کارتابل پیگیری‌های کارشناس"
+                  icon={<CheckSquare className="w-3.5 h-3.5 text-indigo-500" />}
+                  colorScheme="indigo"
+                  size="sm"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons & Quick presets */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 sm:flex-none"
+            >
+              انصراف
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {!followUpRequired && (
+              <Button
+                variant="secondary"
+                size="sm"
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setFollowUpRequired(true);
+                  if (!followUpDate) {
+                    // Default to 2 days later
+                    const twoDays = new Date(Date.now() + 86400000 * 2).toISOString();
+                    setFollowUpDate(twoDays);
+                  }
+                }}
+                leftIcon={<Calendar className="w-4 h-4 text-indigo-500" />}
+                className="flex-1 sm:flex-none"
+              >
+                ثبت و تنظیم پیگیری
+              </Button>
+            )}
+
+            <Button
+              variant="primary"
+              size="sm"
+              type="submit"
+              isLoading={isSubmitting}
+              leftIcon={<Check className="w-4 h-4" />}
+              className="flex-1 sm:flex-none"
+            >
+              ثبت نهایی تعامل
+            </Button>
+          </div>
+        </div>
+      </form>
+
+      {/* Convert Modal if lead conversion clicked */}
+      <LeadConvertModal
+        isOpen={!!leadToConvert}
+        onClose={() => setLeadToConvert(null)}
+        lead={leadToConvert}
+        onConverted={(newCust) => {
+          setResolvedContactType('CUSTOMER');
+          setResolvedCustomer(newCust);
+          setResolvedLead(null);
+          setContactQuery(newCust.mobile || newCust.name);
+          setLeadToConvert(null);
+        }}
+      />
+    </Modal>
+  );
+};
