@@ -4,10 +4,19 @@ import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { apiRouter } from './server/routes';
 import { notificationScheduler } from './server/notificationScheduler';
+import { centralDb } from './server/db';
+import { getJwtSecret } from './server/auth';
 
 dotenv.config();
 
 async function startServer() {
+  // Validate JWT_SECRET is set before accepting any requests
+  const jwtSecret = getJwtSecret();
+  if (!jwtSecret) {
+    console.error('[MMBA Server] FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
+    process.exit(1);
+  }
+
   const app = express();
   const PORT = 3000;
 
@@ -43,6 +52,14 @@ async function startServer() {
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
+  }
+
+  // Run one-time password migration before accepting connections
+  try {
+    const migrated = await centralDb.migratePasswords();
+    console.log(`[MMBA Server] Password migration complete: ${migrated} user(s) migrated.`);
+  } catch (err) {
+    console.error('[MMBA Server] Password migration failed:', err);
   }
 
   app.listen(PORT, '0.0.0.0', () => {

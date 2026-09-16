@@ -3,6 +3,7 @@ import { centralDb, normalizePhone } from './db';
 import { backupService } from './backupService';
 import { webPushService } from './webPushService';
 import { notificationScheduler } from './notificationScheduler';
+import * as auth from './auth';
 import {
   User, UserRole, UserStatus, ModuleName, Customer, Call, Task,
   Contract, Payment, Check, SimCard, Repair, Attachment, Notification,
@@ -15,7 +16,7 @@ import { isAdmin } from '../src/lib/permissions';
 export const apiRouter = Router();
 
 // Middleware: Extract user from Authorization Header or query parameter
-function getAuthUser(req: Request): User | undefined {
+async function getAuthUser(req: Request): Promise<User | undefined> {
   let token = '';
   const authHeader = req.headers.authorization;
   if (authHeader) {
@@ -24,14 +25,27 @@ function getAuthUser(req: Request): User | undefined {
     token = req.query.token.trim();
   }
   if (!token) return undefined;
-  
-  // Format can be raw userId or token-user_id
-  const userId = token.startsWith('token-') ? token.substring(6) : token;
-  const user = centralDb.findUserById(userId);
+
+  // Verify the token's signature and expiry first; only then look up the user
+  const decoded = auth.verifyToken(token);
+  if (!decoded) return undefined;
+
+  const user = centralDb.findUserById(decoded.payload.userId);
   if (user && user.status !== UserStatus.INACTIVE && user.status !== UserStatus.SUSPENDED) {
     return user;
   }
   return undefined;
+}
+
+// Helper: strip the password field from a user object before sending to the client
+function sanitizeUser(user: User): Omit<User, 'password'> {
+  const { password: _pw, ...safe } = user;
+  return safe;
+}
+
+// Helper: strip the password field from all users in an array
+function sanitizeUsers(users: User[]): Omit<User, 'password'>[] {
+  return users.map(sanitizeUser);
 }
 
 // ----------------------------------------------------
@@ -67,8 +81,10 @@ apiRouter.post('/auth/login', async (req: Request, res: Response) => {
       return res.status(403).json({ success: false, message: 'حساب کاربری شما غیرفعال یا معلق می‌باشد. لطفاً با مدیر سیستم تماس بگیرید.' });
     }
 
-    const expectedPassword = user.password || '123';
-    if (password !== expectedPassword) {
+    // Verify the password against the stored hash (never plaintext compare)
+    const storedPassword = user.password || '';
+    const passwordValid = await auth.verifyPassword(password, storedPassword);
+    if (!passwordValid) {
       await centralDb.logAudit({
         userId: user.id,
         userName: user.name,
@@ -86,6 +102,8 @@ apiRouter.post('/auth/login', async (req: Request, res: Response) => {
       ...user,
       lastLoginAt: now,
     };
+    // NOTE: saveUser passes the existing password through unchanged — it does NOT
+    // re-hash it. Only the four dedicated write sites hash on save.
     await centralDb.saveUser(updatedUser);
 
     await centralDb.logAudit({
@@ -98,11 +116,11 @@ apiRouter.post('/auth/login', async (req: Request, res: Response) => {
       ipAddress: req.ip,
     });
 
-    const token = `token-${updatedUser.id}`;
+    const token = auth.signToken(updatedUser.id);
     res.json({
       success: true,
       token,
-      user: updatedUser,
+      user: sanitizeUser(updatedUser),
       serverRevision: centralDb.getRevisionInfo().revision,
     });
   } catch (error: any) {
@@ -111,20 +129,21 @@ apiRouter.post('/auth/login', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/auth/me', (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+apiRouter.get('/auth/me', async (req: Request, res: Response) => {
+  const user = await getAuthUser(req);
   if (!user) {
-    // Return default admin if no auth specified, or 401
+    // Preserve original fallback: return first user if no token provided.
+    // Auth tightening (forcing real auth) is Step 2.
     const state = centralDb.getState();
-    return res.json({ user: state.users[0] || null });
+    return res.json({ user: sanitizeUser(state.users[0]) || null });
   }
-  res.json({ user });
+  res.json({ user: sanitizeUser(user) });
 });
 
 apiRouter.put('/auth/profile', async (req: Request, res: Response) => {
   try {
     const { userId, name, email, mobile, department, avatar, username } = req.body;
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const targetId = userId || authUser?.id || (username === 'admin' ? 'usr-admin' : undefined);
 
     let targetUser = targetId ? centralDb.findUserById(targetId) : undefined;
@@ -162,7 +181,7 @@ apiRouter.put('/auth/profile', async (req: Request, res: Response) => {
       ipAddress: req.ip,
     });
 
-    res.json({ success: true, user: saved, revision: centralDb.getRevisionInfo().revision });
+    res.json({ success: true, user: sanitizeUser(saved), revision: centralDb.getRevisionInfo().revision });
   } catch (error: any) {
     console.error('Profile update error:', error);
     res.status(500).json({ success: false, message: 'خطا در ذخیره‌سازی پروفایل' });
@@ -172,7 +191,7 @@ apiRouter.put('/auth/profile', async (req: Request, res: Response) => {
 apiRouter.put('/auth/password', async (req: Request, res: Response) => {
   try {
     const { userId, currentPassword, newPassword, username } = req.body;
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const targetId = userId || authUser?.id || (username === 'admin' ? 'usr-admin' : undefined);
 
     let targetUser = targetId ? centralDb.findUserById(targetId) : undefined;
@@ -187,8 +206,10 @@ apiRouter.put('/auth/password', async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, message: 'کاربر یافت نشد.' });
     }
 
-    const currentActual = targetUser.password || '123';
-    if (currentPassword !== currentActual) {
+    // Verify the current password against the stored hash
+    const storedPassword = targetUser.password || '';
+    const currentValid = await auth.verifyPassword(currentPassword, storedPassword);
+    if (!currentValid) {
       return res.status(400).json({ success: false, message: 'کلمه عبور فعلی نادرست است.' });
     }
 
@@ -196,9 +217,11 @@ apiRouter.put('/auth/password', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'کلمه عبور جدید باید حداقل ۳ کاراکتر باشد.' });
     }
 
+    // Hash the new password before saving (write site #3)
+    const hashedNewPassword = await auth.hashPassword(newPassword);
     const updatedUser: User = {
       ...targetUser,
-      password: newPassword,
+      password: hashedNewPassword,
     };
 
     const saved = await centralDb.saveUser(updatedUser);
@@ -215,7 +238,7 @@ apiRouter.put('/auth/password', async (req: Request, res: Response) => {
       ipAddress: req.ip,
     });
 
-    res.json({ success: true, user: saved, revision: centralDb.getRevisionInfo().revision });
+    res.json({ success: true, user: sanitizeUser(saved), revision: centralDb.getRevisionInfo().revision });
   } catch (error: any) {
     console.error('Password change error:', error);
     res.status(500).json({ success: false, message: 'خطا در تغییر رمز عبور' });
@@ -233,7 +256,7 @@ apiRouter.get('/sync/all', (req: Request, res: Response) => {
       revision: state.revision,
       lastUpdatedAt: state.lastUpdatedAt,
       data: {
-        users: state.users,
+        users: sanitizeUsers(state.users),
         roles: state.roles,
         customers: state.customers,
         leads: state.leads || [],
@@ -404,7 +427,7 @@ apiRouter.post('/leads', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'شماره همراه برای سرنخ الزامی است.' });
     }
     const saved = await centralDb.saveLead(body);
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     await centralDb.logAudit({
       userId: authUser?.id || 'system',
       userName: authUser?.name || 'کاربر سیستم',
@@ -446,7 +469,7 @@ apiRouter.post('/leads/:id/convert', async (req: Request, res: Response) => {
     const customerData = req.body || {};
     const result = await centralDb.convertLeadToCustomer(leadId, customerData);
 
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     await centralDb.logAudit({
       userId: authUser?.id || 'system',
       userName: authUser?.name || 'کاربر سیستم',
@@ -481,7 +504,7 @@ apiRouter.post('/customers', async (req: Request, res: Response) => {
   try {
     const customer: Customer = req.body;
     const saved = await centralDb.saveCustomer(customer);
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     await centralDb.logAudit({
       userId: authUser?.id || 'system',
       userName: authUser?.name || 'کاربر سیستم',
@@ -503,7 +526,7 @@ apiRouter.put('/customers/:id', async (req: Request, res: Response) => {
   try {
     const customer: Customer = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveCustomer(customer);
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     await centralDb.logAudit({
       userId: authUser?.id || 'system',
       userName: authUser?.name || 'کاربر سیستم',
@@ -526,7 +549,7 @@ apiRouter.delete('/customers/:id', async (req: Request, res: Response) => {
     const id = req.params.id;
     const customer = centralDb.getState().customers.find((c) => c.id === id);
     const deleted = await centralDb.deleteCustomer(id);
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (deleted && customer) {
       await centralDb.logAudit({
         userId: authUser?.id || 'system',
@@ -690,7 +713,7 @@ apiRouter.post('/interactions', async (req: Request, res: Response) => {
     }
 
     // 3. Authenticated user
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const recordingUserId = authUser?.id || body.user_id || body.userId || 'usr-admin';
     const recordingUserName = authUser?.name || body.userName || 'کارشناس سامانه';
 
@@ -766,7 +789,7 @@ apiRouter.patch('/interactions/:id', async (req: Request, res: Response) => {
     }
 
     const updated = await centralDb.patchInteraction(id, body);
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     await centralDb.logAudit({
       userId: authUser?.id || 'system',
       userName: authUser?.name || 'کاربر سیستم',
@@ -801,7 +824,7 @@ apiRouter.post('/interactions/:id/complete-follow-up', async (req: Request, res:
     }
 
     const updated = await centralDb.completeInteractionFollowUp(id);
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     await centralDb.logAudit({
       userId: authUser?.id || 'system',
       userName: authUser?.name || 'کاربر سیستم',
@@ -836,7 +859,7 @@ apiRouter.delete('/interactions/:id', async (req: Request, res: Response) => {
     }
 
     const deleted = await centralDb.deleteInteraction(id);
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     await centralDb.logAudit({
       userId: authUser?.id || 'system',
       userName: authUser?.name || 'کاربر سیستم',
@@ -935,7 +958,7 @@ apiRouter.delete('/voice-notes/:id', async (req: Request, res: Response) => {
 // Edit Text/Voice note — owner-or-admin only (Sprint 03 Patch 05)
 apiRouter.put('/voice-notes/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const id = req.params.id;
     const existing = centralDb.getState().voiceNotes.find((n) => n.id === id);
     if (!existing) return res.status(404).json({ success: false, message: 'یادداشت یافت نشد' });
@@ -1230,8 +1253,8 @@ apiRouter.get('/attachments', (req: Request, res: Response) => {
   res.json({ attachments: centralDb.getState().attachments });
 });
 
-apiRouter.get('/attachments/:id', (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+apiRouter.get('/attachments/:id', async (req: Request, res: Response) => {
+  const user = await getAuthUser(req);
   if (!user) {
     return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
   }
@@ -1245,8 +1268,8 @@ apiRouter.get('/attachments/:id', (req: Request, res: Response) => {
 });
 
 // Secure Attachment Content & Preview Endpoint (Streams binary with exact Content-Type)
-apiRouter.get(['/attachments/:id/content', '/attachments/:id/preview'], (req: Request, res: Response) => {
-  const user = getAuthUser(req);
+apiRouter.get(['/attachments/:id/content', '/attachments/:id/preview'], async (req: Request, res: Response) => {
+  const user = await getAuthUser(req);
   if (!user) {
     return res.status(401).json({ success: false, message: 'دسترسی غیرمجاز: احراز هویت الزامی است.' });
   }
@@ -1308,7 +1331,7 @@ apiRouter.post('/attachments/:id/link-customer', async (req: Request, res: Respo
     if (!saved) {
       return res.status(404).json({ success: false, message: 'سند یافت نشد' });
     }
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     await centralDb.logAudit({
       userId: authUser?.id || 'system',
       userName: authUser?.name || 'کاربر سیستم',
@@ -1341,14 +1364,20 @@ apiRouter.delete('/attachments/:id', async (req: Request, res: Response) => {
 // Users & Roles Management
 // ----------------------------------------------------
 apiRouter.get('/users', (req: Request, res: Response) => {
-  res.json({ users: centralDb.getState().users });
+  res.json({ users: sanitizeUsers(centralDb.getState().users) });
 });
 
 apiRouter.post('/users', async (req: Request, res: Response) => {
   try {
     const user: User = req.body;
+
+    // Hash the password before saving (write site #1: user creation)
+    if (user.password) {
+      user.password = await auth.hashPassword(user.password);
+    }
+
     const saved = await centralDb.saveUser(user);
-    res.json({ success: true, user: saved, revision: centralDb.getRevisionInfo().revision });
+    res.json({ success: true, user: sanitizeUser(saved), revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1356,7 +1385,7 @@ apiRouter.post('/users', async (req: Request, res: Response) => {
 
 apiRouter.put('/users/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد مجاز به ویرایش مشخصات کاربران هستند.' });
     }
@@ -1367,9 +1396,13 @@ apiRouter.put('/users/:id', async (req: Request, res: Response) => {
     }
 
     const incoming = req.body || {};
-    const passwordToSave = (incoming.password || incoming.newPassword)
-      ? String(incoming.password || incoming.newPassword).trim()
-      : existing.password;
+    let passwordToSave = existing.password;
+
+    // Hash the password if a new one is being set (write site #2: admin edit)
+    if (incoming.password || incoming.newPassword) {
+      const rawNew = String(incoming.password || incoming.newPassword).trim();
+      passwordToSave = await auth.hashPassword(rawNew);
+    }
 
     const user: User = {
       ...existing,
@@ -1401,7 +1434,7 @@ apiRouter.put('/users/:id', async (req: Request, res: Response) => {
 
 apiRouter.post('/users/:id/reset-password', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!isAdmin(authUser)) {
       return res.status(403).json({
         success: false,
@@ -1422,7 +1455,9 @@ apiRouter.post('/users/:id/reset-password', async (req: Request, res: Response) 
       return res.status(404).json({ success: false, message: 'کاربر مورد نظر جهت تغییر رمز عبور یافت نشد.' });
     }
 
-    const updated = await centralDb.resetUserPassword(targetUser.id, newPassword.trim());
+    // Hash the new password before storing (write site #4: admin reset)
+    const hashedPassword = await auth.hashPassword(newPassword.trim());
+    const updated = await centralDb.resetUserPassword(targetUser.id, hashedPassword);
 
     await centralDb.logAudit({
       userId: authUser?.id || 'usr-admin',
@@ -1436,11 +1471,10 @@ apiRouter.post('/users/:id/reset-password', async (req: Request, res: Response) 
       ipAddress: req.ip,
     });
 
-    const { password: _, ...sanitized } = updated;
     res.json({
       success: true,
       message: `رمز عبور کاربر "${targetUser.name}" با موفقیت تغییر یافت.`,
-      user: sanitized,
+      user: sanitizeUser(updated),
       revision: centralDb.getRevisionInfo().revision,
     });
   } catch (err: any) {
@@ -1450,7 +1484,7 @@ apiRouter.post('/users/:id/reset-password', async (req: Request, res: Response) 
 
 apiRouter.delete('/users/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!isAdmin(authUser)) {
       return res.status(403).json({
         success: false,
@@ -1571,7 +1605,7 @@ apiRouter.get('/notifications/devices', (req: Request, res: Response) => {
 apiRouter.post('/notifications/devices/register', async (req: Request, res: Response) => {
   try {
     const device: UserNotificationDevice = req.body;
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const enrichedDevice: UserNotificationDevice = {
       ...device,
       userId: device.userId || authUser?.id || 'usr-admin',
@@ -1605,7 +1639,7 @@ apiRouter.delete('/notifications/devices/:id', async (req: Request, res: Respons
 
 apiRouter.post('/notifications/test-push', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const targetUserId = req.body.userId || authUser?.id || 'usr-admin';
     const title = req.body.title || 'آزمایش اعلان هوشمند MMBA';
     const body = req.body.body || 'سیستم هشدار صوتی و اعلان دستگاه‌های متصل فعال و پایدار است.';
@@ -1656,7 +1690,7 @@ apiRouter.post('/audit-logs', async (req: Request, res: Response) => {
 // Any authenticated user can submit a problem report
 apiRouter.post('/problem-reports', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const body: ProblemReport = req.body;
     const report: ProblemReport = {
       ...body,
@@ -1694,8 +1728,8 @@ apiRouter.post('/problem-reports', async (req: Request, res: Response) => {
 });
 
 // Admin ONLY can view all problem reports
-apiRouter.get('/problem-reports', (req: Request, res: Response) => {
-  const authUser = getAuthUser(req);
+apiRouter.get('/problem-reports', async (req: Request, res: Response) => {
+  const authUser = await getAuthUser(req);
   // If user is not admin, return only their own reports or 403
   if (authUser && !isAdmin(authUser)) {
     const userReports = centralDb.getState().problemReports.filter((r) => r.userId === authUser.id);
@@ -1707,7 +1741,7 @@ apiRouter.get('/problem-reports', (req: Request, res: Response) => {
 // Admin ONLY can update or resolve problem reports
 apiRouter.put('/problem-reports/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const report: ProblemReport = { ...req.body, id: req.params.id };
     if (authUser && !isAdmin(authUser) && report.userId !== authUser.id) {
       return res.status(403).json({ success: false, message: 'تنها مدیران سیستم مجاز به تغییر وضعیت گزارش هستند.' });
@@ -1722,7 +1756,7 @@ apiRouter.put('/problem-reports/:id', async (req: Request, res: Response) => {
 // Admin ONLY can delete problem reports
 apiRouter.delete('/problem-reports/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران سیستم مجاز به حذف گزارشات هستند.' });
     }
@@ -1754,9 +1788,9 @@ apiRouter.put('/settings', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 
 // 1. List all backups
-apiRouter.get('/backups', (req: Request, res: Response) => {
+apiRouter.get('/backups', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد سیستم مجاز به دسترسی به پشتیبان‌ها هستند.' });
     }
@@ -1768,9 +1802,9 @@ apiRouter.get('/backups', (req: Request, res: Response) => {
 });
 
 // 2. Health & Diagnostics Summary
-apiRouter.get('/backups/health', (req: Request, res: Response) => {
+apiRouter.get('/backups/health', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد سیستم مجاز به دسترسی به گزارش سلامت بکاپ هستند.' });
     }
@@ -1782,9 +1816,9 @@ apiRouter.get('/backups/health', (req: Request, res: Response) => {
 });
 
 // 3. Automatic Backup Schedule Settings
-apiRouter.get('/backups/schedule', (req: Request, res: Response) => {
+apiRouter.get('/backups/schedule', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز.' });
     }
@@ -1795,9 +1829,9 @@ apiRouter.get('/backups/schedule', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/backups/schedule', (req: Request, res: Response) => {
+apiRouter.put('/backups/schedule', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران سیستم مجاز به تغییر زمان‌بندی پشتیبان‌گیری هستند.' });
     }
@@ -1811,7 +1845,7 @@ apiRouter.put('/backups/schedule', (req: Request, res: Response) => {
 // 4. Create Full Backup Manually
 apiRouter.post('/backups/create', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد سیستم مجاز به تولید بکاپ هستند.' });
     }
@@ -1835,9 +1869,9 @@ apiRouter.post('/backups/create', async (req: Request, res: Response) => {
 });
 
 // 5. Verify Backup Integrity
-apiRouter.get('/backups/:id/verify', (req: Request, res: Response) => {
+apiRouter.get('/backups/:id/verify', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز.' });
     }
@@ -1855,9 +1889,9 @@ apiRouter.get('/backups/:id/verify', (req: Request, res: Response) => {
 });
 
 // 6. Download Full Backup Package (Protected Endpoint)
-apiRouter.get('/backups/:id/download', (req: Request, res: Response) => {
+apiRouter.get('/backups/:id/download', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد سیستم مجاز به دانلود فایل پشتیبان هستند.' });
     }
@@ -1884,7 +1918,7 @@ apiRouter.get('/backups/:id/download', (req: Request, res: Response) => {
 // 7. Delete Backup File
 apiRouter.delete('/backups/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد سیستم مجاز به حذف پشتیبان هستند.' });
     }
@@ -1903,7 +1937,7 @@ apiRouter.delete('/backups/:id', async (req: Request, res: Response) => {
 // 8. Restore System from Backup
 apiRouter.post('/backups/:id/restore', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!authUser || !isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد دارای صلاحیت مجاز به بازگردانی سیستم هستند.' });
     }
@@ -1940,7 +1974,7 @@ apiRouter.post('/backups/:id/restore', async (req: Request, res: Response) => {
 // 8. Upload Full System Backup Package
 apiRouter.post('/backups/upload', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!isAdmin(authUser)) {
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد مجاز به آپلود بسته پشتیبان هستند.' });
     }
@@ -2030,7 +2064,7 @@ apiRouter.get('/journal-entries/:id', (req: Request, res: Response) => {
 apiRouter.post('/journal-entries', async (req: Request, res: Response) => {
   try {
     const { entry, lines } = req.body;
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const entryData = {
       ...(entry || req.body),
       created_by: authUser?.id || 'usr-admin',
@@ -2065,9 +2099,9 @@ apiRouter.post('/accounting-periods', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 11. Internal Document Sharing & Assignment Endpoints
 // ----------------------------------------------------
-apiRouter.get('/document-shares', (req: Request, res: Response) => {
+apiRouter.get('/document-shares', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const { userId, limit, offset, status, onlyUnread } = req.query;
     let shares = centralDb.getDocumentShares();
     const targetId = String(userId || '') || authUser?.id || 'usr-admin';
@@ -2088,7 +2122,7 @@ apiRouter.get('/document-shares', (req: Request, res: Response) => {
 
 apiRouter.post('/document-shares', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const { documentId, recipientUsers, message, customerId, customerName, documentFileName, documentFileSize, documentFileType } = req.body;
 
     if (!documentId) {
@@ -2118,7 +2152,7 @@ apiRouter.post('/document-shares', async (req: Request, res: Response) => {
 
 apiRouter.put('/document-shares/:id/read', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const updated = await centralDb.markDocumentShareRead(req.params.id, authUser?.id || '');
     res.json({ success: true, share: updated });
   } catch (err: any) {
@@ -2128,7 +2162,7 @@ apiRouter.put('/document-shares/:id/read', async (req: Request, res: Response) =
 
 apiRouter.put('/document-shares/:id/archive', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const updated = await centralDb.archiveDocumentShare(req.params.id, authUser?.id || '');
     res.json({ success: true, share: updated });
   } catch (err: any) {
@@ -2149,7 +2183,7 @@ function isConversationMember(userId: string, conversation: any, userRole?: stri
 
 apiRouter.get('/conversations', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const result = centralDb.getConversationsForUser(authUser.id);
     res.json({ success: true, conversations: result.conversations, unreadCount: result.unreadCount });
@@ -2161,7 +2195,7 @@ apiRouter.get('/conversations', async (req: Request, res: Response) => {
 // Admin endpoint: List all conversations across the organization with stats
 apiRouter.get('/conversations/admin', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const adminRoles = [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.GOD, 'ADMIN'];
     const isAdmin = adminRoles.includes(authUser.role as any);
@@ -2185,7 +2219,7 @@ apiRouter.get('/conversations/admin', async (req: Request, res: Response) => {
 
 apiRouter.post('/conversations', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const { recipientUserId, recipientUserName } = req.body;
     if (!recipientUserId) return res.status(400).json({ success: false, message: 'کاربر گیرنده الزامی است.' });
@@ -2209,7 +2243,7 @@ apiRouter.post('/conversations', async (req: Request, res: Response) => {
 // Stage 2: Create Group Conversation
 apiRouter.post('/conversations/group', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const { title, memberIds, groupImageUrl, priority } = req.body;
     if (!title || !title.trim()) {
@@ -2262,7 +2296,7 @@ apiRouter.post('/conversations/group', async (req: Request, res: Response) => {
 // Stage 2: Add member to group
 apiRouter.post('/conversations/:id/members', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2296,7 +2330,7 @@ apiRouter.post('/conversations/:id/members', async (req: Request, res: Response)
 // Stage 2: Remove member from group
 apiRouter.delete('/conversations/:id/members/:userId', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2314,7 +2348,7 @@ apiRouter.delete('/conversations/:id/members/:userId', async (req: Request, res:
 // Stage 1 & 2: Update Conversation (Priority, Name, Description)
 apiRouter.patch('/conversations/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2332,7 +2366,7 @@ apiRouter.patch('/conversations/:id', async (req: Request, res: Response) => {
 // Stage 1: Pin / Unpin Conversation
 apiRouter.post('/conversations/:id/pin', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2347,7 +2381,7 @@ apiRouter.post('/conversations/:id/pin', async (req: Request, res: Response) => 
 // Stage 1: Set Conversation Priority
 apiRouter.post('/conversations/:id/priority', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2363,7 +2397,7 @@ apiRouter.post('/conversations/:id/priority', async (req: Request, res: Response
 // Super Admin: Delete conversation
 apiRouter.delete('/conversations/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const adminRoles = [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.GOD, 'ADMIN'];
     if (!adminRoles.includes(authUser.role as any)) {
@@ -2385,7 +2419,7 @@ apiRouter.delete('/conversations/:id', async (req: Request, res: Response) => {
 
 apiRouter.get('/conversations/:id/messages', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2406,7 +2440,7 @@ apiRouter.get('/conversations/:id/messages', async (req: Request, res: Response)
 
 apiRouter.post('/conversations/:id/messages', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2444,7 +2478,7 @@ apiRouter.post('/conversations/:id/messages', async (req: Request, res: Response
 // Stage 1: Soft Delete Message (with Deletion Reason & Audit)
 apiRouter.delete('/conversations/:id/messages/:messageId', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2476,7 +2510,7 @@ apiRouter.delete('/conversations/:id/messages/:messageId', async (req: Request, 
 // Stage 1: Edit Message
 apiRouter.put('/conversations/:id/messages/:messageId', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const { body } = req.body;
     if (!body || !body.trim()) return res.status(400).json({ success: false, message: 'متن پیام الزامی است.' });
@@ -2493,7 +2527,7 @@ apiRouter.put('/conversations/:id/messages/:messageId', async (req: Request, res
 // Stage 2: Link Document Engine Attachment to Message
 apiRouter.post('/conversations/:id/messages/:messageId/attachments', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const { documentId } = req.body;
     if (!documentId) return res.status(400).json({ success: false, message: 'شناسه سند الزامی است.' });
@@ -2509,7 +2543,7 @@ apiRouter.post('/conversations/:id/messages/:messageId/attachments', async (req:
 
 apiRouter.put('/conversations/:id/read', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = await centralDb.markChatConversationRead(req.params.id, authUser.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2521,7 +2555,7 @@ apiRouter.put('/conversations/:id/read', async (req: Request, res: Response) => 
 
 apiRouter.put('/conversations/:id/archive', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = await centralDb.archiveConversation(req.params.id, authUser.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
@@ -2536,7 +2570,7 @@ apiRouter.put('/conversations/:id/archive', async (req: Request, res: Response) 
 // ----------------------------------------------------
 apiRouter.post('/broadcasts', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const adminRoles = [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.GOD, 'ADMIN'];
     if (!adminRoles.includes(authUser.role as any)) {
@@ -2585,7 +2619,7 @@ apiRouter.post('/broadcasts', async (req: Request, res: Response) => {
 
 apiRouter.get('/broadcasts', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const broadcasts = centralDb.getBroadcastsForAdmin();
     res.json({ success: true, broadcasts });
@@ -2596,7 +2630,7 @@ apiRouter.get('/broadcasts', async (req: Request, res: Response) => {
 
 apiRouter.get('/broadcasts/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const result = centralDb.getBroadcastById(req.params.id);
     if (!result.broadcast) return res.status(404).json({ success: false, message: 'پیام همگانی یافت نشد' });
@@ -2608,7 +2642,7 @@ apiRouter.get('/broadcasts/:id', async (req: Request, res: Response) => {
 
 apiRouter.post('/broadcasts/:id/read', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const updated = await centralDb.markBroadcastRead(req.params.id, authUser.id);
     res.json({ success: true, marked: updated });
@@ -2643,7 +2677,7 @@ apiRouter.get('/registered-holders', (req: Request, res: Response) => {
 
 apiRouter.post('/registered-holders', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const data = req.body || {};
     const fullName = (data.fullName || data.name || '').trim();
     const nationalId = (data.nationalId || data.nationalCode || '').trim();
@@ -2669,7 +2703,7 @@ apiRouter.post('/registered-holders', async (req: Request, res: Response) => {
 
 apiRouter.delete('/registered-holders/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     // Enforce Manager role check: Only managers / admins can delete registered holders
     const allowedRoles = [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.GOD, 'ADMIN'];
     const isManager = authUser && (allowedRoles.includes(authUser.role) || (authUser.role as string) === 'SUPER_ADMIN');
@@ -2773,7 +2807,7 @@ apiRouter.post('/contract-installments', async (req: Request, res: Response) => 
 
 apiRouter.post('/contract-installments/:id/payments', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const installmentId = req.params.id;
     const paymentData = req.body;
 
@@ -2792,7 +2826,7 @@ apiRouter.post('/contract-installments/:id/payments', async (req: Request, res: 
 // Review by Finance Manager / ارجاع به مدیر مالی
 apiRouter.post('/payments/:id/finance-review', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const { status, notes } = req.body;
     const payment = (centralDb.getState().payments || []).find((p) => p.id === req.params.id);
     if (!payment) {
@@ -2817,9 +2851,9 @@ apiRouter.post('/payments/:id/finance-review', async (req: Request, res: Respons
 // ----------------------------------------------------
 // 14. Biometric WebAuthn & Trusted Devices Endpoints
 // ----------------------------------------------------
-apiRouter.get('/biometrics/devices', (req: Request, res: Response) => {
+apiRouter.get('/biometrics/devices', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const userId = (req.query.userId as string) || authUser?.id;
     const devices = centralDb.getTrustedBiometricDevices(userId);
     res.json(devices);
@@ -2830,7 +2864,7 @@ apiRouter.get('/biometrics/devices', (req: Request, res: Response) => {
 
 apiRouter.post('/biometrics/register', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req) || centralDb.findUserById('usr-admin');
+    const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const { credentialId, deviceName, deviceType, publicKey } = req.body;
     if (!credentialId) {
       return res.status(400).json({ success: false, message: 'شناسه امنیتی دستگاه الزامی است.' });
@@ -2856,7 +2890,7 @@ apiRouter.post('/biometrics/register', async (req: Request, res: Response) => {
 
 apiRouter.delete('/biometrics/devices/:id', async (req: Request, res: Response) => {
   try {
-    const authUser = getAuthUser(req);
+    const authUser = await getAuthUser(req);
     const revoked = await centralDb.revokeBiometricDevice(req.params.id, authUser?.id);
     if (!revoked) {
       return res.status(404).json({ success: false, message: 'دستگاه یافت نشد یا مجاز به ابطال نیستید' });
@@ -2896,7 +2930,7 @@ apiRouter.post('/auth/biometric-login', async (req: Request, res: Response) => {
 
     await centralDb.updateBiometricDeviceLastUsed(credentialId);
 
-    const token = `token-${user.id}-${Date.now()}`;
+    const token = auth.signToken(user.id);
     const now = new Date().toISOString();
     const updatedUser = { ...user, lastLoginAt: now };
     await centralDb.saveUser(updatedUser);
@@ -2904,7 +2938,7 @@ apiRouter.post('/auth/biometric-login', async (req: Request, res: Response) => {
     res.json({
       success: true,
       token,
-      user: updatedUser,
+      user: sanitizeUser(updatedUser),
       message: 'ورود موفق با احراز هویت بیومتریک',
     });
   } catch (err: any) {

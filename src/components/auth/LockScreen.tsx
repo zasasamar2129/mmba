@@ -93,8 +93,8 @@ export const LockScreen: React.FC<LockScreenProps> = ({
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      const res = storage.unlockSession(password);
+    setTimeout(async () => {
+      const res = await storage.unlockSession(password);
       setIsLoading(false);
 
       if (res.success && res.user) {
@@ -262,23 +262,6 @@ export const LockScreen: React.FC<LockScreenProps> = ({
               >
                 <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
                 <span>ورود با کاربر دیگر</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setPassword('123');
-                  setTimeout(() => {
-                    const res = storage.unlockSession('123');
-                    if (res.success && res.user) {
-                      success(`نشست کاری باز شد: ${res.user.name}`);
-                      onUnlockSuccess(res.user);
-                    }
-                  }, 100);
-                }}
-                className="text-slate-500 hover:text-slate-300 text-[11px] transition-colors"
-              >
-                بازگشایی سریع (دمو)
               </button>
             </div>
           </div>

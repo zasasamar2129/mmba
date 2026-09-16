@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import * as auth from './auth';
 import {
   User, UserRole, UserStatus, Customer, CustomerStatus, Call, Task, Contract,
   Payment, Check, SimCard, Repair, Attachment, Notification,
@@ -2804,6 +2805,41 @@ class CentralDatabase {
       db.lastUpdatedAt = new Date().toISOString();
       return db;
     });
+  }
+
+  // ----------------------------------------------------
+  // Password Migration: hash all plaintext passwords on startup
+  // ----------------------------------------------------
+  public async migratePasswords(): Promise<number> {
+    const db = this.getState();
+    let migratedCount = 0;
+
+    for (let i = 0; i < db.users.length; i++) {
+      const user = db.users[i];
+      const pw = user.password;
+
+      // Skip users with no password, or already-hashed passwords
+      if (!pw || auth.isPasswordHashed(pw)) {
+        continue;
+      }
+
+      const hashed = await auth.hashPassword(pw);
+      db.users[i] = {
+        ...user,
+        password: hashed,
+        updatedAt: new Date().toISOString(),
+      };
+      migratedCount++;
+    }
+
+    if (migratedCount > 0) {
+      await this.persist();
+      console.log(`[MMBA Auth Migration] Hashed ${migratedCount} plaintext password(s).`);
+    } else {
+      console.log('[MMBA Auth Migration] No plaintext passwords found. Nothing to migrate.');
+    }
+
+    return migratedCount;
   }
 }
 

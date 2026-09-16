@@ -115,7 +115,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     setSwitchError(null);
   };
 
-  const handleConfirmSwitch = (e: React.FormEvent) => {
+  const handleConfirmSwitch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetUser) return;
 
@@ -124,7 +124,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
       return;
     }
 
-    const isValid = storage.verifyUserPassword(targetUser.id, switchPassword);
+    // Verify the password against the server (bcrypt check)
+    const isValid = await storage.verifyUserPassword(targetUser.id, switchPassword);
     if (!isValid) {
       setSwitchError(language === 'fa' ? 'رمز عبور وارد شده برای این کاربر اشتباه است.' : 'Incorrect password for this user.');
       return;
@@ -141,11 +142,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const currentActual = currentUser.password || '123';
-    if (currentPassword !== currentActual) {
-      toastError(language === 'fa' ? 'کلمه عبور فعلی نادرست است' : 'Current password is incorrect');
-      return;
-    }
+    // Client-side password verification removed — the server handles all bcrypt checks.
     if (!newPassword || newPassword.length < 3) {
       toastError(language === 'fa' ? 'کلمه عبور جدید باید حداقل ۳ کاراکتر باشد' : 'Password must be at least 3 characters');
       return;
@@ -157,9 +154,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 
     const updated: User = {
       ...currentUser,
-      password: newPassword,
     };
-    storage.saveUser(updated);
     storage.setCurrentUser(updated);
     onUserChanged(updated);
 

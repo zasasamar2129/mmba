@@ -486,11 +486,13 @@ class CentralStorageService {
     }
   }
 
-  public verifyUserPassword(userId: string, passwordAttempt: string): boolean {
-    const user = this.users.find((u) => u.id === userId);
-    if (!user) return false;
-    const expected = user.password || '123';
-    return passwordAttempt === expected;
+  public async verifyUserPassword(userId: string, passwordAttempt: string): Promise<boolean> {
+    try {
+      const res = await api.login(this.users.find((u) => u.id === userId)?.username || '', passwordAttempt);
+      return res.success;
+    } catch {
+      return false;
+    }
   }
 
   public isSessionLocked(): boolean {
@@ -513,25 +515,35 @@ class CentralStorageService {
     emitChange({ key: 'IS_LOCKED', action: 'UPDATE', payload: true });
   }
 
-  public unlockSession(passwordAttempt: string): { success: boolean; message?: string; user?: User } {
+  public async unlockSession(passwordAttempt: string): Promise<{ success: boolean; message?: string; user?: User }> {
     const lockedUser = this.getLockedUser();
-    const expected = lockedUser.password || '123';
 
-    if (passwordAttempt !== expected) {
-      return { success: false, message: 'رمز عبور وارد شده نادرست است.' };
+    // Verify the password against the server (bcrypt check)
+    try {
+      const res = await api.login(lockedUser.username || '', passwordAttempt);
+      if (!res.success) {
+        return { success: false, message: 'رمز عبور وارد شده نادرست است.' };
+      }
+
+      // Store the server-issued JWT token
+      if (res.token) {
+        api.setAuthToken(res.token);
+      }
+
+      this.isLocked = false;
+      this.lockedUserId = null;
+      this.currentUser = lockedUser;
+      this.isLoggedInState = true;
+      this.saveLocalCacheSnapshot();
+
+      emitChange({ key: 'IS_LOCKED', action: 'UPDATE', payload: false });
+      emitChange({ key: 'CURRENT_USER', action: 'UPDATE', payload: lockedUser });
+      emitChange({ key: 'IS_LOGGED_IN', action: 'UPDATE', payload: true });
+
+      return { success: true, user: lockedUser };
+    } catch {
+      return { success: false, message: 'خطا در برقراری ارتباط با سرور' };
     }
-
-    this.isLocked = false;
-    this.lockedUserId = null;
-    this.currentUser = lockedUser;
-    this.isLoggedInState = true;
-    this.saveLocalCacheSnapshot();
-
-    emitChange({ key: 'IS_LOCKED', action: 'UPDATE', payload: false });
-    emitChange({ key: 'CURRENT_USER', action: 'UPDATE', payload: lockedUser });
-    emitChange({ key: 'IS_LOGGED_IN', action: 'UPDATE', payload: true });
-
-    return { success: true, user: lockedUser };
   }
 
   public getAutoLockMinutes(): number {
@@ -557,7 +569,7 @@ class CentralStorageService {
   public setCurrentUser(user: User): void {
     this.currentUser = user;
     this.isLoggedInState = true;
-    api.setAuthToken(`token-${user.id}`);
+    // The token is now set by the login response — do NOT forge a client-side token here.
     this.saveLocalCacheSnapshot();
     emitChange({ key: 'CURRENT_USER', action: 'UPDATE', payload: user });
   }
