@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, lazy } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ToastProvider, useToast } from './components/ui/Toast';
 import { Header } from './components/layout/Header';
 import { Sidebar } from './components/layout/Sidebar';
-import { ChatApp } from './components/chat/ChatApp';
 import { storage, subscribeToStorage } from './services/storage';
 import { pushService } from './services/pushService';
 import {
@@ -12,43 +11,63 @@ import {
 import { isAdmin, canViewTask } from './lib/permissions';
 import { I18nProvider, useTranslation } from './lib/i18n';
 
-// Modals
-import { LoginModal } from './components/auth/LoginModal';
-import { LockScreen } from './components/auth/LockScreen';
-import { CustomerFormModal } from './components/customers/CustomerFormModal';
-import { CallFormModal } from './components/calls/CallFormModal';
-import { TaskFormModal } from './components/tasks/TaskFormModal';
-import { PaymentFormModal } from './components/finances/PaymentFormModal';
-import { CheckFormModal } from './components/finances/CheckFormModal';
-import { ContractFormModal } from './components/contracts/ContractFormModal';
-import { SimFormModal } from './components/sims/SimFormModal';
-import { RepairFormModal } from './components/repairs/RepairFormModal';
-import { VoiceNoteRecorderModal } from './components/voice/VoiceNoteRecorderModal';
-import { TextNoteModal } from './components/voice/TextNoteModal';
-import { UserProfileMenu } from './components/layout/UserProfileMenu';
-import { ReportIssueModal } from './components/ui/ReportIssueModal';
+// Modals - lazy loaded
+const LoginModal = lazy(() => import('./components/auth/LoginModal').then(m => ({ default: m.LoginModal })));
+const LockScreen = lazy(() => import('./components/auth/LockScreen').then(m => ({ default: m.LockScreen })));
+const CustomerFormModal = lazy(() => import('./components/customers/CustomerFormModal').then(m => ({ default: m.CustomerFormModal })));
+const CallFormModal = lazy(() => import('./components/calls/CallFormModal').then(m => ({ default: m.CallFormModal })));
+const TaskFormModal = lazy(() => import('./components/tasks/TaskFormModal').then(m => ({ default: m.TaskFormModal })));
+const PaymentFormModal = lazy(() => import('./components/finances/PaymentFormModal').then(m => ({ default: m.PaymentFormModal })));
+const CheckFormModal = lazy(() => import('./components/finances/CheckFormModal').then(m => ({ default: m.CheckFormModal })));
+const ContractFormModal = lazy(() => import('./components/contracts/ContractFormModal').then(m => ({ default: m.ContractFormModal })));
+const SimFormModal = lazy(() => import('./components/sims/SimFormModal').then(m => ({ default: m.SimFormModal })));
+const RepairFormModal = lazy(() => import('./components/repairs/RepairFormModal').then(m => ({ default: m.RepairFormModal })));
+const VoiceNoteRecorderModal = lazy(() => import('./components/voice/VoiceNoteRecorderModal').then(m => ({ default: m.VoiceNoteRecorderModal })));
+const TextNoteModal = lazy(() => import('./components/voice/TextNoteModal').then(m => ({ default: m.TextNoteModal })));
+const UserProfileMenu = lazy(() => import('./components/layout/UserProfileMenu').then(m => ({ default: m.UserProfileMenu })));
+const ReportIssueModal = lazy(() => import('./components/ui/ReportIssueModal').then(m => ({ default: m.ReportIssueModal })));
 
-// Views
-import { DashboardOverview } from './components/dashboard/DashboardOverview';
-import { CustomerList } from './components/customers/CustomerList';
-import { CustomerDetailView } from './components/customers/CustomerDetailView';
-import { LeadList } from './components/leads/LeadList';
-import { VoiceNoteList } from './components/voice/VoiceNoteList';
-import { CallList } from './components/calls/CallList';
-import { TaskList } from './components/tasks/TaskList';
-import { PaymentList } from './components/finances/PaymentList';
-import { CheckList } from './components/finances/CheckList';
-import { ContractList } from './components/contracts/ContractList';
-import { SimList } from './components/sims/SimList';
-import { RepairList } from './components/repairs/RepairList';
-import { AttachmentList } from './components/attachments/AttachmentList';
-import { AccountingDashboard } from './components/finance/AccountingDashboard';
-import { ReportsDashboard } from './components/reports/ReportsDashboard';
-import { AdminUserMatrix } from './components/admin/AdminUserMatrix';
-import { AuditLogViewer } from './components/admin/AuditLogViewer';
-import { SettingsBackup } from './components/admin/SettingsBackup';
-import { DocumentInbox } from './components/inbox/DocumentInbox';
-import { ConsignmentList } from './components/consignment/ConsignmentList';
+// Views - lazy loaded with preload for faster navigation
+const DashboardOverview = lazy(() => import('./components/dashboard/DashboardOverview').then(m => ({ default: m.DashboardOverview })));
+const CustomerList = lazy(() => import('./components/customers/CustomerList').then(m => ({ default: m.CustomerList })));
+const CustomerDetailView = lazy(() => import('./components/customers/CustomerDetailView').then(m => ({ default: m.CustomerDetailView })));
+const LeadList = lazy(() => import('./components/leads/LeadList').then(m => ({ default: m.LeadList })));
+const VoiceNoteList = lazy(() => import('./components/voice/VoiceNoteList').then(m => ({ default: m.VoiceNoteList })));
+const CallList = lazy(() => import('./components/calls/CallList').then(m => ({ default: m.CallList })));
+const TaskList = lazy(() => import('./components/tasks/TaskList').then(m => ({ default: m.TaskList })));
+const PaymentList = lazy(() => import('./components/finances/PaymentList').then(m => ({ default: m.PaymentList })));
+const CheckList = lazy(() => import('./components/finances/CheckList').then(m => ({ default: m.CheckList })));
+const ContractList = lazy(() => import('./components/contracts/ContractList').then(m => ({ default: m.ContractList })));
+const SimList = lazy(() => import('./components/sims/SimList').then(m => ({ default: m.SimList })));
+const RepairList = lazy(() => import('./components/repairs/RepairList').then(m => ({ default: m.RepairList })));
+const AttachmentList = lazy(() => import('./components/attachments/AttachmentList').then(m => ({ default: m.AttachmentList })));
+const AccountingDashboard = lazy(() => import('./components/finance/AccountingDashboard').then(m => ({ default: m.AccountingDashboard })));
+const ReportsDashboard = lazy(() => import('./components/reports/ReportsDashboard').then(m => ({ default: m.ReportsDashboard })));
+const AdminUserMatrix = lazy(() => import('./components/admin/AdminUserMatrix').then(m => ({ default: m.AdminUserMatrix })));
+const AuditLogViewer = lazy(() => import('./components/admin/AuditLogViewer').then(m => ({ default: m.AuditLogViewer })));
+const SettingsBackup = lazy(() => import('./components/admin/SettingsBackup').then(m => ({ default: m.SettingsBackup })));
+const DocumentInbox = lazy(() => import('./components/inbox/DocumentInbox').then(m => ({ default: m.DocumentInbox })));
+const ConsignmentList = lazy(() => import('./components/consignment/ConsignmentList').then(m => ({ default: m.ConsignmentList })));
+const ChatApp = lazy(() => import('./components/chat/ChatApp').then(m => ({ default: m.ChatApp })));
+
+// Preload all views during idle time so navigation feels instant (~sub-1s)
+if (typeof window !== 'undefined') {
+  const preloadAll = () => {
+    import('./components/dashboard/DashboardOverview');
+    import('./components/customers/CustomerList');
+    import('./components/customers/CustomerDetailView');
+    import('./components/tasks/TaskList');
+    import('./components/finances/PaymentList');
+    import('./components/attachments/AttachmentList');
+    import('./components/calls/CallList');
+    import('./components/voice/VoiceNoteList');
+  };
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(preloadAll, { timeout: 1500 });
+  } else {
+    setTimeout(preloadAll, 800);
+  }
+}
 
 const AppContent: React.FC = () => {
   const { isRtl, t } = useTranslation();
@@ -316,52 +335,58 @@ const AppContent: React.FC = () => {
               transition={{ duration: 0.18, ease: 'easeOut' }}
               className="w-full"
             >
-              {/* DASHBOARD VIEW */}
-              {activeTab === 'chat' && (
-                <ChatApp
-                  conversations={chatConversations}
-                  currentUser={currentUser}
-                  allUsers={users}
-                  attachments={attachments}
-                  onRefresh={refreshData}
-                />
-              )}
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-64 text-slate-500 dark:text-slate-400">
+                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-indigo-500 border-t-transparent" />
+                  <span className="ml-2">در حال بارگذاری...</span>
+                </div>
+              }>
+                {/* DASHBOARD VIEW */}
+                {activeTab === 'chat' && (
+                  <ChatApp
+                    conversations={chatConversations}
+                    currentUser={currentUser}
+                    allUsers={users}
+                    attachments={attachments}
+                    onRefresh={refreshData}
+                  />
+                )}
 
-              {activeTab === 'dashboard' && (
-                <DashboardOverview
-                  customers={customers}
-                  calls={calls}
-                  voiceNotes={voiceNotes}
-                  tasks={tasks}
-                  payments={payments}
-                  checks={checks}
-                  contracts={contracts}
-                  sims={sims}
-                  repairs={repairs}
-                  onNavigate={setActiveTab}
-                  onSelectCustomer={handleSelectCustomer}
-                  onQuickCall={() => {
-                    setCallInitialCustomer(null);
-                    setIsCallModalOpen(true);
-                  }}
-                  onQuickVoiceNote={() => {
-                    handleOpenVoiceNote('RECORD');
-                  }}
-                  onQuickTask={() => {
-                    setTaskToEdit(null);
-                    setTaskInitialCustomer(null);
-                    setIsTaskModalOpen(true);
-                  }}
-                  onQuickCustomer={() => {
-                    setCustomerToEdit(null);
-                    setIsCustomerModalOpen(true);
-                  }}
-                  onQuickPayment={() => {
-                    setPaymentInitialCustomer(null);
-                    setIsPaymentModalOpen(true);
-                  }}
-                />
-              )}
+                {activeTab === 'dashboard' && (
+                  <DashboardOverview
+                    customers={customers}
+                    calls={calls}
+                    voiceNotes={voiceNotes}
+                    tasks={tasks}
+                    payments={payments}
+                    checks={checks}
+                    contracts={contracts}
+                    sims={sims}
+                    repairs={repairs}
+                    onNavigate={setActiveTab}
+                    onSelectCustomer={handleSelectCustomer}
+                    onQuickCall={() => {
+                      setCallInitialCustomer(null);
+                      setIsCallModalOpen(true);
+                    }}
+                    onQuickVoiceNote={() => {
+                      handleOpenVoiceNote('RECORD');
+                    }}
+                    onQuickTask={() => {
+                      setTaskToEdit(null);
+                      setTaskInitialCustomer(null);
+                      setIsTaskModalOpen(true);
+                    }}
+                    onQuickCustomer={() => {
+                      setCustomerToEdit(null);
+                      setIsCustomerModalOpen(true);
+                    }}
+                    onQuickPayment={() => {
+                      setPaymentInitialCustomer(null);
+                      setIsPaymentModalOpen(true);
+                    }}
+                  />
+                )}
 
               {/* CUSTOMERS VIEW */}
               {activeTab === 'customers' && (
@@ -703,13 +728,15 @@ const AppContent: React.FC = () => {
                   currentUser={currentUser}
                 />
               )}
+              </Suspense>
             </motion.div>
           </AnimatePresence>
         </main>
       </div>
 
-      {/* Global Action Modals */}
-      <CustomerFormModal
+      {/* Global Action Modals - wrapped in Suspense for lazy loading */}
+      <Suspense fallback={null}>
+        <CustomerFormModal
         isOpen={isCustomerModalOpen}
         onClose={() => setIsCustomerModalOpen(false)}
         customerToEdit={customerToEdit}
@@ -875,6 +902,7 @@ const AppContent: React.FC = () => {
         onLoginSuccess={handleLoginSuccess}
         onClose={isLoggedIn ? () => setIsLoginModalOpen(false) : undefined}
       />
+      </Suspense>
     </div>
   );
 };

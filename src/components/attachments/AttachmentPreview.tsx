@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Attachment } from '../../types';
 import { Eye, Download, FileText, Image as ImageIcon } from 'lucide-react';
-import { AttachmentPreviewModal } from '../ui/AttachmentPreviewModal';
+import { FilePreviewModal } from '../ui/FilePreviewModal';
 import { AttachmentItem } from './AttachmentItem';
 import { detectFileInfo, formatFileSize, getAttachmentSrc, downloadAttachment } from '../../lib/filePreviewUtils';
 
@@ -58,7 +58,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> & {
           <Eye className="w-3 h-3 text-slate-400 group-hover:text-indigo-500 shrink-0" />
         </button>
 
-        <AttachmentPreviewModal
+        <FilePreviewModal
           isOpen={isPreviewOpen}
           onClose={() => setIsPreviewOpen(false)}
           attachment={attachment}
@@ -76,7 +76,7 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> & {
         viewMode={size === 'lg' ? 'card' : 'row'}
       />
 
-      <AttachmentPreviewModal
+      <FilePreviewModal
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         attachment={attachment}
@@ -139,7 +139,7 @@ AttachmentPreview.List = function AttachmentPreviewList({
         ))}
       </div>
 
-      <AttachmentPreviewModal
+      <FilePreviewModal
         isOpen={Boolean(selectedAttachment)}
         onClose={() => setSelectedAttachment(null)}
         attachment={selectedAttachment}

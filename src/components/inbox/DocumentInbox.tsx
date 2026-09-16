@@ -11,7 +11,7 @@ import {
   Inbox, MailOpen, Mail, Archive, Eye, Search, User as UserIcon, Calendar,
   FileText, MessageSquare, ArrowLeftRight, Loader2
 } from 'lucide-react';
-import { AttachmentPreviewModal } from '../ui/AttachmentPreviewModal';
+import { FilePreviewModal } from '../ui/FilePreviewModal';
 
 const PAGE_SIZE = 10;
 
@@ -354,7 +354,7 @@ export const DocumentInbox: React.FC<DocumentInboxProps> = ({
       )}
 
       {/* Preview Modal */}
-      <AttachmentPreviewModal
+      <FilePreviewModal
         isOpen={Boolean(previewAttachment)}
         onClose={() => setPreviewAttachment(null)}
         attachment={previewAttachment}

@@ -4,7 +4,7 @@ import {
   Interaction, ProblemReport, BackupItem, BackupHealthSummary,
   BackupScheduleSettings, BackupVerificationResult, RestoreExecutionResult,
   Account, JournalEntry, AccountingPeriod, DocumentShare,
-  ChatConversation, ChatMessage
+  ChatConversation, ChatMessage, MessageAttachment, Broadcast
 } from '../types';
 
 const API_BASE = '/api';
@@ -770,6 +770,105 @@ class ApiClient {
   public async archiveChatConversation(conversationId: string) {
     return this.request<{ success: boolean; conversation: ChatConversation; revision: number }>(`/conversations/${conversationId}/archive`, {
       method: 'PUT',
+    });
+  }
+
+  public async getAdminConversations(params?: { search?: string; type?: string; priority?: string; archived?: boolean }) {
+    const qs = new URLSearchParams();
+    if (params?.search) qs.set('search', params.search);
+    if (params?.type) qs.set('type', params.type);
+    if (params?.priority) qs.set('priority', params.priority);
+    if (params?.archived !== undefined) qs.set('archived', String(params.archived));
+    const q = qs.toString();
+    return this.request<{ success: boolean; conversations: (ChatConversation & { message_count: number })[]; count: number }>(`/conversations/admin${q ? '?' + q : ''}`);
+  }
+
+  public async createGroupConversation(payload: { title: string; memberIds: string[]; groupImageUrl?: string; priority?: string }) {
+    return this.request<{ success: boolean; conversation: ChatConversation }>('/conversations/group', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async addGroupMember(conversationId: string, payload: { userId: string; role?: string }) {
+    return this.request<{ success: boolean; conversation: ChatConversation }>(`/conversations/${conversationId}/members`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async removeGroupMember(conversationId: string, userId: string) {
+    return this.request<{ success: boolean; conversation: ChatConversation }>(`/conversations/${conversationId}/members/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  public async updateConversation(conversationId: string, updates: Partial<ChatConversation>) {
+    return this.request<{ success: boolean; conversation: ChatConversation }>(`/conversations/${conversationId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  public async setConversationPriority(conversationId: string, priority: string) {
+    return this.request<{ success: boolean; conversation: ChatConversation }>(`/conversations/${conversationId}/priority`, {
+      method: 'POST',
+      body: JSON.stringify({ priority }),
+    });
+  }
+
+  public async toggleConversationPin(conversationId: string) {
+    return this.request<{ success: boolean; conversation: ChatConversation }>(`/conversations/${conversationId}/pin`, {
+      method: 'POST',
+    });
+  }
+
+  public async deleteChatMessage(conversationId: string, messageId: string, reason?: string) {
+    return this.request<{ success: boolean; message: ChatMessage }>(`/conversations/${conversationId}/messages/${messageId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ reason }),
+    });
+  }
+
+  public async editChatMessage(conversationId: string, messageId: string, body: string) {
+    return this.request<{ success: boolean; message: ChatMessage }>(`/conversations/${conversationId}/messages/${messageId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ body }),
+    });
+  }
+
+  public async attachDocumentToChatMessage(conversationId: string, messageId: string, documentId: string) {
+    return this.request<{ success: boolean; attachment: MessageAttachment }>(`/conversations/${conversationId}/messages/${messageId}/attachments`, {
+      method: 'POST',
+      body: JSON.stringify({ documentId }),
+    });
+  }
+
+  public async deleteConversation(conversationId: string) {
+    return this.request<{ success: boolean }>(`/conversations/${conversationId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Broadcasts
+  public async createBroadcast(payload: { title?: string; body: string; targetType?: 'ALL' | 'SELECTED'; recipientUserIds?: string[] }) {
+    return this.request<{ success: boolean; broadcast: Broadcast; recipientCount: number }>('/broadcasts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  public async getBroadcasts() {
+    return this.request<{ success: boolean; broadcasts: Broadcast[] }>('/broadcasts');
+  }
+
+  public async getBroadcast(id: string) {
+    return this.request<{ success: boolean; broadcast: Broadcast; recipients: any[] }>(`/broadcasts/${id}`);
+  }
+
+  public async markBroadcastRead(id: string) {
+    return this.request<{ success: boolean; marked: boolean }>(`/broadcasts/${id}/read`, {
+      method: 'POST',
     });
   }
 

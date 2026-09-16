@@ -24,26 +24,31 @@ export function detectFileInfo(
   const rawMime = (item.fileType || item.mimeType || '').trim().toLowerCase();
   const dataUrl = (item.dataUrl || '').trim();
 
-  let mimeType = rawMime;
+  // Detect extension first - used for fallback and display
+  const extMatch = fileName.match(/\.([a-zA-Z0-9]+)$/);
+  const extension = (extMatch ? extMatch[1] : '').toLowerCase();
 
-  // Extract from dataUrl if available
+  // Extract MIME from dataUrl header if present and valid
+  let mimeType = rawMime;
   if (dataUrl.startsWith('data:')) {
     const commaIdx = dataUrl.indexOf(',');
     if (commaIdx > 5) {
       const headerPart = dataUrl.substring(5, commaIdx);
       const extracted = headerPart.split(';')[0];
-      if (extracted && extracted !== 'application/octet-stream') {
+      // Only use header MIME if it's a valid image type (not application/json from buggy browsers)
+      if (extracted && extracted.startsWith('image/') && extracted !== 'application/octet-stream') {
+        mimeType = extracted.toLowerCase();
+      } else if (extracted && extracted === 'application/json' && extension === 'png') {
+        // Safari/other browsers sometimes report PNG as application/json - fix it
+        mimeType = 'image/png';
+      } else if (extracted && extracted !== 'application/octet-stream') {
         mimeType = extracted.toLowerCase();
       }
     }
   }
 
-  // Detect extension
-  const extMatch = fileName.match(/\.([a-zA-Z0-9]+)$/);
-  const extension = (extMatch ? extMatch[1] : '').toLowerCase();
-
   // Sniff magic bytes from base64 if MIME is still generic or octet-stream
-  if (!mimeType || mimeType === 'application/octet-stream') {
+  if (!mimeType || mimeType === 'application/octet-stream' || mimeType === 'application/json') {
     const b64Data = dataUrl.startsWith('data:') ? dataUrl.substring(dataUrl.indexOf(',') + 1, dataUrl.indexOf(',') + 32) : '';
     if (b64Data.startsWith('iVBORw0KGgo')) {
       mimeType = 'image/png';
@@ -57,6 +62,9 @@ export function detectFileInfo(
       mimeType = 'application/pdf';
     } else if (b64Data.startsWith('PHN2Zy') || b64Data.startsWith('PD94bWw')) {
       mimeType = 'image/svg+xml';
+    } else if (b64Data.startsWith('AAAAOGk') || b64Data.startsWith('AAAAGGk') || b64Data.startsWith('AAAAUGk')) {
+      // HEIC/HEIF: start with 'ftyp' box containing 'heic', 'heix', or 'mif1'
+      mimeType = 'image/heic';
     }
   }
 
@@ -113,12 +121,28 @@ export function detectFileInfo(
       case 'rar':
         mimeType = 'application/x-rar-compressed';
         break;
+      case 'heic':
+      case 'heif':
+        mimeType = 'image/heic';
+        break;
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+      case 'mkv':
+        mimeType = 'video/' + extension;
+        break;
+      case 'mp3':
+      case 'wav':
+      case 'm4a':
+      case 'aac':
+        mimeType = 'audio/' + extension;
+        break;
       default:
         mimeType = 'application/octet-stream';
     }
   }
 
-  const isImage = mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'avif'].includes(extension);
+  const isImage = mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'avif', 'heic', 'heif'].includes(extension);
   const isPdf = mimeType === 'application/pdf' || extension === 'pdf';
   const isText = mimeType.startsWith('text/') || mimeType === 'application/json' || ['txt', 'csv', 'log', 'json', 'md', 'xml'].includes(extension);
   const isSpreadsheet = ['xls', 'xlsx', 'csv', 'ods'].includes(extension) || mimeType.includes('spreadsheet') || mimeType.includes('excel');
@@ -132,6 +156,7 @@ export function detectFileInfo(
     else if (extension === 'webp') displayType = 'WEBP';
     else if (extension === 'gif') displayType = 'GIF';
     else if (extension === 'svg') displayType = 'SVG';
+    else if (extension === 'heic' || extension === 'heif') displayType = 'HEIC';
     else displayType = 'IMAGE';
   } else if (isPdf) {
     displayType = 'PDF';
@@ -141,6 +166,10 @@ export function detectFileInfo(
     displayType = 'DOC';
   } else if (isArchive) {
     displayType = 'ZIP';
+  } else if (['mp4', 'mov', 'avi', 'mkv'].includes(extension)) {
+    displayType = 'VIDEO';
+  } else if (['mp3', 'wav', 'm4a', 'aac'].includes(extension)) {
+    displayType = 'AUDIO';
   }
 
   let colorClass = 'text-slate-600 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
@@ -241,14 +270,55 @@ export function downloadAttachment(att: Partial<Attachment> & { fileName?: strin
 /**
  * Downscales an image data URL in-browser using Offscreen Canvas
  * to generate a fast, lightweight thumbnail (under 30KB) for lists and grids.
+ * Converts HEIC/HEIF to JPEG first since browsers can't render them natively.
  */
 export async function createThumbnail(dataUrl: string, maxDim = 240): Promise<string> {
-  if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+  if (!dataUrl || !dataUrl.startsWith('data:')) {
     return dataUrl;
   }
 
   // If already an SVG or tiny dataUrl, return as is
   if (dataUrl.includes('image/svg+xml') || dataUrl.length < 25000) {
+    return dataUrl;
+  }
+
+  // Fix wrong MIME in data URL header (e.g. application/json for PNG from mobile browsers)
+  let normalizedDataUrl = dataUrl;
+  const commaIdx = dataUrl.indexOf(',');
+  if (commaIdx > 5) {
+    const headerPart = dataUrl.substring(5, commaIdx);
+    const headerMime = headerPart.split(';')[0];
+    // Sniff actual format from magic bytes
+    const b64Data = dataUrl.substring(commaIdx + 1, commaIdx + 32);
+    let sniffed: string | null = null;
+    if (b64Data.startsWith('iVBORw0KGgo')) sniffed = 'image/png';
+    else if (b64Data.startsWith('/9j/')) sniffed = 'image/jpeg';
+    else if (b64Data.startsWith('R0lGOD')) sniffed = 'image/gif';
+    else if (b64Data.startsWith('UklGR')) sniffed = 'image/webp';
+    else if (b64Data.startsWith('AAAAOGk') || b64Data.startsWith('AAAAGGk') || b64Data.startsWith('AAAAUGk')) sniffed = 'image/heic';
+    if (sniffed && headerMime !== sniffed && sniffed !== 'image/heic') {
+      // Rewrite header with correct MIME so canvas can decode it
+      normalizedDataUrl = `data:${sniffed}${headerPart.substring(headerMime.length)}${dataUrl.substring(commaIdx)}`;
+    }
+  }
+
+  dataUrl = normalizedDataUrl;
+
+  // HEIC/HEIF cannot be drawn to canvas directly - convert first
+  if (dataUrl.includes('image/heic') || dataUrl.includes('image/heif')) {
+    try {
+      const jpegDataUrl = await convertHeicToJpeg(dataUrl);
+      if (jpegDataUrl) {
+        dataUrl = jpegDataUrl;
+      }
+    } catch {
+      // Conversion failed - return original
+      return dataUrl;
+    }
+  }
+
+  // Only image types can be thumbnailed
+  if (!dataUrl.startsWith('data:image/')) {
     return dataUrl;
   }
 
@@ -305,5 +375,44 @@ export async function createThumbnail(dataUrl: string, maxDim = 240): Promise<st
     } catch {
       resolve(dataUrl);
     }
+  });
+}
+
+/**
+ * Converts a HEIC/HEIF data URL to JPEG using heic2any
+ * Loaded dynamically to avoid bloating the main bundle
+ */
+async function convertHeicToJpeg(dataUrl: string): Promise<string | null> {
+  try {
+    // Dynamically import heic2any only when needed
+    const { default: heic2any } = await import('heic2any');
+    const blob = await dataUrlToBlob(dataUrl);
+    const jpegBlob = await heic2any({
+      blob,
+      toType: 'image/jpeg',
+      quality: 0.85,
+    });
+    return blobToDataUrl(jpegBlob as Blob);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Converts a data URL to a Blob
+ */
+function dataUrlToBlob(dataUrl: string): Promise<Blob> {
+  return fetch(dataUrl).then(res => res.blob());
+}
+
+/**
+ * Converts a Blob to a data URL
+ */
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
   });
 }

@@ -24,6 +24,7 @@ import {
   formatFileSize,
   getAttachmentSrc,
   downloadAttachment,
+  createThumbnail,
 } from '../../lib/filePreviewUtils';
 
 export interface AttachmentItemProps {
@@ -51,11 +52,19 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
 }) => {
   const { t, isRtl } = useTranslation();
   const [imgError, setImgError] = useState(false);
+  const [thumbnailSrc, setThumbnailSrc] = useState<string | null>(null);
   const info = detectFileInfo(attachment);
   const fileName = attachment.displayName || attachment.fileName || (attachment as any).filename || 'file';
   const src = attachment.thumbnailDataUrl || attachment.dataUrl;
   const previewSrc = src || getAttachmentSrc(attachment);
   const sizeText = formatFileSize(attachment.fileSize);
+
+  // Generate thumbnail for HEIC files on mount
+  React.useEffect(() => {
+    if (info.isImage && previewSrc && (previewSrc.includes('image/heic') || previewSrc.includes('image/heif'))) {
+      createThumbnail(previewSrc).then(setThumbnailSrc);
+    }
+  }, [previewSrc, info.isImage]);
 
   if (viewMode === 'row') {
     return (
@@ -70,9 +79,9 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
         >
           {/* Thumbnail / Icon Box */}
           <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-            {info.isImage && previewSrc && !imgError ? (
+            {info.isImage && (thumbnailSrc || previewSrc) && !imgError ? (
               <img
-                src={previewSrc}
+                src={thumbnailSrc || previewSrc}
                 alt={fileName}
                 loading="lazy"
                 referrerPolicy="no-referrer"
@@ -213,9 +222,9 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
         className="relative h-40 bg-slate-100 dark:bg-slate-950 flex items-center justify-center overflow-hidden cursor-pointer"
         onClick={() => onPreview(attachment)}
       >
-        {info.isImage && previewSrc && !imgError ? (
+        {info.isImage && (thumbnailSrc || previewSrc) && !imgError ? (
           <img
-            src={previewSrc}
+            src={thumbnailSrc || previewSrc}
             alt={fileName}
             loading="lazy"
             referrerPolicy="no-referrer"

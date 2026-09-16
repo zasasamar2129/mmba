@@ -1184,9 +1184,9 @@ function parseAttachmentContent(dataUrl: string, fileName?: string, declaredMime
     }
   }
 
-  // Refine MIME type if generic or missing
+  // Refine MIME type if generic, missing, or JSON (browser sends wrong MIME for HEIC)
   const ext = (fileName || '').split('.').pop()?.toLowerCase() || '';
-  if (!mimeType || mimeType === 'application/octet-stream') {
+  if (!mimeType || mimeType === 'application/octet-stream' || mimeType === 'application/json') {
     if (['jpg', 'jpeg'].includes(ext)) mimeType = 'image/jpeg';
     else if (ext === 'png') mimeType = 'image/png';
     else if (ext === 'webp') mimeType = 'image/webp';
@@ -1196,6 +1196,10 @@ function parseAttachmentContent(dataUrl: string, fileName?: string, declaredMime
     else if (['txt', 'log'].includes(ext)) mimeType = 'text/plain; charset=utf-8';
     else if (ext === 'csv') mimeType = 'text/csv; charset=utf-8';
     else if (ext === 'json') mimeType = 'application/json';
+    else if (['heic', 'heif'].includes(ext)) mimeType = 'image/heic';
+    else if (['mp4', 'mov'].includes(ext)) mimeType = 'video/mp4';
+    else if (ext === 'mp3') mimeType = 'audio/mpeg';
+    else if (ext === 'm4a') mimeType = 'audio/mp4';
   }
 
   // Magic bytes sniffing for foolproof accuracy
@@ -2135,8 +2139,12 @@ apiRouter.put('/document-shares/:id/archive', async (req: Request, res: Response
 // ----------------------------------------------------
 // 11b. Internal Chat Endpoints (Sprint 03 Patch 05)
 // ----------------------------------------------------
-function isConversationMember(userId: string, conversation: any): boolean {
-  return !!conversation && (conversation.member_ids || []).includes(userId);
+function isConversationMember(userId: string, conversation: any, userRole?: string): boolean {
+  if (!conversation) return false;
+  if ((conversation.member_ids || []).includes(userId)) return true;
+  const adminRoles = [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.GOD, 'ADMIN'];
+  if (userRole && adminRoles.includes(userRole as any)) return true;
+  return false;
 }
 
 apiRouter.get('/conversations', async (req: Request, res: Response) => {
@@ -2145,6 +2153,31 @@ apiRouter.get('/conversations', async (req: Request, res: Response) => {
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const result = centralDb.getConversationsForUser(authUser.id);
     res.json({ success: true, conversations: result.conversations, unreadCount: result.unreadCount });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Admin endpoint: List all conversations across the organization with stats
+apiRouter.get('/conversations/admin', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const adminRoles = [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.GOD, 'ADMIN'];
+    const isAdmin = adminRoles.includes(authUser.role as any);
+    if (!isAdmin) {
+      return res.status(403).json({ success: false, message: 'فقط مدیران سیستم به پنل نظارت پیام‌ها دسترسی دارند.' });
+    }
+
+    const { search, type, priority, archived } = req.query;
+    const conversations = centralDb.getAllConversationsForAdmin({
+      search: search ? String(search) : undefined,
+      type: type ? String(type) : undefined,
+      priority: priority ? String(priority) : undefined,
+      archived: archived !== undefined ? archived === 'true' : undefined,
+    });
+
+    res.json({ success: true, conversations, count: conversations.length });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -2173,13 +2206,190 @@ apiRouter.post('/conversations', async (req: Request, res: Response) => {
   }
 });
 
+// Stage 2: Create Group Conversation
+apiRouter.post('/conversations/group', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const { title, memberIds, groupImageUrl, priority } = req.body;
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, message: 'عنوان گروه الزامی است.' });
+    }
+    if (!Array.isArray(memberIds) || memberIds.length === 0) {
+      return res.status(400).json({ success: false, message: 'انتخاب حداقل یک عضو برای گروه الزامی است.' });
+    }
+
+    const conversation = await centralDb.createGroupConversation(
+      authUser.id,
+      authUser.name,
+      title.trim(),
+      memberIds,
+      groupImageUrl,
+      priority
+    );
+
+    // Notify added members
+    const now = new Date().toISOString();
+    memberIds.forEach((mid: string) => {
+      if (mid === authUser.id) return;
+      centralDb.saveNotification({
+        id: `notif-grp-${Date.now()}-${mid}`,
+        userId: mid,
+        title: 'عضویت در گروه گفتگو',
+        message: `شما به گروه "${title}" توسط ${authUser.name} اضافه شدید.`,
+        category: 'SYSTEM',
+        severity: 'INFO',
+        read: false,
+        createdAt: now,
+        relatedEntityType: 'CHAT',
+        relatedEntityId: conversation.id,
+      }).catch(() => {});
+    });
+
+    await centralDb.logAudit({
+      userId: authUser.id, userName: authUser.name, userRole: authUser.role,
+      action: 'ایجاد گروه گفتگوی تیمی', module: ModuleName.CHAT, entityType: 'CONVERSATION',
+      targetId: conversation.id,
+      details: `ایجاد گروه "${title}" با ${memberIds.length + 1} عضو`,
+    });
+
+    res.json({ success: true, conversation });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Stage 2: Add member to group
+apiRouter.post('/conversations/:id/members', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const conversation = centralDb.getConversationById(req.params.id);
+    if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
+    if (!isConversationMember(authUser.id, conversation, authUser.role)) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز.' });
+    }
+
+    const { userId, role } = req.body;
+    if (!userId) return res.status(400).json({ success: false, message: 'شناسه کاربر الزامی است.' });
+    const targetUser = centralDb.findUserById(userId);
+    const updated = await centralDb.addGroupMember(
+      req.params.id,
+      userId,
+      targetUser?.name || 'کاربر جدید',
+      role || 'MEMBER'
+    );
+
+    await centralDb.logAudit({
+      userId: authUser.id, userName: authUser.name, userRole: authUser.role,
+      action: 'افزودن عضو به گروه گفتگو', module: ModuleName.CHAT, entityType: 'CONVERSATION',
+      targetId: req.params.id,
+      details: `افزودن ${targetUser?.name || userId} به گفتگو توسط ${authUser.name}`,
+    });
+
+    res.json({ success: true, conversation: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Stage 2: Remove member from group
+apiRouter.delete('/conversations/:id/members/:userId', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const conversation = centralDb.getConversationById(req.params.id);
+    if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
+    if (!isConversationMember(authUser.id, conversation, authUser.role)) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز.' });
+    }
+
+    const updated = await centralDb.removeGroupMember(req.params.id, req.params.userId);
+    res.json({ success: true, conversation: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Stage 1 & 2: Update Conversation (Priority, Name, Description)
+apiRouter.patch('/conversations/:id', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const conversation = centralDb.getConversationById(req.params.id);
+    if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
+    if (!isConversationMember(authUser.id, conversation, authUser.role)) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز.' });
+    }
+
+    const updated = await centralDb.updateConversation(req.params.id, req.body);
+    res.json({ success: true, conversation: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Stage 1: Pin / Unpin Conversation
+apiRouter.post('/conversations/:id/pin', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const conversation = centralDb.getConversationById(req.params.id);
+    if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
+
+    const updated = await centralDb.toggleConversationPin(req.params.id, authUser.id);
+    res.json({ success: true, conversation: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Stage 1: Set Conversation Priority
+apiRouter.post('/conversations/:id/priority', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const conversation = centralDb.getConversationById(req.params.id);
+    if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
+
+    const { priority } = req.body;
+    const updated = await centralDb.setConversationPriority(req.params.id, priority);
+    res.json({ success: true, conversation: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Super Admin: Delete conversation
+apiRouter.delete('/conversations/:id', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const adminRoles = [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.GOD, 'ADMIN'];
+    if (!adminRoles.includes(authUser.role as any)) {
+      return res.status(403).json({ success: false, message: 'فقط مدیران ارشد مجاز به حذف گفتگو هستند.' });
+    }
+
+    const deleted = await centralDb.deleteConversationBySuperAdmin(req.params.id);
+    await centralDb.logAudit({
+      userId: authUser.id, userName: authUser.name, userRole: authUser.role,
+      action: 'حذف کامل گفتگو توسط مدیر', module: ModuleName.CHAT, entityType: 'CONVERSATION',
+      targetId: req.params.id, details: `حذف گفتگو ${req.params.id}`,
+    });
+
+    res.json({ success: deleted });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 apiRouter.get('/conversations/:id/messages', async (req: Request, res: Response) => {
   try {
     const authUser = getAuthUser(req);
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
-    if (!isConversationMember(authUser.id, conversation)) return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز به گفتگو.' });
+    if (!isConversationMember(authUser.id, conversation, authUser.role)) return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز به گفتگو.' });
     const before = req.query.before as string | undefined;
     const limitNum = req.query.limit ? parseInt(String(req.query.limit), 10) || 50 : 50;
     let messages = centralDb.getChatMessagesByConversation(req.params.id);
@@ -2200,7 +2410,7 @@ apiRouter.post('/conversations/:id/messages', async (req: Request, res: Response
     if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
     const conversation = centralDb.getConversationById(req.params.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
-    if (!isConversationMember(authUser.id, conversation)) return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز به گفتگو.' });
+    if (!isConversationMember(authUser.id, conversation, authUser.role)) return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز به گفتگو.' });
     const body = { ...(req.body || {}), conversation_id: req.params.id, conversationId: req.params.id, sender_user_id: authUser.id, senderUserId: authUser.id, sender_user_name: authUser.name, senderUserName: authUser.name };
     const message = await centralDb.sendChatMessage(body);
     // Notify other members via in-app notification
@@ -2231,6 +2441,72 @@ apiRouter.post('/conversations/:id/messages', async (req: Request, res: Response
   }
 });
 
+// Stage 1: Soft Delete Message (with Deletion Reason & Audit)
+apiRouter.delete('/conversations/:id/messages/:messageId', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const conversation = centralDb.getConversationById(req.params.id);
+    if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
+    if (!isConversationMember(authUser.id, conversation, authUser.role)) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز.' });
+    }
+
+    const { reason } = req.body || {};
+    const updated = await centralDb.softDeleteChatMessage(
+      req.params.messageId,
+      authUser.id,
+      authUser.name,
+      reason
+    );
+    if (!updated) return res.status(404).json({ success: false, message: 'پیام یافت نشد' });
+
+    await centralDb.logAudit({
+      userId: authUser.id, userName: authUser.name, userRole: authUser.role,
+      action: 'حذف پیام گفتگو (Soft Delete)', module: ModuleName.CHAT, entityType: 'CHAT_MESSAGE',
+      targetId: req.params.messageId, details: `دلیل: ${reason || 'ثبت نشده'}`,
+    });
+
+    res.json({ success: true, message: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Stage 1: Edit Message
+apiRouter.put('/conversations/:id/messages/:messageId', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const { body } = req.body;
+    if (!body || !body.trim()) return res.status(400).json({ success: false, message: 'متن پیام الزامی است.' });
+
+    const updated = await centralDb.editChatMessage(req.params.messageId, authUser.id, body.trim());
+    if (!updated) return res.status(403).json({ success: false, message: 'امکان ویرایش این پیام وجود ندارد.' });
+
+    res.json({ success: true, message: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Stage 2: Link Document Engine Attachment to Message
+apiRouter.post('/conversations/:id/messages/:messageId/attachments', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const { documentId } = req.body;
+    if (!documentId) return res.status(400).json({ success: false, message: 'شناسه سند الزامی است.' });
+
+    const att = await centralDb.attachDocumentToMessage(req.params.messageId, documentId);
+    if (!att) return res.status(404).json({ success: false, message: 'پیام یا سند یافت نشد.' });
+
+    res.json({ success: true, attachment: att });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 apiRouter.put('/conversations/:id/read', async (req: Request, res: Response) => {
   try {
     const authUser = getAuthUser(req);
@@ -2250,6 +2526,92 @@ apiRouter.put('/conversations/:id/archive', async (req: Request, res: Response) 
     const conversation = await centralDb.archiveConversation(req.params.id, authUser.id);
     if (!conversation) return res.status(404).json({ success: false, message: 'گفتگو یافت نشد' });
     res.json({ success: true, conversation, revision: centralDb.getRevisionInfo().revision });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ----------------------------------------------------
+// 11c. Broadcasts Endpoints (Stage 3)
+// ----------------------------------------------------
+apiRouter.post('/broadcasts', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const adminRoles = [UserRole.SUPER_ADMIN, UserRole.OWNER, UserRole.GOD, 'ADMIN'];
+    if (!adminRoles.includes(authUser.role as any)) {
+      return res.status(403).json({ success: false, message: 'فقط مدیران سیستم مجاز به ارسال پیام همگانی هستند.' });
+    }
+
+    const { title, body, targetType, recipientUserIds } = req.body;
+    if (!body || !body.trim()) {
+      return res.status(400).json({ success: false, message: 'متن پیام همگانی الزامی است.' });
+    }
+
+    let targetIds: string[] = [];
+    if (targetType === 'SELECTED') {
+      if (!Array.isArray(recipientUserIds) || recipientUserIds.length === 0) {
+        return res.status(400).json({ success: false, message: 'حداقل یک کاربر گیرنده باید انتخاب شود.' });
+      }
+      targetIds = recipientUserIds;
+    } else {
+      // ALL active users
+      targetIds = (centralDb.getState().users || [])
+        .filter((u: any) => u.status !== UserStatus.INACTIVE && u.status !== UserStatus.SUSPENDED)
+        .map((u: any) => u.id);
+    }
+
+    const result = await centralDb.createBroadcast(
+      authUser.id,
+      authUser.name,
+      title || 'اطلاعیه رسمی سامانه',
+      body.trim(),
+      targetType || 'ALL',
+      targetIds
+    );
+
+    await centralDb.logAudit({
+      userId: authUser.id, userName: authUser.name, userRole: authUser.role,
+      action: 'ارسال پیام همگانی سیستمی', module: ModuleName.CHAT, entityType: 'BROADCAST',
+      targetId: result.broadcast.id,
+      details: `پیام همگانی "${title}" به ${targetIds.length} کاربر ارسال شد.`,
+    });
+
+    res.json({ success: true, broadcast: result.broadcast, recipientCount: result.recipients.length });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.get('/broadcasts', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const broadcasts = centralDb.getBroadcastsForAdmin();
+    res.json({ success: true, broadcasts });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.get('/broadcasts/:id', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const result = centralDb.getBroadcastById(req.params.id);
+    if (!result.broadcast) return res.status(404).json({ success: false, message: 'پیام همگانی یافت نشد' });
+    res.json({ success: true, ...result });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.post('/broadcasts/:id/read', async (req: Request, res: Response) => {
+  try {
+    const authUser = getAuthUser(req);
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const updated = await centralDb.markBroadcastRead(req.params.id, authUser.id);
+    res.json({ success: true, marked: updated });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }

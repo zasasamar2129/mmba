@@ -10,7 +10,9 @@ import {
   Account, AccountType, JournalEntry, JournalEntryLine, JournalEntryStatus,
   AccountingPeriod, AccountingPeriodStatus, DocumentShare, DocumentShareStatus,
   RegisteredHolder, ContractInstallment, InstallmentStatus, TrustedBiometricDevice,
-  ChatConversation, ChatMessage, ConversationType, ChatMemberRole, MessageStatus
+  ChatConversation, ChatMessage, ConversationType, ChatMemberRole, MessageStatus,
+  ConversationPriority, Broadcast, BroadcastStatus, BroadcastRecipient, BroadcastRecipientStatus, MessageAttachment,
+  ConversationMember
 } from '../src/types';
 import { DEFAULT_ROLES } from '../src/lib/permissions';
 
@@ -62,6 +64,9 @@ export interface CentralDatabaseSchema {
   documentShares: DocumentShare[];
   conversations: ChatConversation[];
   chatMessages: ChatMessage[];
+  broadcasts?: Broadcast[];
+  broadcastRecipients?: BroadcastRecipient[];
+  messageAttachments?: MessageAttachment[];
   registeredHolders: RegisteredHolder[];
   contractInstallments: ContractInstallment[];
   trustedBiometricDevices: TrustedBiometricDevice[];
@@ -2125,6 +2130,405 @@ class CentralDatabase {
       };
       db.conversations[idx] = updated;
       return updated;
+    });
+  }
+
+  public getAllConversationsForAdmin(options?: { search?: string; type?: string; priority?: string; archived?: boolean }): (ChatConversation & { message_count: number })[] {
+    let list = Array.isArray(this.getState().conversations) ? [...this.getState().conversations] : [];
+    const msgs = this.getState().chatMessages || [];
+
+    // Enrich with message counts
+    let enriched = list.map((c) => {
+      const convMsgs = msgs.filter((m) => m.conversation_id === c.id || m.conversationId === c.id);
+      return {
+        ...c,
+        message_count: convMsgs.length,
+      };
+    });
+
+    if (options?.archived !== undefined) {
+      if (options.archived) {
+        enriched = enriched.filter((c) => Boolean(c.archived_at) || (c.is_archived_by && c.is_archived_by.length > 0));
+      } else {
+        enriched = enriched.filter((c) => !c.archived_at && (!c.is_archived_by || c.is_archived_by.length === 0));
+      }
+    }
+
+    if (options?.type && options.type !== 'ALL') {
+      enriched = enriched.filter((c) => c.type === options.type);
+    }
+
+    if (options?.priority && options.priority !== 'ALL') {
+      enriched = enriched.filter((c) => c.priority === options.priority);
+    }
+
+    if (options?.search) {
+      const q = options.search.trim().toLowerCase();
+      enriched = enriched.filter((c) => {
+        const titleMatch = (c.title || c.group_name || '').toLowerCase().includes(q);
+        const lastMsgMatch = (c.last_message || '').toLowerCase().includes(q);
+        const memberMatch = (c.members || []).some((m) => (m.user_name || '').toLowerCase().includes(q));
+        return titleMatch || lastMsgMatch || memberMatch;
+      });
+    }
+
+    // Sort newest activity first
+    return enriched.sort((a, b) => new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime());
+  }
+
+  public async createGroupConversation(
+    creatorUserId: string,
+    creatorUserName: string,
+    title: string,
+    memberUserIds: string[],
+    groupImageUrl?: string,
+    priority: string = ConversationPriority.NORMAL
+  ): Promise<ChatConversation> {
+    return this.mutate((db) => {
+      const now = new Date().toISOString();
+      const uniqueMemberIds = Array.from(new Set([creatorUserId, ...memberUserIds]));
+      const members: ConversationMember[] = uniqueMemberIds.map((uid) => {
+        const u = db.users.find((user) => user.id === uid);
+        const isCreator = uid === creatorUserId;
+        return {
+          user_id: uid,
+          userId: uid,
+          user_name: u?.name || (isCreator ? creatorUserName : 'کاربر'),
+          userName: u?.name || (isCreator ? creatorUserName : 'کاربر'),
+          role: isCreator ? ChatMemberRole.ADMIN : ChatMemberRole.MEMBER,
+          joined_at: now,
+          joinedAt: now,
+        };
+      });
+
+      const convo: ChatConversation = {
+        id: `conv-grp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        type: ConversationType.GROUP,
+        title,
+        group_name: title,
+        group_image_url: groupImageUrl,
+        members,
+        member_ids: uniqueMemberIds,
+        created_by: creatorUserId,
+        createdById: creatorUserId,
+        created_by_name: creatorUserName,
+        createdByName: creatorUserName,
+        priority,
+        created_at: now,
+        createdAt: now,
+        updated_at: now,
+        updatedAt: now,
+        message_count: 0,
+        pinned_by_user_ids: [],
+      };
+
+      if (!db.conversations) db.conversations = [];
+      db.conversations.unshift(convo);
+      return convo;
+    });
+  }
+
+  public async addGroupMember(
+    conversationId: string,
+    userId: string,
+    userName: string,
+    role: string = ChatMemberRole.MEMBER
+  ): Promise<ChatConversation | undefined> {
+    return this.mutate((db) => {
+      const convo = (db.conversations || []).find((c) => c.id === conversationId);
+      if (!convo) return undefined;
+      const now = new Date().toISOString();
+      if (!convo.member_ids.includes(userId)) {
+        convo.member_ids.push(userId);
+        convo.members = convo.members || [];
+        convo.members.push({
+          user_id: userId,
+          userId,
+          user_name: userName,
+          userName,
+          role,
+          joined_at: now,
+          joinedAt: now,
+        });
+        convo.updated_at = now;
+        convo.updatedAt = now;
+      }
+      return convo;
+    });
+  }
+
+  public async removeGroupMember(conversationId: string, userId: string): Promise<ChatConversation | undefined> {
+    return this.mutate((db) => {
+      const convo = (db.conversations || []).find((c) => c.id === conversationId);
+      if (!convo) return undefined;
+      const now = new Date().toISOString();
+      convo.member_ids = (convo.member_ids || []).filter((id) => id !== userId);
+      if (convo.members) {
+        const mem = convo.members.find((m) => m.user_id === userId);
+        if (mem) {
+          mem.left_at = now;
+        }
+      }
+      convo.updated_at = now;
+      convo.updatedAt = now;
+      return convo;
+    });
+  }
+
+  public async updateConversation(conversationId: string, updates: Partial<ChatConversation>): Promise<ChatConversation | undefined> {
+    return this.mutate((db) => {
+      const idx = (db.conversations || []).findIndex((c) => c.id === conversationId);
+      if (idx < 0) return undefined;
+      const now = new Date().toISOString();
+      db.conversations[idx] = {
+        ...db.conversations[idx],
+        ...updates,
+        updated_at: now,
+        updatedAt: now,
+      };
+      return db.conversations[idx];
+    });
+  }
+
+  public async setConversationPriority(conversationId: string, priority: string): Promise<ChatConversation | undefined> {
+    return this.updateConversation(conversationId, { priority });
+  }
+
+  public async toggleConversationPin(conversationId: string, userId: string): Promise<ChatConversation | undefined> {
+    return this.mutate((db) => {
+      const convo = (db.conversations || []).find((c) => c.id === conversationId);
+      if (!convo) return undefined;
+      let pinnedIds = convo.pinned_by_user_ids || [];
+      if (pinnedIds.includes(userId)) {
+        pinnedIds = pinnedIds.filter((id) => id !== userId);
+      } else {
+        pinnedIds = [...pinnedIds, userId];
+      }
+      convo.pinned_by_user_ids = pinnedIds;
+      convo.is_pinned = pinnedIds.length > 0;
+      convo.pinnedByUserId = pinnedIds[0] || undefined;
+      convo.pinned_at = pinnedIds.includes(userId) ? new Date().toISOString() : undefined;
+      convo.updated_at = new Date().toISOString();
+      return convo;
+    });
+  }
+
+  public async softDeleteChatMessage(
+    messageId: string,
+    userId: string,
+    userName: string,
+    reason?: string
+  ): Promise<ChatMessage | undefined> {
+    return this.mutate((db) => {
+      const msg = (db.chatMessages || []).find((m) => m.id === messageId);
+      if (!msg) return undefined;
+      const now = new Date().toISOString();
+      msg.deleted_at = now;
+      msg.deletedAt = now;
+      msg.deleted_by_user_id = userId;
+      msg.deletedByUserId = userId;
+      msg.deleted_by_user_name = userName;
+      msg.deletedByUserName = userName;
+      msg.deletion_reason = reason || 'حذف شده توسط کاربر یا مدیر';
+      msg.body = 'این پیام حذف شده است.';
+      msg.body_text = 'این پیام حذف شده است.';
+      msg.updated_at = now;
+      msg.updatedAt = now;
+      return msg;
+    });
+  }
+
+  public async editChatMessage(
+    messageId: string,
+    userId: string,
+    newBody: string
+  ): Promise<ChatMessage | undefined> {
+    return this.mutate((db) => {
+      const msg = (db.chatMessages || []).find((m) => m.id === messageId);
+      if (!msg) return undefined;
+      if (msg.sender_user_id !== userId && msg.senderUserId !== userId) return undefined;
+      const now = new Date().toISOString();
+      msg.body = newBody;
+      msg.body_text = newBody;
+      msg.is_edited = true;
+      msg.edited_at = now;
+      msg.editedAt = now;
+      msg.updated_at = now;
+      msg.updatedAt = now;
+      return msg;
+    });
+  }
+
+  public async deleteConversationBySuperAdmin(conversationId: string): Promise<boolean> {
+    return this.mutate((db) => {
+      const initialCount = (db.conversations || []).length;
+      db.conversations = (db.conversations || []).filter((c) => c.id !== conversationId);
+      db.chatMessages = (db.chatMessages || []).filter((m) => m.conversation_id !== conversationId && m.conversationId !== conversationId);
+      return db.conversations.length < initialCount;
+    });
+  }
+
+  public async adminArchiveConversation(conversationId: string, adminUserId: string): Promise<ChatConversation | undefined> {
+    return this.mutate((db) => {
+      const convo = (db.conversations || []).find((c) => c.id === conversationId);
+      if (!convo) return undefined;
+      const now = new Date().toISOString();
+      convo.archived_at = now;
+      convo.is_archived_by = Array.from(new Set([...(convo.is_archived_by || []), adminUserId]));
+      convo.isArchivedBy = convo.is_archived_by;
+      convo.updated_at = now;
+      return convo;
+    });
+  }
+
+  public async attachDocumentToMessage(messageId: string, documentId: string): Promise<MessageAttachment | undefined> {
+    return this.mutate((db) => {
+      const msg = (db.chatMessages || []).find((m) => m.id === messageId);
+      if (!msg) return undefined;
+      const doc = (db.attachments || []).find((a) => a.id === documentId);
+      if (!doc) return undefined;
+
+      const now = new Date().toISOString();
+      const att: MessageAttachment = {
+        id: `matt-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        message_id: messageId,
+        document_id: documentId,
+        documentFileName: doc.fileName || doc.filename,
+        documentFileType: doc.fileType,
+        documentFileSize: doc.fileSize,
+        documentUrl: doc.url || doc.dataUrl,
+        createdAt: now,
+      };
+
+      if (!db.messageAttachments) db.messageAttachments = [];
+      db.messageAttachments.push(att);
+
+      // Also ensure message has attachment reference
+      if (!msg.attachments) msg.attachments = [];
+      if (!msg.attachments.some((a) => a.attachment_id === documentId || a.attachmentId === documentId)) {
+        msg.attachments.push({
+          attachment_id: documentId,
+          attachmentId: documentId,
+          attachment_name: doc.fileName || doc.filename || 'سند',
+          attachmentName: doc.fileName || doc.filename || 'سند',
+          attachment_file_size: doc.fileSize,
+          attachmentFileSize: doc.fileSize,
+          attachment_file_type: doc.fileType,
+          attachmentFileType: doc.fileType,
+          data_url: doc.dataUrl,
+          thumbnail_data_url: doc.thumbnailDataUrl,
+        });
+      }
+      if (!msg.message_attachments) msg.message_attachments = [];
+      msg.message_attachments.push(att);
+      return att;
+    });
+  }
+
+  // ----------------------------------------------------
+  // Broadcast Operations (Stage 3)
+  // ----------------------------------------------------
+  public async createBroadcast(
+    senderUserId: string,
+    senderUserName: string,
+    title: string,
+    body: string,
+    targetType: 'ALL' | 'SELECTED',
+    recipientUserIds: string[]
+  ): Promise<{ broadcast: Broadcast; recipients: BroadcastRecipient[] }> {
+    return this.mutate((db) => {
+      const now = new Date().toISOString();
+      const broadcastId = `bc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+      const recipients: BroadcastRecipient[] = recipientUserIds.map((uid) => {
+        const u = db.users.find((user) => user.id === uid);
+        return {
+          id: `bcr-${Date.now()}-${uid}`,
+          broadcast_id: broadcastId,
+          broadcastId,
+          user_id: uid,
+          userId: uid,
+          user_name: u?.name,
+          userName: u?.name,
+          status: BroadcastRecipientStatus.DELIVERED,
+          delivered_at: now,
+          deliveredAt: now,
+        };
+      });
+
+      const broadcast: Broadcast = {
+        id: broadcastId,
+        sender_user_id: senderUserId,
+        senderUserId,
+        sender_user_name: senderUserName,
+        senderUserName,
+        title,
+        body,
+        target_type: targetType,
+        created_at: now,
+        createdAt: now,
+        status: BroadcastStatus.SENT,
+        recipient_count: recipients.length,
+        sent_count: recipients.length,
+        delivered_count: recipients.length,
+        read_count: 0,
+        failed_count: 0,
+      };
+
+      if (!db.broadcasts) db.broadcasts = [];
+      if (!db.broadcastRecipients) db.broadcastRecipients = [];
+      db.broadcasts.unshift(broadcast);
+      db.broadcastRecipients.push(...recipients);
+
+      // Create in-app notifications for each recipient
+      recipients.forEach((rec) => {
+        const notifId = `notif-bc-${Date.now()}-${rec.user_id}`;
+        db.notifications = db.notifications || [];
+        db.notifications.unshift({
+          id: notifId,
+          userId: rec.user_id,
+          title: `پیام همگانی: ${title || 'اطلاعیه جدید'}`,
+          message: body.slice(0, 150),
+          category: 'SYSTEM',
+          severity: 'INFO',
+          read: false,
+          createdAt: now,
+          relatedEntityType: 'BROADCAST',
+          relatedEntityId: broadcastId,
+        });
+      });
+
+      return { broadcast, recipients };
+    });
+  }
+
+  public getBroadcastsForAdmin(): Broadcast[] {
+    return Array.isArray(this.getState().broadcasts)
+      ? [...this.getState().broadcasts].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      : [];
+  }
+
+  public getBroadcastById(id: string): { broadcast?: Broadcast; recipients: BroadcastRecipient[] } {
+    const state = this.getState();
+    const broadcast = (state.broadcasts || []).find((b) => b.id === id);
+    const recipients = (state.broadcastRecipients || []).filter((r) => r.broadcast_id === id || r.broadcastId === id);
+    return { broadcast, recipients };
+  }
+
+  public async markBroadcastRead(broadcastId: string, userId: string): Promise<boolean> {
+    return this.mutate((db) => {
+      const rec = (db.broadcastRecipients || []).find((r) => (r.broadcast_id === broadcastId || r.broadcastId === broadcastId) && (r.user_id === userId || r.userId === userId));
+      if (!rec || rec.status === BroadcastRecipientStatus.READ) return false;
+      const now = new Date().toISOString();
+      rec.status = BroadcastRecipientStatus.READ;
+      rec.read_at = now;
+      rec.readAt = now;
+
+      const bc = (db.broadcasts || []).find((b) => b.id === broadcastId);
+      if (bc) {
+        bc.read_count = (bc.read_count || 0) + 1;
+      }
+      return true;
     });
   }
 

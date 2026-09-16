@@ -29,7 +29,7 @@ export interface AttachmentUploaderProps {
 }
 
 const ALLOWED_EXTENSIONS = [
-  'jpg', 'jpeg', 'png', 'webp', 'pdf', 'txt', 'doc', 'docx', 'xls', 'xlsx', 'csv'
+  'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'pdf', 'txt', 'doc', 'docx', 'xls', 'xlsx', 'csv'
 ];
 
 export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
@@ -47,7 +47,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   uploaderName = 'کاربر سیستم',
   uploaderId = 'usr-current',
   title = 'ضمیمه و پیوست اسناد / فیش واریزی',
-  subtitle = 'پشتیبانی از عکس فیش (JPG, PNG, WebP) و اسناد متنی/PDF تا سقف ۱۰ مگابایت',
+  subtitle = 'پشتیبانی از عکس فیش (JPG, PNG, WebP, HEIC/HEIF) و اسناد متنی/PDF تا سقف ۱۰ مگابایت',
 }) => {
   const { success, error, warning } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -67,7 +67,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
       // 1. Extension check
       const ext = file.name.split('.').pop()?.toLowerCase() || '';
       if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        error(`پسوند .${ext} پشتیبانی نمی‌شود. فقط فرمت‌های تصویر (JPG, PNG, WebP) و اسناد (PDF, Word, Excel, Text) مجاز هستند.`);
+        error(`پسوند .${ext} پشتیبانی نمی‌شود. فقط فرمت‌های تصویر (JPG, PNG, WebP, HEIC/HEIF) و اسناد (PDF, Word, Excel, Text) مجاز هستند.`);
         resolve(null);
         return;
       }
@@ -84,16 +84,51 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
+
+        // Determine correct MIME type - mobile browsers often report empty or wrong types for HEIC/HEIF
+        // ALWAYS override based on extension for known image formats
+        const mimeMap: Record<string, string> = {
+          'heic': 'image/heic',
+          'heif': 'image/heif',
+          'jpg': 'image/jpeg',
+          'jpeg': 'image/jpeg',
+          'png': 'image/png',
+          'webp': 'image/webp',
+          'pdf': 'application/pdf',
+          'txt': 'text/plain',
+          'doc': 'application/msword',
+          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'xls': 'application/vnd.ms-excel',
+          'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'csv': 'text/csv',
+        };
+        // Use extension-based MIME for images/docs, fall back to file.type only for unknown
+        const fileType = mimeMap[ext] || file.type || `application/${ext}`;
+
+        // Fix the data URL header to use the correct MIME type
+        // Browser's FileReader may embed wrong MIME (e.g. application/json for HEIC)
+        let fixedDataUrl = dataUrl;
+        if (dataUrl.startsWith('data:')) {
+          const commaIdx = dataUrl.indexOf(',');
+          if (commaIdx > 5) {
+            const headerPart = dataUrl.substring(5, commaIdx);
+            const browserMime = headerPart.split(';')[0];
+            if (browserMime && browserMime !== fileType) {
+              fixedDataUrl = `data:${fileType}${headerPart.substring(browserMime.length)}${dataUrl.substring(commaIdx)}`;
+            }
+          }
+        }
+
         const newAttachment: Attachment = {
           id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
           fileName: file.name,
           filename: file.name,
-          fileType: file.type || `application/${ext}`,
-          mimeType: file.type || `application/${ext}`,
+          fileType: fileType,
+          mimeType: fileType,
           fileSize: file.size,
           sizeBytes: file.size,
-          dataUrl,
-          category: file.type.startsWith('image/') ? 'تصویر فیش واریزی' : 'سند و مدرک مالی',
+          dataUrl: fixedDataUrl,
+          category: fileType.startsWith('image/') ? 'تصویر فیش واریزی' : 'سند و مدرک مالی',
           customerId: customerId || '',
           customerName: customerName || '',
           relatedEntityType,
@@ -207,7 +242,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".jpg,.jpeg,.png,.webp,.pdf,.txt,.doc,.docx,.xls,.xlsx,.csv,image/*,application/pdf"
+            accept=".jpg,.jpeg,.png,.webp,.heic,.heif,.pdf,.txt,.doc,.docx,.xls,.xlsx,.csv,image/*,application/pdf"
             onChange={(e) => handleFiles(e.target.files)}
             disabled={disabled || isProcessing}
             className="hidden"
@@ -224,7 +259,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
                 : 'برای انتخاب یا بارگذاری فایل اینجا کلیک کنید یا فایل را بکشید و رها کنید'}
             </p>
             <p className="text-[10px] text-slate-500 dark:text-slate-400">
-              فرمت‌های مجاز: عکس فیش، تصویر کارتخوان، اسکن قرارداد، PDF و فایل‌های متنی (حداکثر {maxSizeMB}MB)
+              فرمت‌های مجاز: عکس فیش (JPG, PNG, WebP, HEIC/HEIF)، تصویر کارتخوان، اسکن قرارداد، PDF و فایل‌های متنی (حداکثر {maxSizeMB}MB)
             </p>
           </div>
         </div>

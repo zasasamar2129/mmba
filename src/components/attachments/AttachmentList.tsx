@@ -15,7 +15,7 @@ import { computeSHA256 } from '../../lib/fileUtils';
 import { storage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
 import { useTranslation } from '../../lib/i18n';
-import { AttachmentPreviewModal } from '../ui/AttachmentPreviewModal';
+import { FilePreviewModal } from '../ui/FilePreviewModal';
 import { AttachmentItem } from './AttachmentItem';
 import { InternalDocumentShareModal } from './InternalDocumentShareModal';
 import { RenameDocumentModal } from './RenameDocumentModal';
@@ -138,19 +138,49 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
         return;
       }
 
+      // Determine correct MIME from extension - mobile browsers report
+      // wrong/empty types for PNG and HEIC (e.g. application/json, empty string)
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      const mimeMap: Record<string, string> = {
+        'heic': 'image/heic',
+        'heif': 'image/heif',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'webp': 'image/webp',
+        'gif': 'image/gif',
+        'pdf': 'application/pdf',
+      };
+      const fileType = mimeMap[ext] || file.type || 'application/octet-stream';
+
+      // Rewrite the data URL header with the correct MIME so canvas/server
+      // decode it properly (browser may embed wrong type for mobile uploads)
+      let fixedDataUrl = dataUrl;
+      if (dataUrl.startsWith('data:')) {
+        const commaIdx = dataUrl.indexOf(',');
+        if (commaIdx > 5) {
+          const headerPart = dataUrl.substring(5, commaIdx);
+          const browserMime = headerPart.split(';')[0];
+          if (browserMime && browserMime !== fileType) {
+            fixedDataUrl = `data:${fileType}${headerPart.substring(browserMime.length)}${dataUrl.substring(commaIdx)}`;
+          }
+        }
+      }
+
       const selectedCust = customerId ? customers.find((c) => c.id === customerId) : undefined;
       const newAtt: Attachment = {
         id: '',
         fileName: file.name,
         displayName: file.name,
         originalName: file.name,
-        fileType: file.type || 'application/octet-stream',
+        fileType: fileType,
+        mimeType: fileType,
         fileSize: file.size,
-        dataUrl,
+        dataUrl: fixedDataUrl,
         sha256,
         customerId: selectedCust?.id,
         customerName: selectedCust?.name,
-        category: file.type.startsWith('image/')
+        category: fileType.startsWith('image/')
           ? (isRtl ? 'تصویر و مدرک شناسایی' : 'Identity / Image')
           : (isRtl ? 'سند و قرارداد' : 'Document / Contract'),
         uploadedByUserId: storage.getCurrentUser().id,
@@ -173,7 +203,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
 
       patchUpload(key, { phase: 'UPLOADING' });
       // Fire-and-forget: thumbnail generation + server sync
-      createThumbnail(dataUrl)
+      createThumbnail(fixedDataUrl)
         .then((thumb) => storage.updateAttachmentThumbnail(saved.id, thumb))
         .catch(() => {});
       // ETag/ETag backfill already handled on server POST response
@@ -393,6 +423,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
             <input
               ref={fileInputRef}
               type="file"
+              accept="image/*,video/*,audio/*,.heic,.heif,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.zip,.rar"
               onChange={handleFileUpload}
               className="hidden"
             />
@@ -589,7 +620,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
       )}
 
       {/* Master Lightbox / Fullscreen Preview Modal */}
-      <AttachmentPreviewModal
+      <FilePreviewModal
         isOpen={Boolean(activePreviewAtt)}
         onClose={() => setActivePreviewAtt(null)}
         attachment={activePreviewAtt}

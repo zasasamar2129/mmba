@@ -2493,6 +2493,130 @@ class CentralStorageService {
     api.archiveChatConversation(conversationId).catch((err) => console.error('Failed to archive conversation:', err));
   }
 
+  public async toggleConversationPin(conversationId: string): Promise<ChatConversation | null> {
+    const me = this.currentUser;
+    const convs = this.conversations || [];
+    const ci = convs.findIndex((c) => c.id === conversationId);
+    if (ci < 0) return null;
+    const pinned = convs[ci].pinned_by_user_ids || convs[ci].pinnedByUserIds || [];
+    const isPinned = pinned.includes(me.id);
+    const newPinned = isPinned ? pinned.filter((id) => id !== me.id) : [...pinned, me.id];
+    convs[ci] = { ...convs[ci], pinned_by_user_ids: newPinned, pinnedByUserIds: newPinned };
+    this.saveLocalCacheSnapshot();
+    emitChange({ key: 'CHAT_CONVERSATIONS', action: 'UPDATE', payload: convs[ci] });
+    api.toggleConversationPin(conversationId).catch((err) => console.error('Failed to toggle pin:', err));
+    return convs[ci];
+  }
+
+  public async setConversationPriority(conversationId: string, priority: string): Promise<ChatConversation | null> {
+    const convs = this.conversations || [];
+    const ci = convs.findIndex((c) => c.id === conversationId);
+    if (ci < 0) return null;
+    convs[ci] = { ...convs[ci], priority: priority as any };
+    this.saveLocalCacheSnapshot();
+    emitChange({ key: 'CHAT_CONVERSATIONS', action: 'UPDATE', payload: convs[ci] });
+    api.setConversationPriority(conversationId, priority).catch((err) => console.error('Failed to set priority:', err));
+    return convs[ci];
+  }
+
+  public async createGroupConversation(title: string, memberIds: string[], groupImageUrl?: string, priority?: string): Promise<ChatConversation | null> {
+    try {
+      const res = await api.createGroupConversation({ title, memberIds, groupImageUrl, priority });
+      if (res.success && res.conversation) {
+        this.conversations = [res.conversation, ...(this.conversations || [])];
+        this.saveLocalCacheSnapshot();
+        emitChange({ key: 'CHAT_CONVERSATIONS', action: 'CREATE', payload: res.conversation });
+        return res.conversation;
+      }
+      return null;
+    } catch (err: any) { console.error('Failed to create group:', err); return null; }
+  }
+
+  public async addGroupMember(conversationId: string, userId: string, role?: string): Promise<ChatConversation | null> {
+    try {
+      const res = await api.addGroupMember(conversationId, { userId, role });
+      if (res.success && res.conversation) {
+        const convs = this.conversations || [];
+        const idx = convs.findIndex((c) => c.id === conversationId);
+        if (idx >= 0) convs[idx] = res.conversation; else convs.unshift(res.conversation);
+        this.saveLocalCacheSnapshot();
+        emitChange({ key: 'CHAT_CONVERSATIONS', action: 'UPDATE', payload: res.conversation });
+        return res.conversation;
+      }
+      return null;
+    } catch (err: any) { console.error('Failed to add member:', err); return null; }
+  }
+
+  public async removeGroupMember(conversationId: string, userId: string): Promise<ChatConversation | null> {
+    try {
+      const res = await api.removeGroupMember(conversationId, userId);
+      if (res.success && res.conversation) {
+        const convs = this.conversations || [];
+        const idx = convs.findIndex((c) => c.id === conversationId);
+        if (idx >= 0) convs[idx] = res.conversation;
+        this.saveLocalCacheSnapshot();
+        emitChange({ key: 'CHAT_CONVERSATIONS', action: 'UPDATE', payload: res.conversation });
+        return res.conversation;
+      }
+      return null;
+    } catch (err: any) { console.error('Failed to remove member:', err); return null; }
+  }
+
+  public async softDeleteChatMessage(conversationId: string, messageId: string, reason?: string): Promise<boolean> {
+    const me = this.currentUser;
+    const msgs = this.chatMessages || [];
+    const idx = msgs.findIndex((m) => m.id === messageId);
+    if (idx >= 0) {
+      msgs[idx] = { ...msgs[idx], is_deleted: true, isDeleted: true, deleted_at: new Date().toISOString(), deleted_by_user_id: me.id, deleted_by_user_name: me.name, deletion_reason: reason || 'حذف توسط مدیر', body: 'این پیام توسط مدیر حذف شده است.' };
+      this.saveLocalCacheSnapshot();
+      emitChange({ key: 'CHAT_MESSAGES', action: 'UPDATE', payload: msgs[idx] });
+    }
+    try { await api.deleteChatMessage(conversationId, messageId, reason); return true; } catch { return false; }
+  }
+
+  public async editChatMessage(conversationId: string, messageId: string, body: string): Promise<boolean> {
+    const msgs = this.chatMessages || [];
+    const idx = msgs.findIndex((m) => m.id === messageId);
+    if (idx >= 0) {
+      msgs[idx] = { ...msgs[idx], body, body_text: body, is_edited: true, isEdited: true, edited_at: new Date().toISOString() };
+      this.saveLocalCacheSnapshot();
+      emitChange({ key: 'CHAT_MESSAGES', action: 'UPDATE', payload: msgs[idx] });
+    }
+    try { await api.editChatMessage(conversationId, messageId, body); return true; } catch { return false; }
+  }
+
+  public async attachDocumentToChatMessage(conversationId: string, messageId: string, documentId: string): Promise<boolean> {
+    try {
+      const res = await api.attachDocumentToChatMessage(conversationId, messageId, documentId);
+      if (res.success) {
+        const msgs = this.chatMessages || [];
+        const idx = msgs.findIndex((m) => m.id === messageId);
+        if (idx >= 0) {
+          const existing = msgs[idx].attachments || [];
+          msgs[idx] = { ...msgs[idx], attachments: [...existing, { document_id: documentId, documentId }] };
+          this.saveLocalCacheSnapshot();
+          emitChange({ key: 'CHAT_MESSAGES', action: 'UPDATE', payload: msgs[idx] });
+        }
+        return true;
+      }
+      return false;
+    } catch (err: any) { console.error('Failed to attach document:', err); return false; }
+  }
+
+  public async deleteConversationByAdmin(conversationId: string): Promise<boolean> {
+    try {
+      this.conversations = (this.conversations || []).filter((c) => c.id !== conversationId);
+      this.saveLocalCacheSnapshot();
+      emitChange({ key: 'CHAT_CONVERSATIONS', action: 'DELETE', payload: conversationId });
+      api.deleteConversation(conversationId).catch(() => {});
+      return true;
+    } catch { return false; }
+  }
+
+  public async getAdminConversations(filters?: { search?: string; type?: string; priority?: string; archived?: boolean }): Promise<any[]> {
+    try { const res = await api.getAdminConversations(filters); return res.conversations || []; } catch { return []; }
+  }
+
   // ----------------------------------------------------
   // Registered Holders (افراد ثبت‌کننده سیم‌کارت)
   // ----------------------------------------------------
