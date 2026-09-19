@@ -256,6 +256,9 @@ export interface User {
   createdAt: string;
   updatedAt?: string;
   lastLoginAt?: string;
+  // Session revocation (Step 3): embedded in JWT, verified on each request.
+  // Bumping this logs out every active session for the user.
+  tokenVersion?: number;
 }
 
 export enum CustomerType {
@@ -1051,6 +1054,8 @@ export interface VoiceNote {
   customerId?: string;
   customerName?: string;
   audioDataUrl?: string; // Base64 Data URL (audio/webm, audio/mp4, or audio/wav) — برای TEXT وجود ندارد
+  mimeType?: string; // Authoritative container/MIME captured at record time (Step 4)
+  fileName?: string; // Display/extension-derived name for downloads (Step 4)
   durationSeconds?: number; // 0 برای TEXT
   transcription?: string;
   category: VoiceNoteCategory | string;

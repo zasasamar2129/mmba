@@ -6,19 +6,25 @@ import { apiRouter } from './server/routes';
 import { notificationScheduler } from './server/notificationScheduler';
 import { centralDb } from './server/db';
 import { getJwtSecret } from './server/auth';
+import { securityHeaders, healthExemptGeneral, loginLimiter } from './server/security';
+import { assertRequiredEnv } from './server/config';
 
 dotenv.config();
 
 async function startServer() {
-  // Validate JWT_SECRET is set before accepting any requests
-  const jwtSecret = getJwtSecret();
-  if (!jwtSecret) {
-    console.error('[MMBA Server] FATAL: JWT_SECRET environment variable is not set. Refusing to start.');
+  // Validate every required secret before accepting any requests. Refuses to
+  // start and names only the missing key — never a value. (Step 3 §5.3)
+  const missing = assertRequiredEnv(['JWT_SECRET']);
+  if (missing.length > 0) {
+    console.error(`[MMBA Server] FATAL: Missing required environment variable(s): ${missing.join(', ')}. Refusing to start.`);
     process.exit(1);
   }
 
   const app = express();
   const PORT = 3000;
+
+  // Security headers BEFORE any route middleware (Step 3 §4).
+  app.use(securityHeaders);
 
   // Body parsers with generous payload limits for receipts/attachments/voice
   app.use(express.json({ limit: '50mb' }));
@@ -34,6 +40,10 @@ async function startServer() {
     }
     next();
   });
+
+  // General API tier limiter (Step 3 §2B). Applied at app level; /health is
+  // exempt so uptime monitors still work (spec §2D).
+  app.use(healthExemptGeneral);
 
   // Mount Centralized MMBA API Router FIRST
   app.use('/api/v1', apiRouter);

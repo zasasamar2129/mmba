@@ -11,9 +11,15 @@ import {
   BackupType, BackupStatus, UserNotificationDevice, NotificationSettings,
   Account, JournalEntry, AccountingPeriod, DocumentShare
 } from '../src/types';
-import { isAdmin } from '../src/lib/permissions';
+import { isAdmin, hasPermission } from '../src/lib/permissions';
+import { PermissionAction } from '../src/types';
+import { authLimiter, loginLimiter, sensitiveLimiter } from './security';
 
 export const apiRouter = Router();
+
+// Rate limiting (Step 3 §2). Auth tier applies to every auth route (login is
+// handled separately with per-account counting, so it is excluded here).
+apiRouter.use(['/auth/biometric-challenge', '/auth/biometric-login', '/auth/password', '/auth/profile'], authLimiter);
 
 // Middleware: Extract user from Authorization Header or query parameter
 async function getAuthUser(req: Request): Promise<User | undefined> {
@@ -31,23 +37,63 @@ async function getAuthUser(req: Request): Promise<User | undefined> {
   if (!decoded) return undefined;
 
   const user = centralDb.findUserById(decoded.payload.userId);
-  if (user && user.status !== UserStatus.INACTIVE && user.status !== UserStatus.SUSPENDED) {
-    return user;
+  if (!user || user.status === UserStatus.INACTIVE || user.status === UserStatus.SUSPENDED) {
+    return undefined;
   }
-  return undefined;
+  // Session revocation (Step 3, Option A): a token is only valid if its
+  // embedded tokenVersion matches the user's current one.
+  const storedVersion = user.tokenVersion || 0;
+  const tokenVersion = decoded.payload.tokenVersion || 0;
+  if (tokenVersion !== storedVersion) {
+    return undefined;
+  }
+  return user;
 }
 
-// Helper: strip the password field from a user object before sending to the client
+
+// Step 3 §9: /notifications/vapid-public-key is no longer allowlisted — the
+// client fetches it only via subscribeUser() which runs after login (App.tsx),
+// so it does not need to be reachable pre-auth. Returns only the public key;
+// the private key never leaves webPushService.
+const ALLOWLIST_PATHS = new Set<string>([
+  '/auth/login', '/auth/biometric-challenge', '/auth/biometric-login',
+  '/health',
+]);
+
+function requireAuth(req: Request, res: Response, next: any) {
+  const path = req.path.startsWith('/api/v1') ? req.path.slice(5) : req.path.startsWith('/api') ? req.path.slice(4) : req.path;
+  if (ALLOWLIST_PATHS.has(path)) { return next(); }
+  const fullPath = req.originalUrl?.split('?')[0] || '';
+  const isAllowlisted = Array.from(ALLOWLIST_PATHS).some(p =>
+    fullPath === `/api${p}` || fullPath === `/api/v1${p}` || fullPath === p
+  );
+  if (isAllowlisted) { return next(); }
+  getAuthUser(req).then((user) => {
+    if (!user) { return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' }); }
+    (req as any).authUser = user; next();
+  }).catch(() => { return res.status(401).json({ success: false, message: 'احراز هویت نامعتبر است.' }); });
+}
+
+// Apply authentication middleware to ALL routes
+apiRouter.use(requireAuth);
+
 function sanitizeUser(user: User): Omit<User, 'password'> {
   const { password: _pw, ...safe } = user;
   return safe;
 }
-
-// Helper: strip the password field from all users in an array
 function sanitizeUsers(users: User[]): Omit<User, 'password'>[] {
   return users.map(sanitizeUser);
 }
 
+function requirePermission(module: ModuleName, action: PermissionAction) {
+  return (req: Request, res: Response, next: any) => {
+    const user = (req as any).authUser as User;
+    if (!hasPermission(user, module, action)) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز: نقش شما مجوز این عملیات را ندارد.' });
+    }
+    next();
+  };
+}
 // ----------------------------------------------------
 // Health Check
 // ----------------------------------------------------
@@ -65,7 +111,7 @@ apiRouter.get('/health', (req: Request, res: Response) => {
 // ----------------------------------------------------
 // Authentication & Profile Endpoints
 // ----------------------------------------------------
-apiRouter.post('/auth/login', async (req: Request, res: Response) => {
+apiRouter.post('/auth/login', loginLimiter, async (req: Request, res: Response) => {
   try {
     const { usernameOrEmail, password } = req.body;
     if (!usernameOrEmail || !password) {
@@ -116,7 +162,7 @@ apiRouter.post('/auth/login', async (req: Request, res: Response) => {
       ipAddress: req.ip,
     });
 
-    const token = auth.signToken(updatedUser.id);
+    const token = auth.signToken(updatedUser.id, updatedUser.tokenVersion);
     res.json({
       success: true,
       token,
@@ -132,10 +178,7 @@ apiRouter.post('/auth/login', async (req: Request, res: Response) => {
 apiRouter.get('/auth/me', async (req: Request, res: Response) => {
   const user = await getAuthUser(req);
   if (!user) {
-    // Preserve original fallback: return first user if no token provided.
-    // Auth tightening (forcing real auth) is Step 2.
-    const state = centralDb.getState();
-    return res.json({ user: sanitizeUser(state.users[0]) || null });
+    return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
   }
   res.json({ user: sanitizeUser(user) });
 });
@@ -242,6 +285,43 @@ apiRouter.put('/auth/password', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Password change error:', error);
     res.status(500).json({ success: false, message: 'خطا در تغییر رمز عبور' });
+  }
+});
+
+// ----------------------------------------------------
+// Session Management (Step 3, Option A: per-user token version)
+// Bumping tokenVersion invalidates every token issued before the bump.
+// ----------------------------------------------------
+apiRouter.post('/auth/logout', async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).authUser as User;
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const nextVersion = (authUser.tokenVersion || 0) + 1;
+    await centralDb.saveUser({ ...authUser, tokenVersion: nextVersion });
+    res.status(204).end();
+  } catch (error: any) {
+    console.error('Logout error:', error);
+    res.status(500).json({ success: false, message: 'خطا در خروج از حساب کاربری' });
+  }
+});
+
+apiRouter.post('/auth/sessions/revoke-all', async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).authUser as User;
+    if (!authUser) return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    const nextVersion = (authUser.tokenVersion || 0) + 1;
+    await centralDb.saveUser({ ...authUser, tokenVersion: nextVersion });
+    await centralDb.logAudit({
+      userId: authUser.id, userName: authUser.name, userRole: authUser.role,
+      action: 'خروج از تمام دستگاه‌ها (Revoke All Sessions)', module: ModuleName.USERS,
+      targetId: authUser.id, targetType: 'USER',
+      details: `کاربر ${authUser.name} (@${authUser.username}) از تمام دستگاه‌های متصل خارج شد.`,
+      ipAddress: req.ip,
+    });
+    res.json({ success: true, message: 'از تمام دستگاه‌ها خارج شدید.' });
+  } catch (error: any) {
+    console.error('Revoke-all error:', error);
+    res.status(500).json({ success: false, message: 'خطا در خروج از دستگاه‌ها' });
   }
 });
 
@@ -569,7 +649,7 @@ apiRouter.delete('/customers/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/customers/bulk-delete', async (req: Request, res: Response) => {
+apiRouter.post('/customers/bulk-delete', sensitiveLimiter, async (req: Request, res: Response) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids)) {
@@ -881,12 +961,12 @@ apiRouter.delete('/interactions/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/voice-notes', (req: Request, res: Response) => {
+apiRouter.get('/voice-notes', requirePermission(ModuleName.NOTES, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ voiceNotes: centralDb.getState().voiceNotes });
 });
 
 // Audio streaming endpoint with HTTP Range Request (206 Partial Content) support for iOS/Safari/iPhone
-apiRouter.get('/voice-notes/:id/audio', (req: Request, res: Response) => {
+apiRouter.get('/voice-notes/:id/audio', requirePermission(ModuleName.NOTES, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const vn = centralDb.getState().voiceNotes.find((n) => n.id === id);
@@ -900,7 +980,9 @@ apiRouter.get('/voice-notes/:id/audio', (req: Request, res: Response) => {
       return res.status(400).send('Invalid audio data format');
     }
 
-    const mimeType = matches[1] || 'audio/wav';
+    // Step 4: prefer the authoritative MIME captured at record time; fall back
+    // to the data URL header for legacy notes recorded before MIME persistence.
+    const mimeType = (vn.mimeType && vn.mimeType.startsWith('audio/')) ? vn.mimeType : (matches[1] || 'audio/wav');
     const base64Data = matches[2];
     const buffer = Buffer.from(base64Data, 'base64');
     const totalSize = buffer.length;
@@ -936,9 +1018,23 @@ apiRouter.get('/voice-notes/:id/audio', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/voice-notes', async (req: Request, res: Response) => {
+apiRouter.post('/voice-notes', requirePermission(ModuleName.NOTES, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const vn: VoiceNote = req.body;
+    // Step 4: derive and persist an authoritative container/MIME + filename so
+    // downstream serving never depends on re-inferring from a possibly-empty
+    // data URL header (root-cause hardening for the iPhone 8 / WebM decode issue).
+    const dataUrl = vn.audioDataUrl || '';
+    if (dataUrl.startsWith('data:') && !vn.mimeType) {
+      const headerMatch = dataUrl.match(/^data:([a-zA-Z0-9\/+-.]+);/);
+      if (headerMatch && headerMatch[1] && headerMatch[1] !== 'application/octet-stream') {
+        vn.mimeType = headerMatch[1];
+      }
+    }
+    if (!vn.fileName && dataUrl) {
+      const ext = vn.mimeType === 'audio/webm' ? 'webm' : vn.mimeType === 'audio/mp4' || vn.mimeType === 'audio/aac' ? 'm4a' : vn.mimeType === 'audio/wav' ? 'wav' : 'm4a';
+      vn.fileName = `voice-${Date.now()}.${ext}`;
+    }
     const saved = await centralDb.saveVoiceNote(vn);
     res.json({ success: true, voiceNote: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
@@ -946,7 +1042,7 @@ apiRouter.post('/voice-notes', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/voice-notes/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/voice-notes/:id', requirePermission(ModuleName.NOTES, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteVoiceNote(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -956,7 +1052,7 @@ apiRouter.delete('/voice-notes/:id', async (req: Request, res: Response) => {
 });
 
 // Edit Text/Voice note — owner-or-admin only (Sprint 03 Patch 05)
-apiRouter.put('/voice-notes/:id', async (req: Request, res: Response) => {
+apiRouter.put('/voice-notes/:id', requirePermission(ModuleName.NOTES, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     const id = req.params.id;
@@ -977,11 +1073,11 @@ apiRouter.put('/voice-notes/:id', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // Tasks CRUD
 // ----------------------------------------------------
-apiRouter.get('/tasks', (req: Request, res: Response) => {
+apiRouter.get('/tasks', requirePermission(ModuleName.TASKS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ tasks: centralDb.getState().tasks });
 });
 
-apiRouter.post('/tasks', async (req: Request, res: Response) => {
+apiRouter.post('/tasks', requirePermission(ModuleName.TASKS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const task: Task = req.body;
     const saved = await centralDb.saveTask(task);
@@ -991,7 +1087,7 @@ apiRouter.post('/tasks', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/tasks/:id', async (req: Request, res: Response) => {
+apiRouter.put('/tasks/:id', requirePermission(ModuleName.TASKS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const task: Task = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveTask(task);
@@ -1001,7 +1097,7 @@ apiRouter.put('/tasks/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/tasks/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/tasks/:id', requirePermission(ModuleName.TASKS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteTask(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -1013,11 +1109,11 @@ apiRouter.delete('/tasks/:id', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // Contracts CRUD
 // ----------------------------------------------------
-apiRouter.get('/contracts', (req: Request, res: Response) => {
+apiRouter.get('/contracts', requirePermission(ModuleName.CONTRACTS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ contracts: centralDb.getState().contracts });
 });
 
-apiRouter.post('/contracts', async (req: Request, res: Response) => {
+apiRouter.post('/contracts', requirePermission(ModuleName.CONTRACTS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const contract: Contract = req.body;
     const saved = await centralDb.saveContract(contract);
@@ -1027,7 +1123,7 @@ apiRouter.post('/contracts', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/contracts/:id', async (req: Request, res: Response) => {
+apiRouter.put('/contracts/:id', requirePermission(ModuleName.CONTRACTS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const contract: Contract = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveContract(contract);
@@ -1037,7 +1133,7 @@ apiRouter.put('/contracts/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/contracts/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/contracts/:id', requirePermission(ModuleName.CONTRACTS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteContract(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -1049,11 +1145,11 @@ apiRouter.delete('/contracts/:id', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // Payments & Checks CRUD
 // ----------------------------------------------------
-apiRouter.get('/payments', (req: Request, res: Response) => {
+apiRouter.get('/payments', requirePermission(ModuleName.PAYMENTS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ payments: centralDb.getState().payments });
 });
 
-apiRouter.post('/payments', async (req: Request, res: Response) => {
+apiRouter.post('/payments', requirePermission(ModuleName.PAYMENTS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const payment: Payment = req.body;
     const saved = await centralDb.savePayment(payment);
@@ -1063,7 +1159,7 @@ apiRouter.post('/payments', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/payments/:id', async (req: Request, res: Response) => {
+apiRouter.put('/payments/:id', requirePermission(ModuleName.PAYMENTS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const payment: Payment = { ...req.body, id: req.params.id };
     const saved = await centralDb.savePayment(payment);
@@ -1073,7 +1169,7 @@ apiRouter.put('/payments/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/payments/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/payments/:id', requirePermission(ModuleName.PAYMENTS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deletePayment(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -1082,11 +1178,11 @@ apiRouter.delete('/payments/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/checks', (req: Request, res: Response) => {
+apiRouter.get('/checks', requirePermission(ModuleName.CHECKS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ checks: centralDb.getState().checks });
 });
 
-apiRouter.post('/checks', async (req: Request, res: Response) => {
+apiRouter.post('/checks', requirePermission(ModuleName.CHECKS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const check: Check = req.body;
     const saved = await centralDb.saveCheck(check);
@@ -1096,7 +1192,7 @@ apiRouter.post('/checks', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/checks/:id', async (req: Request, res: Response) => {
+apiRouter.put('/checks/:id', requirePermission(ModuleName.CHECKS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const check: Check = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveCheck(check);
@@ -1106,7 +1202,7 @@ apiRouter.put('/checks/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/checks/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/checks/:id', requirePermission(ModuleName.CHECKS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteCheck(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -1118,11 +1214,11 @@ apiRouter.delete('/checks/:id', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // SIM & Repairs CRUD
 // ----------------------------------------------------
-apiRouter.get('/sims', (req: Request, res: Response) => {
+apiRouter.get('/sims', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ sims: centralDb.getState().sims });
 });
 
-apiRouter.post('/sims', async (req: Request, res: Response) => {
+apiRouter.post('/sims', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const sim: SimCard = req.body;
     const saved = await centralDb.saveSim(sim);
@@ -1132,7 +1228,7 @@ apiRouter.post('/sims', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/sims/:id', async (req: Request, res: Response) => {
+apiRouter.put('/sims/:id', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const sim: SimCard = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveSim(sim);
@@ -1142,7 +1238,7 @@ apiRouter.put('/sims/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/sims/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/sims/:id', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteSim(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -1151,11 +1247,11 @@ apiRouter.delete('/sims/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/repairs', (req: Request, res: Response) => {
+apiRouter.get('/repairs', requirePermission(ModuleName.REPAIRS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ repairs: centralDb.getState().repairs });
 });
 
-apiRouter.post('/repairs', async (req: Request, res: Response) => {
+apiRouter.post('/repairs', requirePermission(ModuleName.REPAIRS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const repair: Repair = req.body;
     const saved = await centralDb.saveRepair(repair);
@@ -1165,7 +1261,7 @@ apiRouter.post('/repairs', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/repairs/:id', async (req: Request, res: Response) => {
+apiRouter.put('/repairs/:id', requirePermission(ModuleName.REPAIRS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const repair: Repair = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveRepair(repair);
@@ -1175,7 +1271,7 @@ apiRouter.put('/repairs/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/repairs/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/repairs/:id', requirePermission(ModuleName.REPAIRS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteRepair(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -1268,6 +1364,9 @@ apiRouter.get('/attachments/:id', async (req: Request, res: Response) => {
 });
 
 // Secure Attachment Content & Preview Endpoint (Streams binary with exact Content-Type)
+// Step 4: added HTTP Range support (206 / 416), Accept-Ranges on both paths, and
+// SVG served as a download (attachment) so an uploaded SVG is not an XSS vector
+// in the app origin.
 apiRouter.get(['/attachments/:id/content', '/attachments/:id/preview'], async (req: Request, res: Response) => {
   const user = await getAuthUser(req);
   if (!user) {
@@ -1292,17 +1391,66 @@ apiRouter.get(['/attachments/:id/content', '/attachments/:id/preview'], async (r
   const isDownload = req.query.download === 'true' || req.query.download === '1';
   const fileName = att.fileName || att.filename || 'attachment';
   const encodedName = encodeURIComponent(fileName).replace(/['()]/g, escape);
+  // SVG can carry active <script> content — never render it inline in the app
+  // origin. Force a download unless the client explicitly asks for preview and
+  // the record is not flagged sensitive.
+  const isSvg = mimeType === 'image/svg+xml';
+  const disposition = isDownload || isSvg ? 'attachment' : 'inline';
+  const totalSize = buffer.length;
 
   res.setHeader('Content-Type', mimeType);
-  res.setHeader('Content-Length', buffer.length);
   res.setHeader('Cache-Control', 'private, max-age=86400');
+  res.setHeader('Accept-Ranges', 'bytes');
   res.setHeader(
     'Content-Disposition',
-    `${isDownload ? 'attachment' : 'inline'}; filename="${encodedName}"; filename*=UTF-8''${encodedName}`
+    `${disposition}; filename="${encodedName}"; filename*=UTF-8''${encodedName}`
   );
 
+  // HTTP Range Request support (iOS/Safari audio + video scrubbing, PDF range).
+  const range = req.headers.range;
+  if (range) {
+    const parsed = parseByteRange(range, totalSize);
+    if (!parsed) {
+      res.setHeader('Content-Range', `bytes */${totalSize}`);
+      return res.status(416).send('Range Not Satisfiable');
+    }
+    const { start, end } = parsed;
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${totalSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': end - start + 1,
+      'Content-Type': mimeType,
+      'Cache-Control': 'private, max-age=86400',
+    });
+    return res.end(buffer.subarray(start, end + 1));
+  }
+
+  res.setHeader('Content-Length', totalSize);
   return res.send(buffer);
 });
+
+// Parse an HTTP byte-range header into a valid [start, end] within [0, size).
+// Supports: bytes=a-b, bytes=a-, bytes=-n (suffix of last n bytes).
+// Returns null for malformed / unsatisfiable ranges.
+function parseByteRange(rangeHeader: string, size: number): { start: number; end: number } | null {
+  const m = rangeHeader.match(/^bytes=(\d*)-(\d*)$/);
+  if (!m) return null;
+  const startStr = m[1];
+  const endStr = m[2];
+  if (startStr === '' && endStr === '') return null;
+  if (startStr === '') {
+    // suffix range: last N bytes
+    const suffix = parseInt(endStr, 10);
+    if (suffix <= 0) return null;
+    return { start: Math.max(0, size - suffix), end: size - 1 };
+  }
+  const start = parseInt(startStr, 10);
+  if (start >= size) return null;
+  if (endStr === '') return { start, end: size - 1 };
+  const end = parseInt(endStr, 10);
+  if (end < start) return null;
+  return { start, end: Math.min(end, size - 1) };
+}
 
 apiRouter.post('/attachments', async (req: Request, res: Response) => {
   try {
@@ -1363,11 +1511,11 @@ apiRouter.delete('/attachments/:id', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // Users & Roles Management
 // ----------------------------------------------------
-apiRouter.get('/users', (req: Request, res: Response) => {
+apiRouter.get('/users', requirePermission(ModuleName.USERS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ users: sanitizeUsers(centralDb.getState().users) });
 });
 
-apiRouter.post('/users', async (req: Request, res: Response) => {
+apiRouter.post('/users', sensitiveLimiter, requirePermission(ModuleName.USERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const user: User = req.body;
 
@@ -1383,7 +1531,7 @@ apiRouter.post('/users', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/users/:id', async (req: Request, res: Response) => {
+apiRouter.put('/users/:id', requirePermission(ModuleName.USERS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!isAdmin(authUser)) {
@@ -1432,7 +1580,7 @@ apiRouter.put('/users/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/users/:id/reset-password', async (req: Request, res: Response) => {
+apiRouter.post('/users/:id/reset-password', requirePermission(ModuleName.USERS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!isAdmin(authUser)) {
@@ -1482,7 +1630,7 @@ apiRouter.post('/users/:id/reset-password', async (req: Request, res: Response) 
   }
 });
 
-apiRouter.delete('/users/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/users/:id', requirePermission(ModuleName.USERS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!isAdmin(authUser)) {
@@ -1538,11 +1686,11 @@ apiRouter.delete('/users/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/roles', (req: Request, res: Response) => {
+apiRouter.get('/roles', requirePermission(ModuleName.USERS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ roles: centralDb.getState().roles });
 });
 
-apiRouter.put('/roles/:id', async (req: Request, res: Response) => {
+apiRouter.put('/roles/:id', sensitiveLimiter, requirePermission(ModuleName.USERS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const role: Role = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveRole(role);
@@ -1555,11 +1703,11 @@ apiRouter.put('/roles/:id', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // Notifications, Devices & Web Push Engine
 // ----------------------------------------------------
-apiRouter.get('/notifications', (req: Request, res: Response) => {
+apiRouter.get('/notifications', requirePermission(ModuleName.NOTES, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ notifications: centralDb.getState().notifications });
 });
 
-apiRouter.post('/notifications', async (req: Request, res: Response) => {
+apiRouter.post('/notifications', requirePermission(ModuleName.NOTES, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const n: Notification = req.body;
     const saved = await centralDb.saveNotification(n);
@@ -1592,6 +1740,9 @@ apiRouter.post('/notifications/read-all', async (req: Request, res: Response) =>
   }
 });
 
+// Returns ONLY the public VAPID key (webPushService.getPublicKey()). The
+// private key lives in webPushService (env override or data/vapid_keys.json)
+// and never appears in any response. Authenticated since Step 3 §9.
 apiRouter.get('/notifications/vapid-public-key', (req: Request, res: Response) => {
   res.json({ success: true, publicKey: webPushService.getPublicKey() });
 });
@@ -1671,11 +1822,11 @@ apiRouter.put('/notifications/settings', async (req: Request, res: Response) => 
   }
 });
 
-apiRouter.get('/audit-logs', (req: Request, res: Response) => {
+apiRouter.get('/audit-logs', requirePermission(ModuleName.AUDIT_LOGS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ auditLogs: centralDb.getState().auditLogs });
 });
 
-apiRouter.post('/audit-logs', async (req: Request, res: Response) => {
+apiRouter.post('/audit-logs', sensitiveLimiter, async (req: Request, res: Response) => {
   try {
     const log = await centralDb.logAudit({ ...req.body, ipAddress: req.ip });
     res.json({ success: true, log, revision: centralDb.getRevisionInfo().revision });
@@ -1770,11 +1921,11 @@ apiRouter.delete('/problem-reports/:id', async (req: Request, res: Response) => 
 // ----------------------------------------------------
 // Settings
 // ----------------------------------------------------
-apiRouter.get('/settings', (req: Request, res: Response) => {
+apiRouter.get('/settings', requirePermission(ModuleName.SETTINGS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ settings: centralDb.getState().settings });
 });
 
-apiRouter.put('/settings', async (req: Request, res: Response) => {
+apiRouter.put('/settings', sensitiveLimiter, requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const updated = await centralDb.updateSettings(req.body);
     res.json({ success: true, settings: updated, revision: centralDb.getRevisionInfo().revision });
@@ -1788,7 +1939,7 @@ apiRouter.put('/settings', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 
 // 1. List all backups
-apiRouter.get('/backups', async (req: Request, res: Response) => {
+apiRouter.get('/backups', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
@@ -1802,7 +1953,7 @@ apiRouter.get('/backups', async (req: Request, res: Response) => {
 });
 
 // 2. Health & Diagnostics Summary
-apiRouter.get('/backups/health', async (req: Request, res: Response) => {
+apiRouter.get('/backups/health', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
@@ -1816,7 +1967,7 @@ apiRouter.get('/backups/health', async (req: Request, res: Response) => {
 });
 
 // 3. Automatic Backup Schedule Settings
-apiRouter.get('/backups/schedule', async (req: Request, res: Response) => {
+apiRouter.get('/backups/schedule', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
@@ -1829,7 +1980,7 @@ apiRouter.get('/backups/schedule', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/backups/schedule', async (req: Request, res: Response) => {
+apiRouter.put('/backups/schedule', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
@@ -1843,7 +1994,7 @@ apiRouter.put('/backups/schedule', async (req: Request, res: Response) => {
 });
 
 // 4. Create Full Backup Manually
-apiRouter.post('/backups/create', async (req: Request, res: Response) => {
+apiRouter.post('/backups/create', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (authUser && !isAdmin(authUser)) {
@@ -1869,7 +2020,7 @@ apiRouter.post('/backups/create', async (req: Request, res: Response) => {
 });
 
 // 5. Verify Backup Integrity
-apiRouter.get('/backups/:id/verify', async (req: Request, res: Response) => {
+apiRouter.get('/backups/:id/verify', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
@@ -1889,7 +2040,7 @@ apiRouter.get('/backups/:id/verify', async (req: Request, res: Response) => {
 });
 
 // 6. Download Full Backup Package (Protected Endpoint)
-apiRouter.get('/backups/:id/download', async (req: Request, res: Response) => {
+apiRouter.get('/backups/:id/download', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
@@ -1916,7 +2067,7 @@ apiRouter.get('/backups/:id/download', async (req: Request, res: Response) => {
 });
 
 // 7. Delete Backup File
-apiRouter.delete('/backups/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/backups/:id', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     if (authUser && !isAdmin(authUser)) {
@@ -1935,7 +2086,7 @@ apiRouter.delete('/backups/:id', async (req: Request, res: Response) => {
 });
 
 // 8. Restore System from Backup
-apiRouter.post('/backups/:id/restore', async (req: Request, res: Response) => {
+apiRouter.post('/backups/:id/restore', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!authUser || !isAdmin(authUser)) {
@@ -1972,7 +2123,7 @@ apiRouter.post('/backups/:id/restore', async (req: Request, res: Response) => {
 });
 
 // 8. Upload Full System Backup Package
-apiRouter.post('/backups/upload', async (req: Request, res: Response) => {
+apiRouter.post('/backups/upload', requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     if (!isAdmin(authUser)) {
@@ -1996,14 +2147,14 @@ apiRouter.post('/backups/upload', async (req: Request, res: Response) => {
 });
 
 // 9. Legacy / Simple JSON Export & Import (Backward Compatibility)
-apiRouter.get('/backup/export', (req: Request, res: Response) => {
+apiRouter.get('/backup/export', sensitiveLimiter, requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), (req: Request, res: Response) => {
   const state = centralDb.getState();
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Content-Disposition', `attachment; filename=mmba_backup_${Date.now()}.json`);
   res.send(JSON.stringify(state, null, 2));
 });
 
-apiRouter.post('/backup/import', async (req: Request, res: Response) => {
+apiRouter.post('/backup/import', sensitiveLimiter, requirePermission(ModuleName.SETTINGS, PermissionAction.MANAGE), async (req: Request, res: Response) => {
   try {
     const imported = await centralDb.importFullDatabase(req.body);
     res.json({ success: true, revision: imported.revision, message: 'بانک اطلاعاتی با موفقیت بازیابی شد.' });
@@ -2015,7 +2166,7 @@ apiRouter.post('/backup/import', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 10. MMBA Accounting Foundation Endpoints
 // ----------------------------------------------------
-apiRouter.get('/accounts', (req: Request, res: Response) => {
+apiRouter.get('/accounts', requirePermission(ModuleName.PAYMENTS, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const accounts = centralDb.getAccounts();
     res.json(accounts);
@@ -2024,7 +2175,7 @@ apiRouter.get('/accounts', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/accounts', async (req: Request, res: Response) => {
+apiRouter.post('/accounts', requirePermission(ModuleName.PAYMENTS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const saved = await centralDb.saveAccount(req.body);
     res.json(saved);
@@ -2033,7 +2184,7 @@ apiRouter.post('/accounts', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/accounts/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/accounts/:id', requirePermission(ModuleName.PAYMENTS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteAccount(req.params.id);
     res.json({ success: deleted });
@@ -2042,7 +2193,7 @@ apiRouter.delete('/accounts/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/journal-entries', (req: Request, res: Response) => {
+apiRouter.get('/journal-entries', requirePermission(ModuleName.PAYMENTS, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const entries = centralDb.getJournalEntries();
     res.json(entries);
@@ -2051,7 +2202,7 @@ apiRouter.get('/journal-entries', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/journal-entries/:id', (req: Request, res: Response) => {
+apiRouter.get('/journal-entries/:id', requirePermission(ModuleName.PAYMENTS, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const entry = centralDb.findJournalEntryById(req.params.id);
     if (!entry) return res.status(404).json({ success: false, message: 'سند حسابداری یافت نشد.' });
@@ -2061,7 +2212,7 @@ apiRouter.get('/journal-entries/:id', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/journal-entries', async (req: Request, res: Response) => {
+apiRouter.post('/journal-entries', requirePermission(ModuleName.PAYMENTS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const { entry, lines } = req.body;
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
@@ -2078,7 +2229,7 @@ apiRouter.post('/journal-entries', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/accounting-periods', (req: Request, res: Response) => {
+apiRouter.get('/accounting-periods', requirePermission(ModuleName.PAYMENTS, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const periods = centralDb.getAccountingPeriods();
     res.json(periods);
@@ -2087,7 +2238,7 @@ apiRouter.get('/accounting-periods', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/accounting-periods', async (req: Request, res: Response) => {
+apiRouter.post('/accounting-periods', requirePermission(ModuleName.PAYMENTS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const saved = await centralDb.saveAccountingPeriod(req.body);
     res.json(saved);
@@ -2099,7 +2250,7 @@ apiRouter.post('/accounting-periods', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 11. Internal Document Sharing & Assignment Endpoints
 // ----------------------------------------------------
-apiRouter.get('/document-shares', async (req: Request, res: Response) => {
+apiRouter.get('/document-shares', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const { userId, limit, offset, status, onlyUnread } = req.query;
@@ -2120,7 +2271,7 @@ apiRouter.get('/document-shares', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/document-shares', async (req: Request, res: Response) => {
+apiRouter.post('/document-shares', requirePermission(ModuleName.CUSTOMERS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const { documentId, recipientUsers, message, customerId, customerName, documentFileName, documentFileSize, documentFileType } = req.body;
@@ -2150,7 +2301,7 @@ apiRouter.post('/document-shares', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/document-shares/:id/read', async (req: Request, res: Response) => {
+apiRouter.put('/document-shares/:id/read', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const updated = await centralDb.markDocumentShareRead(req.params.id, authUser?.id || '');
@@ -2160,7 +2311,7 @@ apiRouter.put('/document-shares/:id/read', async (req: Request, res: Response) =
   }
 });
 
-apiRouter.put('/document-shares/:id/archive', async (req: Request, res: Response) => {
+apiRouter.put('/document-shares/:id/archive', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const updated = await centralDb.archiveDocumentShare(req.params.id, authUser?.id || '');
@@ -2786,7 +2937,7 @@ apiRouter.get('/registered-holders/:id/id-card', (req: Request, res: Response) =
 // ----------------------------------------------------
 // 13. Contract Installments & Finance Referral Endpoints
 // ----------------------------------------------------
-apiRouter.get('/contract-installments', (req: Request, res: Response) => {
+apiRouter.get('/contract-installments', requirePermission(ModuleName.CONTRACTS, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const contractId = req.query.contractId as string | undefined;
     const installments = centralDb.getContractInstallments(contractId);
@@ -2796,7 +2947,7 @@ apiRouter.get('/contract-installments', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/contract-installments', async (req: Request, res: Response) => {
+apiRouter.post('/contract-installments', requirePermission(ModuleName.CONTRACTS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const saved = await centralDb.saveContractInstallment(req.body);
     res.json({ success: true, installment: saved });
@@ -2805,7 +2956,7 @@ apiRouter.post('/contract-installments', async (req: Request, res: Response) => 
   }
 });
 
-apiRouter.post('/contract-installments/:id/payments', async (req: Request, res: Response) => {
+apiRouter.post('/contract-installments/:id/payments', requirePermission(ModuleName.PAYMENTS, PermissionAction.VERIFY), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const installmentId = req.params.id;
@@ -2824,7 +2975,7 @@ apiRouter.post('/contract-installments/:id/payments', async (req: Request, res: 
 });
 
 // Review by Finance Manager / ارجاع به مدیر مالی
-apiRouter.post('/payments/:id/finance-review', async (req: Request, res: Response) => {
+apiRouter.post('/payments/:id/finance-review', requirePermission(ModuleName.PAYMENTS, PermissionAction.VERIFY), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const { status, notes } = req.body;
@@ -2930,7 +3081,7 @@ apiRouter.post('/auth/biometric-login', async (req: Request, res: Response) => {
 
     await centralDb.updateBiometricDeviceLastUsed(credentialId);
 
-    const token = auth.signToken(user.id);
+    const token = auth.signToken(user.id, user.tokenVersion);
     const now = new Date().toISOString();
     const updatedUser = { ...user, lastLoginAt: now };
     await centralDb.saveUser(updatedUser);

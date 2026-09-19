@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+# Runtime data: production DB + generated VAPID keypair
+data/

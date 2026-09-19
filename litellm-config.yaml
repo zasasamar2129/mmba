@@ -1,0 +1,6 @@
+model_list:
+  - model_name: claude-3-5-sonnet-20241022
+    litellm_params:
+      model: moonshot/moonshot-v1-128k
+      api_key: "sk-your-kimi-api-key"
+      api_base: "https://api.moonshot.cn/v1"

@@ -9,6 +9,12 @@ import {
 
 const API_BASE = '/api';
 
+// CSRF decision (Step 3 §3): auth travels via the `Authorization: Bearer`
+// header, never a cookie, so CSRF is not the live risk — the browser does not
+// attach that header cross-site. The real risk is XSS; the CSP in
+// server/security.ts is the primary defence. FUTURE ARCHITECTURAL RULE: if
+// auth is ever migrated to cookies (HttpOnly), REVISIT this CSRF decision
+// BEFORE the migration — SameSite/HttpOnly + a token become mandatory.
 class ApiClient {
   private getAuthToken(): string | null {
     try {

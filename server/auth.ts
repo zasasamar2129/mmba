@@ -12,6 +12,9 @@ export interface JWTPayload {
   userId: string;
   iat: number;
   exp: number;
+  // Session revocation (Step 3, Option A): the user's tokenVersion at issue
+  // time. Verification rejects if it disagrees with the stored user record.
+  tokenVersion?: number;
 }
 
 export interface TokenData {
@@ -47,13 +50,15 @@ export function isPasswordHashed(password: string): boolean {
   return password.startsWith('$2a$') || password.startsWith('$2b$') || password.startsWith('$2y$');
 }
 
-// Generate a JWT token for a user
-export function signToken(userId: string): string {
+// Generate a JWT token for a user. Embed the user's current tokenVersion so a
+// later bump (logout / revoke-all / compromised-account reset) invalidates it.
+export function signToken(userId: string, tokenVersion?: number): string {
   const secret = getJwtSecret();
   const payload: JWTPayload = {
     userId,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60, // 24 hours
+    ...(tokenVersion !== undefined ? { tokenVersion } : {}),
   };
   return jwt.sign(payload, secret, { algorithm: 'HS256' });
 }
