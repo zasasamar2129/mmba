@@ -479,7 +479,7 @@ apiRouter.get('/contacts/lookup', (req: Request, res: Response) => {
 // ----------------------------------------------------
 // Leads CRUD & Conversion (Sprint 02 Patch 01)
 // ----------------------------------------------------
-apiRouter.get('/leads', (req: Request, res: Response) => {
+apiRouter.get('/leads', requirePermission(ModuleName.LEADS, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const { status, query, q } = req.query;
     const leads = centralDb.getLeads({
@@ -492,7 +492,7 @@ apiRouter.get('/leads', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/leads/:id', (req: Request, res: Response) => {
+apiRouter.get('/leads/:id', requirePermission(ModuleName.LEADS, PermissionAction.VIEW), (req: Request, res: Response) => {
   const lead = centralDb.findLeadById(req.params.id);
   if (!lead) {
     return res.status(404).json({ success: false, message: 'سرنخ مورد نظر یافت نشد.' });
@@ -500,7 +500,7 @@ apiRouter.get('/leads/:id', (req: Request, res: Response) => {
   res.json({ success: true, lead });
 });
 
-apiRouter.post('/leads', async (req: Request, res: Response) => {
+apiRouter.post('/leads', requirePermission(ModuleName.LEADS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const body = req.body;
     if (!body.mobile) {
@@ -525,7 +525,7 @@ apiRouter.post('/leads', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/leads/:id', async (req: Request, res: Response) => {
+apiRouter.put('/leads/:id', requirePermission(ModuleName.LEADS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const saved = await centralDb.saveLead({ ...req.body, id: req.params.id });
     res.json({ success: true, lead: saved, revision: centralDb.getRevisionInfo().revision });
@@ -534,7 +534,7 @@ apiRouter.put('/leads/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/leads/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/leads/:id', requirePermission(ModuleName.LEADS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteLead(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -543,7 +543,7 @@ apiRouter.delete('/leads/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/leads/:id/convert', async (req: Request, res: Response) => {
+apiRouter.post('/leads/:id/convert', requirePermission(ModuleName.CUSTOMERS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const leadId = req.params.id;
     const customerData = req.body || {};
@@ -576,11 +576,11 @@ apiRouter.post('/leads/:id/convert', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // Customers CRUD
 // ----------------------------------------------------
-apiRouter.get('/customers', (req: Request, res: Response) => {
+apiRouter.get('/customers', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ customers: centralDb.getState().customers });
 });
 
-apiRouter.post('/customers', async (req: Request, res: Response) => {
+apiRouter.post('/customers', requirePermission(ModuleName.CUSTOMERS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const customer: Customer = req.body;
     const saved = await centralDb.saveCustomer(customer);
@@ -602,7 +602,7 @@ apiRouter.post('/customers', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/customers/:id', async (req: Request, res: Response) => {
+apiRouter.put('/customers/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const customer: Customer = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveCustomer(customer);
@@ -624,7 +624,7 @@ apiRouter.put('/customers/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/customers/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/customers/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const customer = centralDb.getState().customers.find((c) => c.id === id);
@@ -649,7 +649,7 @@ apiRouter.delete('/customers/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/customers/bulk-delete', sensitiveLimiter, async (req: Request, res: Response) => {
+apiRouter.post('/customers/bulk-delete', sensitiveLimiter, requirePermission(ModuleName.CUSTOMERS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const { ids } = req.body;
     if (!Array.isArray(ids)) {
@@ -665,11 +665,11 @@ apiRouter.post('/customers/bulk-delete', sensitiveLimiter, async (req: Request, 
 // ----------------------------------------------------
 // Calls & Voice Notes CRUD
 // ----------------------------------------------------
-apiRouter.get('/calls', (req: Request, res: Response) => {
+apiRouter.get('/calls', requirePermission(ModuleName.CALLS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ calls: centralDb.getState().calls });
 });
 
-apiRouter.post('/calls', async (req: Request, res: Response) => {
+apiRouter.post('/calls', requirePermission(ModuleName.CALLS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const call: Call = req.body;
     const saved = await centralDb.saveCall(call);
@@ -679,7 +679,7 @@ apiRouter.post('/calls', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/calls/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/calls/:id', requirePermission(ModuleName.CALLS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteCall(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -692,7 +692,7 @@ apiRouter.delete('/calls/:id', async (req: Request, res: Response) => {
 // Interactions (Call Center Engine - Sprint 02 Vertical Slice)
 // Base paths: /api/v1/interactions and /api/interactions
 // ----------------------------------------------------
-apiRouter.get('/interactions', (req: Request, res: Response) => {
+apiRouter.get('/interactions', requirePermission(ModuleName.CALLS, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const {
       customerId,
@@ -745,7 +745,7 @@ apiRouter.get('/interactions', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.get('/interactions/:id', (req: Request, res: Response) => {
+apiRouter.get('/interactions/:id', requirePermission(ModuleName.CALLS, PermissionAction.VIEW), (req: Request, res: Response) => {
   const interaction = centralDb.findInteractionById(req.params.id);
   if (!interaction) {
     return res.status(404).json({
@@ -756,7 +756,7 @@ apiRouter.get('/interactions/:id', (req: Request, res: Response) => {
   res.json({ success: true, interaction });
 });
 
-apiRouter.post('/interactions', async (req: Request, res: Response) => {
+apiRouter.post('/interactions', requirePermission(ModuleName.CALLS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
     const customerId = (body.customer_id || body.customerId) as string | undefined;
@@ -839,7 +839,7 @@ apiRouter.post('/interactions', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.patch('/interactions/:id', async (req: Request, res: Response) => {
+apiRouter.patch('/interactions/:id', requirePermission(ModuleName.CALLS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const existing = centralDb.findInteractionById(id);
@@ -892,7 +892,7 @@ apiRouter.patch('/interactions/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/interactions/:id/complete-follow-up', async (req: Request, res: Response) => {
+apiRouter.post('/interactions/:id/complete-follow-up', requirePermission(ModuleName.CALLS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const existing = centralDb.findInteractionById(id);
@@ -927,7 +927,7 @@ apiRouter.post('/interactions/:id/complete-follow-up', async (req: Request, res:
   }
 });
 
-apiRouter.delete('/interactions/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/interactions/:id', requirePermission(ModuleName.CALLS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const existing = centralDb.findInteractionById(id);
@@ -1345,11 +1345,11 @@ function parseAttachmentContent(dataUrl: string, fileName?: string, declaredMime
 // ----------------------------------------------------
 // Attachments CRUD & Flexible Linking & Secure Content Streaming
 // ----------------------------------------------------
-apiRouter.get('/attachments', (req: Request, res: Response) => {
+apiRouter.get('/attachments', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ attachments: centralDb.getState().attachments });
 });
 
-apiRouter.get('/attachments/:id', async (req: Request, res: Response) => {
+apiRouter.get('/attachments/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
   const user = await getAuthUser(req);
   if (!user) {
     return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
@@ -1367,12 +1367,7 @@ apiRouter.get('/attachments/:id', async (req: Request, res: Response) => {
 // Step 4: added HTTP Range support (206 / 416), Accept-Ranges on both paths, and
 // SVG served as a download (attachment) so an uploaded SVG is not an XSS vector
 // in the app origin.
-apiRouter.get(['/attachments/:id/content', '/attachments/:id/preview'], async (req: Request, res: Response) => {
-  const user = await getAuthUser(req);
-  if (!user) {
-    return res.status(401).json({ success: false, message: 'دسترسی غیرمجاز: احراز هویت الزامی است.' });
-  }
-
+apiRouter.get(['/attachments/:id/content', '/attachments/:id/preview'], requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
   const att = centralDb.getState().attachments.find((a) => a.id === req.params.id);
   if (!att) {
     return res.status(404).json({ success: false, message: 'فایل پیوست یافت نشد.' });
@@ -1452,7 +1447,7 @@ function parseByteRange(rangeHeader: string, size: number): { start: number; end
   return { start, end: Math.min(end, size - 1) };
 }
 
-apiRouter.post('/attachments', async (req: Request, res: Response) => {
+apiRouter.post('/attachments', requirePermission(ModuleName.CUSTOMERS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const att: Attachment = req.body;
     const saved = await centralDb.saveAttachment(att);
@@ -1462,7 +1457,7 @@ apiRouter.post('/attachments', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.put('/attachments/:id', async (req: Request, res: Response) => {
+apiRouter.put('/attachments/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const att: Attachment = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveAttachment(att);
@@ -1472,7 +1467,7 @@ apiRouter.put('/attachments/:id', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/attachments/:id/link-customer', async (req: Request, res: Response) => {
+apiRouter.post('/attachments/:id/link-customer', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const { customerId, customerName } = req.body;
     const saved = await centralDb.linkAttachmentCustomer(req.params.id, customerId, customerName);
@@ -1499,7 +1494,7 @@ apiRouter.post('/attachments/:id/link-customer', async (req: Request, res: Respo
   }
 });
 
-apiRouter.delete('/attachments/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/attachments/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteAttachment(req.params.id);
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
@@ -2805,7 +2800,7 @@ apiRouter.post('/broadcasts/:id/read', async (req: Request, res: Response) => {
 // ----------------------------------------------------
 // 12. Registered SIM Holders Endpoints (افراد ثبت‌کننده سیم‌کارت)
 // ----------------------------------------------------
-apiRouter.get('/registered-holders', (req: Request, res: Response) => {
+apiRouter.get('/registered-holders', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.VIEW), (req: Request, res: Response) => {
   try {
     const holders = centralDb.getRegisteredHolders();
     // Compute current active SIMs count per holder
@@ -2826,7 +2821,7 @@ apiRouter.get('/registered-holders', (req: Request, res: Response) => {
   }
 });
 
-apiRouter.post('/registered-holders', async (req: Request, res: Response) => {
+apiRouter.post('/registered-holders', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     const data = req.body || {};
@@ -2852,7 +2847,7 @@ apiRouter.post('/registered-holders', async (req: Request, res: Response) => {
   }
 });
 
-apiRouter.delete('/registered-holders/:id', async (req: Request, res: Response) => {
+apiRouter.delete('/registered-holders/:id', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req) || centralDb.findUserById('usr-admin');
     // Enforce Manager role check: Only managers / admins can delete registered holders
@@ -2882,7 +2877,7 @@ apiRouter.delete('/registered-holders/:id', async (req: Request, res: Response) 
   }
 });
 
-apiRouter.post('/registered-holders/:id/id-card', async (req: Request, res: Response) => {
+apiRouter.post('/registered-holders/:id/id-card', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { imageDataUrl, fileName, fileType, sizeBytes } = req.body || {};
@@ -2910,7 +2905,7 @@ apiRouter.post('/registered-holders/:id/id-card', async (req: Request, res: Resp
   }
 });
 
-apiRouter.get('/registered-holders/:id/id-card', (req: Request, res: Response) => {
+apiRouter.get('/registered-holders/:id/id-card', requirePermission(ModuleName.SIM_INVENTORY, PermissionAction.VIEW), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const holders = centralDb.getRegisteredHolders();

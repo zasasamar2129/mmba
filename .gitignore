@@ -8,3 +8,8 @@ coverage/
 !.env.example
 # Runtime data: production DB + generated VAPID keypair
 data/
+# One-off tooling/config that must not be committed accidentally
+litellm-config.yaml
+apply_*.cjs
+server/apply_*.cjs
+*.config.yaml
