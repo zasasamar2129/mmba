@@ -6,7 +6,7 @@
 // Lifecycle: install → activate → fetch (controlled caching).
 // =================================================
 
-const CACHE_VERSION = 'mmba-v1';
+const CACHE_VERSION = 'mmba-v2';
 const STATIC_CACHE = `mmba-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mmba-runtime-${CACHE_VERSION}`;
 
