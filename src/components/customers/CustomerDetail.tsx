@@ -78,11 +78,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       list.push({
         id: `t-call-${c.id}`,
         type: 'CALL',
-        title: `تماس ${c.callType}: ${c.subject}`,
-        description: c.notes + (c.followUpRequired ? ' (دارای پیگیری بعدی)' : ''),
+        title: isRtl ? `تماس ${c.callType}: ${c.subject}` : `Call ${c.callType}: ${c.subject}`,
+        description: c.notes + (c.followUpRequired ? (isRtl ? ' (دارای پیگیری بعدی)' : ' (Follow-up Required)') : ''),
         timestamp: c.dateTime || c.createdAt,
         userId: c.userId,
-        userName: c.userName || 'کارشناس',
+        userName: c.userName || (isRtl ? 'کارشناس' : 'Specialist'),
         entityId: c.id,
       });
     });
