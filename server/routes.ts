@@ -1887,7 +1887,45 @@ apiRouter.post('/notifications/devices/register', async (req: Request, res: Resp
       userName: device.userName || authUser?.name || 'کاربر سیستم',
     };
     const registered = await centralDb.registerDevice(enrichedDevice);
+    await centralDb.logAudit({
+      userId: authUser?.id || registered.userId,
+      userName: authUser?.name || registered.userName || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'PUSH_SUBSCRIPTION_CREATED',
+      module: ModuleName.SETTINGS,
+      targetId: registered.id,
+      targetType: 'PUSH_SUBSCRIPTION',
+      details: `ثبت اشتراک پوش برای دستگاه ${registered.deviceName || ''} (${registered.platform || ''}).`,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, device: registered, revision: centralDb.getRevisionInfo().revision });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Delete the current user's push subscription (idempotent). The server derives
+// ownership from the authenticated user — never trusts a client-provided userId.
+apiRouter.delete('/notifications/push/subscription', async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).authUser as User | undefined;
+    if (!authUser) {
+      return res.status(401).json({ success: false, message: 'احراز هویت الزامی است.' });
+    }
+    const removed = await centralDb.deleteAllUserDevices(authUser.id);
+    const affectedCount = removed.filter((d) => d).length;
+    await centralDb.logAudit({
+      userId: authUser.id,
+      userName: authUser.name,
+      userRole: authUser.role,
+      action: 'PUSH_SUBSCRIPTION_REMOVED',
+      module: ModuleName.SETTINGS,
+      targetId: authUser.id,
+      targetType: 'USER',
+      details: `حذف ${affectedCount} اشتراک پوش ثبت‌شده برای کاربر ${authUser.name} (@${authUser.username}).`,
+      ipAddress: req.ip,
+    });
+    res.json({ success: true, removed: affectedCount, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1895,7 +1933,13 @@ apiRouter.post('/notifications/devices/register', async (req: Request, res: Resp
 
 apiRouter.post('/notifications/devices/:id/toggle', async (req: Request, res: Response) => {
   try {
+    const authUser = await getAuthUser(req);
     const { enabled } = req.body;
+    const existing = centralDb.getUserDevices().find((d) => d.id === req.params.id);
+    // Ownership enforcement: a user may only toggle their own device.
+    if (!existing || existing.userId !== authUser?.id) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز: این دستگاه متعلق به شما نیست.' });
+    }
     const updated = await centralDb.updateDevice(req.params.id, { enabled: Boolean(enabled) });
     res.json({ success: true, device: updated, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
@@ -1905,20 +1949,50 @@ apiRouter.post('/notifications/devices/:id/toggle', async (req: Request, res: Re
 
 apiRouter.delete('/notifications/devices/:id', async (req: Request, res: Response) => {
   try {
+    const authUser = await getAuthUser(req);
+    const device = centralDb.getUserDevices().find((d) => d.id === req.params.id);
+    // Ownership enforcement: a user may only delete their own device. Admins
+    // may manage any device (spec: subscription cleanup / device management).
+    if (!device || (device.userId !== authUser?.id && !isAdmin(authUser))) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز: این دستگاه متعلق به شما نیست.' });
+    }
     const deleted = await centralDb.deleteDevice(req.params.id);
+    await centralDb.logAudit({
+      userId: authUser?.id || 'system',
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'PUSH_SUBSCRIPTION_REMOVED',
+      module: ModuleName.SETTINGS,
+      targetId: req.params.id,
+      targetType: 'PUSH_SUBSCRIPTION',
+      details: `حذف اشتراک پوش دستگاه ${device?.deviceName || ''} (${device?.platform || ''}).`,
+      ipAddress: req.ip,
+    });
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-apiRouter.post('/notifications/test-push', async (req: Request, res: Response) => {
+// Test-push is rate-limited (spec §55) to stop clients spamming push requests.
+apiRouter.post('/notifications/test-push', sensitiveLimiter, async (req: Request, res: Response) => {
   try {
     const authUser = await getAuthUser(req);
     const targetUserId = req.body.userId || authUser?.id || 'usr-admin';
     const title = req.body.title || 'آزمایش اعلان هوشمند MMBA';
     const body = req.body.body || 'سیستم هشدار صوتی و اعلان دستگاه‌های متصل فعال و پایدار است.';
     const notif = await notificationScheduler.sendTestNotification(targetUserId, title, body);
+    await centralDb.logAudit({
+      userId: authUser?.id || targetUserId,
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'TEST_NOTIFICATION_SENT',
+      module: ModuleName.SETTINGS,
+      targetId: notif.id,
+      targetType: 'NOTIFICATION',
+      details: 'ارسال اعلان پوش آزمایشی.',
+      ipAddress: req.ip,
+    });
     res.json({ success: true, notification: notif });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });

@@ -211,11 +211,23 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
           <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
             {pushStatus.subscribed
               ? 'دستگاه شما آماده دریافت هشدارهای بلادرنگ سررسید وظایف، چک‌ها و تعمیرات است.'
+              : pushStatus.permission === 'denied'
+              ? 'دسترسی اعلان در تنظیمات مرورگر مسدود شده است. برای فعال‌سازی، آن را از تنظیمات سایت متصرف کنید.'
+              : pushStatus.permission === 'granted'
+              ? 'مجوز اعلان صادر شده است، اما هنوز اشتراک این دستگاه ثبت نشده.'
               : 'برای دریافت هشدارهای صوتی و پیام‌های سررسید حتی در زمان بسته بودن تب مرورگر، این قابلیت را فعال کنید.'}
           </p>
 
           <div className="flex items-center gap-2 pt-1">
-            {!pushStatus.subscribed ? (
+            {!pushStatus.supported ? (
+              <p className="w-full text-center text-[11px] text-amber-600 dark:text-amber-400">
+                مرورگر شما از اعلان‌های وب پشتیبانی نمی‌کند.
+              </p>
+            ) : !pushStatus.subscribed && pushStatus.permission === 'denied' ? (
+              <p className="w-full text-center text-[11px] text-rose-600 dark:text-rose-400">
+                اعلان در تنظیمات مرورگر مسدود است.
+              </p>
+            ) : !pushStatus.subscribed ? (
               <Button
                 variant="primary"
                 size="sm"

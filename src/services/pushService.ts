@@ -41,7 +41,21 @@ export function detectDeviceInfo(): {
     platform = navigator.platform;
   }
 
-  const deviceName = `${browser} on ${platform} (${deviceType.toLowerCase()})`;
+  // Friendly device labels (spec §96) — never the raw user-agent as primary UX.
+  const isIos = /iPhone|iPad|iPod/i.test(ua);
+  const isAndroid = /Android/i.test(ua);
+  const osLabel = isIos
+    ? deviceType === 'TABLET' ? 'iPad' : 'iPhone'
+    : isAndroid
+    ? deviceType === 'TABLET' ? 'Android tablet' : 'Android phone'
+    : platform;
+
+  const deviceName = isAndroid && deviceType === 'MOBILE'
+    ? `${browser} on Android phone`
+    : isIos
+    ? `${deviceType === 'TABLET' ? 'iPad' : 'iPhone'} · ${browser}`
+    : `${browser} on ${osLabel}`;
+
   return { deviceName, deviceType, browser, platform };
 }
 
@@ -250,6 +264,42 @@ class PushService {
       return { success: false, error: data.message || 'خطا در ثبت دستگاه در سامانه' };
     } catch (err: any) {
       return { success: false, error: err.message || 'خطا در ثبت دستگاه' };
+    }
+  }
+
+  public async checkSubscription(): Promise<PushSubscription | null> {
+    if (!this.isSupported()) return null;
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return null;
+      return await reg.pushManager.getSubscription();
+    } catch (err) {
+      console.warn('[PushService] checkSubscription error:', err);
+      return null;
+    }
+  }
+
+  /** Unsubscribe this device: remove the browser subscription and the server record. */
+  public async unsubscribeDevice(): Promise<{ success: boolean; error?: string }> {
+    if (!this.isSupported()) {
+      return { success: false, error: 'مرورگر شما از اعلان‌های وب پشتیبانی نمی‌کند.' };
+    }
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await sub.unsubscribe();
+        }
+      }
+      const res = await fetch('/api/v1/notifications/push/subscription', {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      this.currentDevice = null;
+      return { success: !!data.success, error: data.message };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'خطا در لغو اشتراک پوش' };
     }
   }
 

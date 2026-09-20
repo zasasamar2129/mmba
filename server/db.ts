@@ -1677,6 +1677,18 @@ class CentralDatabase {
     });
   }
 
+  // Remove every push subscription belonging to a user (device-level cleanup).
+  // Returns the removed subscription records so callers can log audit numbers.
+  public async deleteAllUserDevices(userId: string): Promise<boolean[]> {
+    return this.mutate((db) => {
+      if (!db.userNotificationDevices) return [];
+      const targets = db.userNotificationDevices.filter((d) => d.userId === userId);
+      if (targets.length === 0) return [];
+      db.userNotificationDevices = db.userNotificationDevices.filter((d) => d.userId !== userId);
+      return targets.map(() => true);
+    });
+  }
+
   // Delivery Tracking Operations
   public getDeliveries(notificationId?: string, userId?: string): NotificationDelivery[] {
     const list = this.getDatabase().notificationDeliveries || [];

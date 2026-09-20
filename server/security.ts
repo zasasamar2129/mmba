@@ -33,6 +33,7 @@ export function securityHeaders(req: Request, res: Response, next: NextFunction)
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "worker-src 'self'",
   ].join('; '));
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');

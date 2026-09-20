@@ -54,6 +54,11 @@ export const NotificationSettingsManager: React.FC = () => {
   const { success, error, info } = useToast();
   const currentUser = storage.getCurrentUser();
 
+  const pushSupported = pushService.isPushSupported();
+  const [permissionState, setPermissionState] = useState<'default' | 'granted' | 'denied' | 'unsupported'>(() =>
+    pushSupported ? pushService.getPermissionState() : 'unsupported'
+  );
+
   const [loading, setLoading] = useState(false);
   const [devices, setDevices] = useState<UserDevice[]>([]);
   const [deliveries, setDeliveries] = useState<NotificationDelivery[]>([]);
@@ -191,6 +196,38 @@ export const NotificationSettingsManager: React.FC = () => {
     return <Monitor className="w-4 h-4 text-sky-500" />;
   };
 
+  const handleUnsubscribeAll = async () => {
+    setLoading(true);
+    try {
+      const res = await pushService.unsubscribeDevice();
+      if (res.success) {
+        success(isRtl ? 'این دستگاه از اعلان‌های پوش خارج شد' : 'Device unsubscribed from push');
+        await loadData();
+      } else {
+        error(res.error || (isRtl ? 'خطا در لغو اشتراک' : 'Failed to unsubscribe'));
+      }
+    } catch (e: any) {
+      error(e.message || 'خطا در لغو اشتراک');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDeviceLabel = (dev: UserDevice): string => {
+    const ua = (dev.userAgent || '').toLowerCase();
+    const name = dev.deviceName || '';
+    // Friendly labels — do not expose raw user-agent strings as primary UX (§96)
+    if (name && name !== 'مرورگر وب') return name;
+    if (ua.includes('iphone')) return 'iPhone';
+    if (ua.includes('ipad')) return 'iPad';
+    if (ua.includes('android')) {
+      return ua.includes('mobile') || ua.includes('mobi') ? 'Android phone' : 'Android tablet';
+    }
+    if (ua.includes('windows')) return 'Chrome on Windows';
+    if (ua.includes('macintosh')) return 'Safari on Mac';
+    return name || 'دستگاه مرورگر وب';
+  };
+
   return (
     <div className="space-y-6 text-right animate-blur-fade-up">
       {/* Top Banner / Device Status */}
@@ -224,14 +261,26 @@ export const NotificationSettingsManager: React.FC = () => {
           >
             {isRtl ? 'بروزرسانی وضعیت' : 'Refresh'}
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={handleRegisterCurrentDevice}
-            leftIcon={<Smartphone className="w-4 h-4" />}
-          >
-            {isRtl ? 'ثبت این مرورگر برای دریافت پوش' : 'Register Current Device'}
-          </Button>
+          {pushSupported ? (
+            permissionState === 'denied' ? (
+              <span className="text-xs text-rose-600 dark:text-rose-400 shrink-0">
+                {isRtl ? 'دسترسی اعلان در تنظیمات مرورگر مسدود است' : 'Notification permission denied in browser'}
+              </span>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleRegisterCurrentDevice}
+                leftIcon={<Smartphone className="w-4 h-4" />}
+              >
+                {isRtl ? 'ثبت این مرورگر برای دریافت پوش' : 'Register Current Device'}
+              </Button>
+            )
+          ) : (
+            <span className="text-xs text-amber-600 dark:text-amber-400 shrink-0">
+              {isRtl ? 'مرورگر شما از اعلان‌های وب پشتیبانی نمی‌کند' : 'Web Push not supported by this browser'}
+            </span>
+          )}
         </div>
       </div>
 
@@ -432,22 +481,21 @@ export const NotificationSettingsManager: React.FC = () => {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                        {dev.deviceName || 'دستگاه مرورگر وب'}
+                        {getDeviceLabel(dev)}
                       </span>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300">
                         {dev.platform || 'Web'}
                       </span>
                     </div>
-                    <span className="text-[11px] text-slate-400 block truncate max-w-md font-mono mt-0.5">
-                      {dev.userAgent || dev.endpoint}
+                    <span className="text-[11px] text-slate-400 block truncate max-w-md">
+                      {dev.browser && !dev.browser.toLowerCase().includes('unknown')
+                        ? `${dev.browser} · ${formatPersianDate(dev.lastActiveAt, true)}`
+                        : formatPersianDate(dev.lastActiveAt, true)}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-[11px] text-slate-400">
-                    {formatPersianDate(dev.lastActiveAt, true)}
-                  </span>
                   <button
                     type="button"
                     onClick={() => handleUnregisterDevice(dev.id)}
@@ -459,6 +507,20 @@ export const NotificationSettingsManager: React.FC = () => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {devices.length > 0 && pushSupported && (
+          <div className="pt-2 flex justify-end border-t border-slate-100 dark:border-slate-800">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleUnsubscribeAll}
+              isLoading={loading}
+              leftIcon={<Smartphone className="w-3.5 h-3.5" />}
+            >
+              {isRtl ? 'حذف این دستگاه از اعلان‌های پوش' : 'Remove this device from push'}
+            </Button>
           </div>
         )}
       </div>
