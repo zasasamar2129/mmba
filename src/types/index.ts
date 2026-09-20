@@ -958,6 +958,9 @@ export interface AuditLog {
   fieldName?: string;
   oldValue?: any;
   newValue?: any;
+  result?: 'SUCCESS' | 'FAILURE' | 'PARTIAL';
+  beforeState?: Record<string, any>;
+  afterState?: Record<string, any>;
 }
 
 export interface BackupManifest {

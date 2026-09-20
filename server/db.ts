@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import * as auth from './auth';
 import {
   User, UserRole, UserStatus, Customer, CustomerStatus, Call, Task, Contract,
-  Payment, Check, SimCard, Repair, Attachment, Notification,
+  Payment, PaymentStatus, Check, CheckStatus, SimCard, Repair, Attachment, Notification,
   AuditLog, Role, DateSuggestion, ShareableLink, VoiceNote, ModuleName, PermissionAction,
   Interaction, InteractionType, ProblemReport, Lead, LeadStatus,
   UserNotificationDevice, NotificationDelivery, NotificationSettings,
@@ -129,6 +129,23 @@ const SEED_USERS: User[] = [
     lastLoginAt: new Date().toISOString(),
   },
 ];
+
+export class PhoneDuplicateError extends Error {
+  public code: string;
+  public existingCustomer?: Customer;
+  public existingLead?: Lead;
+  public existingUser?: User;
+  public duplicateNumber: string;
+  constructor(message: string, code: string, duplicateNumber: string, existingCustomer?: Customer, existingLead?: Lead, existingUser?: User) {
+    super(message);
+    this.name = 'PhoneDuplicateError';
+    this.code = code;
+    this.duplicateNumber = duplicateNumber;
+    this.existingCustomer = existingCustomer;
+    this.existingLead = existingLead;
+    this.existingUser = existingUser;
+  }
+}
 
 export function normalizePhone(raw: string | undefined | null): string {
   if (!raw) return '';
@@ -466,6 +483,25 @@ class CentralDatabase {
       const normUsername = (user.username || '').trim().toLowerCase();
       const normEmail = (user.email || '').trim().toLowerCase();
       const targetId = (user.id || '').trim();
+      const normMobile = normalizePhone(user.mobile);
+
+      // Check for phone duplicate across users
+      if (normMobile) {
+        const existingByPhone = db.users.find((u) => {
+          if (u.id === targetId) return false;
+          return normalizePhone(u.mobile) === normMobile;
+        });
+        if (existingByPhone) {
+          throw new PhoneDuplicateError(
+            `شماره موبایل ${normMobile} تکراری است در کاربر`,
+            'PHONE_NUMBER_DUPLICATE',
+            normMobile,
+            undefined,
+            undefined,
+            existingByPhone
+          );
+        }
+      }
 
       // Find existing user by ID or by normalized username or email
       const existingIdx = db.users.findIndex((u) => {
@@ -558,6 +594,27 @@ class CentralDatabase {
     return this.mutate((db) => {
       const now = new Date().toISOString();
       const existingIdx = db.customers.findIndex((c) => c.id === customer.id);
+
+      // Check for phone duplicate before save (unless editing same customer)
+      const normMobile = normalizePhone(customer.mobile);
+      const normPhone = normalizePhone(customer.phone);
+      if (normMobile || normPhone) {
+        const duplicate = db.customers.find((c) => {
+          if (existingIdx >= 0 && c.id === customer.id) return false;
+          const cMob = normalizePhone(c.mobile);
+          const cPh = normalizePhone(c.phone);
+          return (normMobile && cMob === normMobile) || (normPhone && cPh === normPhone);
+        });
+        if (duplicate) {
+          throw new PhoneDuplicateError(
+            `شماره تلفن ${normMobile || normPhone} تکراری است`,
+            'PHONE_NUMBER_DUPLICATE',
+            normMobile || normPhone,
+            duplicate
+          );
+        }
+      }
+
       if (existingIdx >= 0) {
         db.customers[existingIdx] = {
           ...db.customers[existingIdx],
@@ -645,6 +702,36 @@ class CentralDatabase {
         (l) => (lead.id && l.id === lead.id) || (lead.leadCode && l.leadCode === lead.leadCode) || normalizePhone(l.mobile) === normMobile
       );
 
+      // Check for phone duplicate across both leads and customers
+      if (normMobile) {
+        const existingLead = db.leads.find((l) => {
+          if (existingIdx >= 0 && l.id === lead.id) return false;
+          return normalizePhone(l.mobile) === normMobile;
+        });
+        if (existingLead) {
+          throw new PhoneDuplicateError(
+            `شماره موبایل ${normMobile} تکراری است در سرنخ`,
+            'PHONE_NUMBER_DUPLICATE',
+            normMobile,
+            undefined,
+            existingLead
+          );
+        }
+        const existingCustomer = db.customers.find((c) => {
+          const cMob = normalizePhone(c.mobile);
+          const cPh = normalizePhone(c.phone);
+          return cMob === normMobile || cPh === normMobile;
+        });
+        if (existingCustomer) {
+          throw new PhoneDuplicateError(
+            `شماره موبایل ${normMobile} تکراری است در مشتری`,
+            'PHONE_NUMBER_DUPLICATE',
+            normMobile,
+            existingCustomer
+          );
+        }
+      }
+
       if (existingIdx >= 0) {
         const current = db.leads[existingIdx];
         const updated: Lead = {
@@ -700,6 +787,24 @@ class CentralDatabase {
       const lead = db.leads[leadIdx];
 
       const normMobile = normalizePhone(customerData.mobile || lead.mobile);
+
+      // Check for phone duplicate across both customers and leads during conversion
+      if (normMobile) {
+        const dupCustomer = db.customers.find((c) => {
+          const cMob = normalizePhone(c.mobile);
+          const cPh = normalizePhone(c.phone);
+          return cMob === normMobile || cPh === normMobile;
+        });
+        if (dupCustomer && !(customerData.id && dupCustomer.id === customerData.id)) {
+          throw new PhoneDuplicateError(
+            `شماره موبایل ${normMobile} تکراری است در مشتری`,
+            'PHONE_NUMBER_DUPLICATE',
+            normMobile,
+            dupCustomer
+          );
+        }
+      }
+
       let existingCust = db.customers.find((c) => (customerData.id && c.id === customerData.id) || (normMobile && normalizePhone(c.mobile) === normMobile));
 
       let finalCustomer: Customer;
@@ -1278,6 +1383,10 @@ class CentralDatabase {
 
   public async deletePayment(id: string): Promise<boolean> {
     return this.mutate((db) => {
+      const payment = db.payments.find((p) => p.id === id);
+      if (payment?.status === PaymentStatus.COMPLETED || payment?.status === PaymentStatus.VERIFIED) {
+        throw new Error('حذف پرداخت تأییدشده مجاز نیست.');
+      }
       const len = db.payments.length;
       db.payments = db.payments.filter((p) => p.id !== id);
       return db.payments.length < len;
@@ -1307,6 +1416,10 @@ class CentralDatabase {
 
   public async deleteCheck(id: string): Promise<boolean> {
     return this.mutate((db) => {
+      const check = db.checks.find((c) => c.id === id);
+      if (check && check.status === CheckStatus.DEPOSITED || check && check.status === CheckStatus.CLEARED) {
+        throw new Error('حذف چک وصول‌شده مجاز نیست.');
+      }
       const len = db.checks.length;
       db.checks = db.checks.filter((c) => c.id !== id);
       return db.checks.length < len;
@@ -1632,10 +1745,18 @@ class CentralDatabase {
         userRole: audit.userRole || UserRole.SUPER_ADMIN,
         action: audit.action || 'عملیات نامشخص',
         module: audit.module || ModuleName.SETTINGS,
+        entityType: audit.entityType,
+        entityName: audit.entityName,
         targetId: audit.targetId,
         targetType: audit.targetType,
         details: audit.details || '',
         ipAddress: audit.ipAddress,
+        fieldName: audit.fieldName,
+        oldValue: audit.oldValue,
+        newValue: audit.newValue,
+        result: audit.result || 'SUCCESS',
+        beforeState: audit.beforeState,
+        afterState: audit.afterState,
       };
       db.auditLogs.unshift(newAudit);
       if (db.auditLogs.length > 2000) {
@@ -1795,6 +1916,15 @@ class CentralDatabase {
       // Strict Double-Entry Rule Validation: Total Debit MUST equal Total Credit
       if (Math.abs(totalDebit - totalCredit) > 0.01) {
         throw new Error(`سند تراز نیست! مجموع بدهکار (${totalDebit.toLocaleString()}) با مجموع بستانکار (${totalCredit.toLocaleString()}) برابر نمی‌باشد.`);
+      }
+
+      // Validate referenced accounts exist
+      const accounts = Array.isArray(db.accounts) ? db.accounts : [];
+      const accountIds = new Set(accounts.map((a) => a.id));
+      for (const line of lines) {
+        if (!accountIds.has(line.account_id)) {
+          throw new Error(`حساب با شناسه ${line.account_id} وجود ندارد.`);
+        }
       }
 
       const now = new Date().toISOString();

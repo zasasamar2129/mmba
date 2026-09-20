@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { centralDb, normalizePhone } from './db';
+import { centralDb, normalizePhone, PhoneDuplicateError } from './db';
 import { backupService } from './backupService';
 import { webPushService } from './webPushService';
 import { notificationScheduler } from './notificationScheduler';
@@ -521,6 +521,9 @@ apiRouter.post('/leads', requirePermission(ModuleName.LEADS, PermissionAction.CR
     });
     res.json({ success: true, lead: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
+    if (err instanceof PhoneDuplicateError) {
+      return res.status(409).json({ success: false, error: 'PHONE_NUMBER_DUPLICATE', message: err.message });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -530,6 +533,9 @@ apiRouter.put('/leads/:id', requirePermission(ModuleName.LEADS, PermissionAction
     const saved = await centralDb.saveLead({ ...req.body, id: req.params.id });
     res.json({ success: true, lead: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
+    if (err instanceof PhoneDuplicateError) {
+      return res.status(409).json({ success: false, error: 'PHONE_NUMBER_DUPLICATE', message: err.message });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -569,6 +575,9 @@ apiRouter.post('/leads/:id/convert', requirePermission(ModuleName.CUSTOMERS, Per
       revision: centralDb.getRevisionInfo().revision,
     });
   } catch (err: any) {
+    if (err instanceof PhoneDuplicateError) {
+      return res.status(409).json({ success: false, error: 'PHONE_NUMBER_DUPLICATE', message: err.message });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -598,6 +607,9 @@ apiRouter.post('/customers', requirePermission(ModuleName.CUSTOMERS, PermissionA
     });
     res.json({ success: true, customer: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
+    if (err instanceof PhoneDuplicateError) {
+      return res.status(409).json({ success: false, error: 'PHONE_NUMBER_DUPLICATE', message: err.message });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -620,6 +632,9 @@ apiRouter.put('/customers/:id', requirePermission(ModuleName.CUSTOMERS, Permissi
     });
     res.json({ success: true, customer: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
+    if (err instanceof PhoneDuplicateError) {
+      return res.status(409).json({ success: false, error: 'PHONE_NUMBER_DUPLICATE', message: err.message });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -1117,6 +1132,18 @@ apiRouter.post('/contracts', requirePermission(ModuleName.CONTRACTS, PermissionA
   try {
     const contract: Contract = req.body;
     const saved = await centralDb.saveContract(contract);
+    const authUser = await getAuthUser(req);
+    await centralDb.logAudit({
+      userId: authUser?.id || 'system',
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'ثقر قرارداد جدید',
+      module: ModuleName.CONTRACTS,
+      targetId: saved.id,
+      targetType: 'CONTRACT',
+      details: `قرارداد جدید ${saved.contractNumber} با مبلغ ${saved.amount} برای مشتری ${saved.customerName} ثبت شد.`,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, contract: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -1127,6 +1154,18 @@ apiRouter.put('/contracts/:id', requirePermission(ModuleName.CONTRACTS, Permissi
   try {
     const contract: Contract = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveContract(contract);
+    const authUser = await getAuthUser(req);
+    await centralDb.logAudit({
+      userId: authUser?.id || 'system',
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'ویرایش قرارداد',
+      module: ModuleName.CONTRACTS,
+      targetId: saved.id,
+      targetType: 'CONTRACT',
+      details: `قرارداد ${saved.contractNumber} ویرایش شد.`,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, contract: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -1136,6 +1175,20 @@ apiRouter.put('/contracts/:id', requirePermission(ModuleName.CONTRACTS, Permissi
 apiRouter.delete('/contracts/:id', requirePermission(ModuleName.CONTRACTS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteContract(req.params.id);
+    const authUser = await getAuthUser(req);
+    if (deleted) {
+      await centralDb.logAudit({
+        userId: authUser?.id || 'system',
+        userName: authUser?.name || 'کاربر سیستم',
+        userRole: authUser?.role || UserRole.SUPER_ADMIN,
+        action: 'حذف قرارداد',
+        module: ModuleName.CONTRACTS,
+        targetId: req.params.id,
+        targetType: 'CONTRACT',
+        details: `قرارداد ${req.params.id} حذف شد.`,
+        ipAddress: req.ip,
+      });
+    }
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -1153,6 +1206,18 @@ apiRouter.post('/payments', requirePermission(ModuleName.PAYMENTS, PermissionAct
   try {
     const payment: Payment = req.body;
     const saved = await centralDb.savePayment(payment);
+    const authUser = await getAuthUser(req);
+    await centralDb.logAudit({
+      userId: authUser?.id || 'system',
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'ثبت پرداخت مالی جدید',
+      module: ModuleName.PAYMENTS,
+      targetId: saved.id,
+      targetType: 'PAYMENT',
+      details: `پرداخت به مبلغ ${saved.amount} ثبت شد.`,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, payment: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -1163,6 +1228,18 @@ apiRouter.put('/payments/:id', requirePermission(ModuleName.PAYMENTS, Permission
   try {
     const payment: Payment = { ...req.body, id: req.params.id };
     const saved = await centralDb.savePayment(payment);
+    const authUser = await getAuthUser(req);
+    await centralDb.logAudit({
+      userId: authUser?.id || 'system',
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'ویرایش پرداخت مالی',
+      module: ModuleName.PAYMENTS,
+      targetId: saved.id,
+      targetType: 'PAYMENT',
+      details: `پرداخت ${saved.id} ویرایش شد.`,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, payment: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -1172,6 +1249,20 @@ apiRouter.put('/payments/:id', requirePermission(ModuleName.PAYMENTS, Permission
 apiRouter.delete('/payments/:id', requirePermission(ModuleName.PAYMENTS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deletePayment(req.params.id);
+    const authUser = await getAuthUser(req);
+    if (deleted) {
+      await centralDb.logAudit({
+        userId: authUser?.id || 'system',
+        userName: authUser?.name || 'کاربر سیستم',
+        userRole: authUser?.role || UserRole.SUPER_ADMIN,
+        action: 'حذف پرداخت مالی',
+        module: ModuleName.PAYMENTS,
+        targetId: req.params.id,
+        targetType: 'PAYMENT',
+        details: `پرداخت ${req.params.id} حذف شد.`,
+        ipAddress: req.ip,
+      });
+    }
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -1186,6 +1277,18 @@ apiRouter.post('/checks', requirePermission(ModuleName.CHECKS, PermissionAction.
   try {
     const check: Check = req.body;
     const saved = await centralDb.saveCheck(check);
+    const authUser = await getAuthUser(req);
+    await centralDb.logAudit({
+      userId: authUser?.id || 'system',
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'ثبت چک جدید',
+      module: ModuleName.CHECKS,
+      targetId: saved.id,
+      targetType: 'CHECK',
+      details: `چک شماره ${saved.checkNumber} به مبلغ ${saved.amount} بانک ${saved.bankName} ثبت شد.`,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, check: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -1196,6 +1299,18 @@ apiRouter.put('/checks/:id', requirePermission(ModuleName.CHECKS, PermissionActi
   try {
     const check: Check = { ...req.body, id: req.params.id };
     const saved = await centralDb.saveCheck(check);
+    const authUser = await getAuthUser(req);
+    await centralDb.logAudit({
+      userId: authUser?.id || 'system',
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'ویرایش چک',
+      module: ModuleName.CHECKS,
+      targetId: saved.id,
+      targetType: 'CHECK',
+      details: `چک شماره ${saved.checkNumber} ویرایش شد.`,
+      ipAddress: req.ip,
+    });
     res.json({ success: true, check: saved, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -1205,6 +1320,20 @@ apiRouter.put('/checks/:id', requirePermission(ModuleName.CHECKS, PermissionActi
 apiRouter.delete('/checks/:id', requirePermission(ModuleName.CHECKS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteCheck(req.params.id);
+    const authUser = await getAuthUser(req);
+    if (deleted) {
+      await centralDb.logAudit({
+        userId: authUser?.id || 'system',
+        userName: authUser?.name || 'کاربر سیستم',
+        userRole: authUser?.role || UserRole.SUPER_ADMIN,
+        action: 'حذف چک',
+        module: ModuleName.CHECKS,
+        targetId: req.params.id,
+        targetType: 'CHECK',
+        details: `چک ${req.params.id} حذف شد.`,
+        ipAddress: req.ip,
+      });
+    }
     res.json({ success: deleted, revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
     res.status(500).json({ success: false, message: err.message });
@@ -2173,6 +2302,18 @@ apiRouter.get('/accounts', requirePermission(ModuleName.PAYMENTS, PermissionActi
 apiRouter.post('/accounts', requirePermission(ModuleName.PAYMENTS, PermissionAction.CREATE), async (req: Request, res: Response) => {
   try {
     const saved = await centralDb.saveAccount(req.body);
+    const authUser = await getAuthUser(req);
+    await centralDb.logAudit({
+      userId: authUser?.id || 'system',
+      userName: authUser?.name || 'کاربر سیستم',
+      userRole: authUser?.role || UserRole.SUPER_ADMIN,
+      action: 'ثبت / ویرایش حساب کل یا معین',
+      module: ModuleName.PAYMENTS,
+      targetId: saved.id,
+      targetType: 'ACCOUNT',
+      details: `حساب ${saved.name} (کد: ${saved.code}) ثبت/ویرایش گردید.`,
+      ipAddress: req.ip,
+    });
     res.json(saved);
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
@@ -2182,6 +2323,20 @@ apiRouter.post('/accounts', requirePermission(ModuleName.PAYMENTS, PermissionAct
 apiRouter.delete('/accounts/:id', requirePermission(ModuleName.PAYMENTS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
   try {
     const deleted = await centralDb.deleteAccount(req.params.id);
+    const authUser = await getAuthUser(req);
+    if (deleted) {
+      await centralDb.logAudit({
+        userId: authUser?.id || 'system',
+        userName: authUser?.name || 'کاربر سیستم',
+        userRole: authUser?.role || UserRole.SUPER_ADMIN,
+        action: 'حذف حساب حسابداری',
+        module: ModuleName.PAYMENTS,
+        targetId: req.params.id,
+        targetType: 'ACCOUNT',
+        details: `حساب ${req.params.id} از کدینگ حساب‌ها حذف شد.`,
+        ipAddress: req.ip,
+      });
+    }
     res.json({ success: deleted });
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
@@ -2218,6 +2373,19 @@ apiRouter.post('/journal-entries', requirePermission(ModuleName.PAYMENTS, Permis
     };
     const linesData = lines || req.body.lines || [];
     const saved = await centralDb.saveJournalEntry(entryData, linesData);
+    if (authUser) {
+      await centralDb.logAudit({
+        userId: authUser.id,
+        userName: authUser.name || 'کاربر سیستم',
+        userRole: authUser.role || UserRole.SUPER_ADMIN,
+        action: 'ثبت سند حسابداری',
+        module: ModuleName.PAYMENTS,
+        targetId: saved.id,
+        targetType: 'JOURNAL_ENTRY',
+        details: `سند حسابداری ${saved.entry_number} با بدهکار ${saved.totalDebit} و بستانکار ${saved.totalCredit} ثبت شد.`,
+        ipAddress: req.ip,
+      });
+    }
     res.json(saved);
   } catch (err: any) {
     res.status(400).json({ success: false, message: err.message });
