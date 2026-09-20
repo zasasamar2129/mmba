@@ -109,7 +109,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         <label
           htmlFor={generatedId}
           className={cn(
-            'flex items-start gap-3 p-3 sm:p-3.5 rounded-2xl cursor-pointer select-none transition-all text-right border',
+            'flex items-start gap-3 p-3 sm:p-3.5 rounded-2xl cursor-pointer select-none transition-all text-end border',
             isSelected
               ? `${currentScheme.border} bg-indigo-50/70 dark:bg-slate-900/90 ${currentScheme.glow}`
               : 'bg-white/80 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900/40',
@@ -251,7 +251,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
       <label
         htmlFor={generatedId}
         className={cn(
-          'inline-flex items-start gap-2.5 cursor-pointer select-none group transition-all text-right',
+          'inline-flex items-start gap-2.5 cursor-pointer select-none group transition-all text-end',
           disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : '',
           className
         )}

@@ -63,7 +63,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         <CheckSquare className="w-5 h-5" />
         <span className="text-[10px]">{t('nav.tasks')}</span>
         {overdueTasksCount > 0 && (
-          <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-950" />
+          <span className="absolute top-1 end-2 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-slate-950" />
         )}
       </button>
 

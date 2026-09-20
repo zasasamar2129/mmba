@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Wifi, WifiOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from '../../lib/i18n';
 
 export const OfflineBanner: React.FC = () => {
+  const { isRtl } = useTranslation();
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const [showReconnected, setShowReconnected] = useState<boolean>(false);
 
@@ -37,7 +39,7 @@ export const OfflineBanner: React.FC = () => {
           className="fixed top-0 inset-x-0 z-50 bg-rose-600 text-white text-xs py-1.5 px-4 text-center font-medium shadow-md flex items-center justify-center gap-2"
         >
           <WifiOff className="w-4 h-4 animate-pulse" />
-          <span>ارتباط اینترنت قطع است — حالت آفلاین فعال است. تغییرات شما محلی ذخیره می‌شوند.</span>
+          <span>{isRtl ? 'ارتباط اینترنت قطع است — حالت آفلاین فعال است. تغییرات شما محلی ذخیره می‌شوند.' : 'Internet connection lost — offline mode active. Your changes are saved locally.'}</span>
         </motion.div>
       )}
 
@@ -49,7 +51,7 @@ export const OfflineBanner: React.FC = () => {
           className="fixed top-0 inset-x-0 z-50 bg-emerald-600 text-white text-xs py-1.5 px-4 text-center font-medium shadow-md flex items-center justify-center gap-2"
         >
           <Wifi className="w-4 h-4" />
-          <span>اتصال اینترنت برقرار شد — همگام‌سازی اطلاعات در پس‌زمینه انجام گردید.</span>
+          <span>{isRtl ? 'اتصال اینترنت برقرار شد — همگام‌سازی اطلاعات در پس‌زمینه انجام گردید.' : 'Internet connection restored — background sync completed.'}</span>
         </motion.div>
       )}
     </AnimatePresence>

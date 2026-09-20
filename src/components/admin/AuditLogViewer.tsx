@@ -248,7 +248,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       ) : viewMode === 'list' ? (
         /* ROW / LIST VIEW (TABLE) */
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="p-3 w-36">تاریخ و ساعت</th>
@@ -257,7 +257,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 <th className="p-3 w-28">واحد / ماژول</th>
                 <th className="p-3">شرح جزئیات و تغییرات</th>
                 <th className="p-3 w-48">مقدار قبلی / جدید</th>
-                <th className="p-3 text-left w-20">مشاهده</th>
+                <th className="p-3 text-start w-20">مشاهده</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -314,7 +314,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   </td>
 
                   {/* Actions */}
-                  <td className="p-3 text-left whitespace-nowrap">
+                  <td className="p-3 text-start whitespace-nowrap">
                     <button
                       type="button"
                       onClick={() => setSelectedLog(log)}

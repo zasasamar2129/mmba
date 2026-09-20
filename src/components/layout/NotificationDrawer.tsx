@@ -191,7 +191,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
     >
       <div className="space-y-4">
         {/* Device Push Notification Banner */}
-        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/80 to-slate-50 dark:from-indigo-950/30 dark:to-slate-900/60 border border-indigo-200/70 dark:border-indigo-800/40 text-right space-y-2.5">
+        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/80 to-slate-50 dark:from-indigo-950/30 dark:to-slate-900/60 border border-indigo-200/70 dark:border-indigo-800/40 text-end space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
@@ -294,7 +294,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
                 <div
                   key={notif.id}
                   onClick={() => handleItemClick(notif)}
-                  className={`p-3.5 rounded-xl border transition-all cursor-pointer text-right flex items-start gap-3 ${
+                  className={`p-3.5 rounded-xl border transition-all cursor-pointer text-end flex items-start gap-3 ${
                     notif.read
                       ? 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/60 text-slate-600 dark:text-slate-300 opacity-85'
                       : 'bg-white dark:bg-slate-900/90 border-indigo-200 dark:border-indigo-500/30 text-slate-900 dark:text-slate-100 shadow-xs'

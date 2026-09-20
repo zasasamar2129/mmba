@@ -187,7 +187,7 @@ export const CheckFormModal: React.FC<CheckFormModalProps> = ({
               leftIcon={<DollarSign className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />}
             />
             {rawAmount > 0 && (
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold text-left pr-2">
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold text-start pe-2">
                 {isRtl ? 'معادل: ' : 'Equivalent: '}{formatCurrency(rawAmount)}
               </p>
             )}

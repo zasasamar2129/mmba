@@ -384,7 +384,7 @@ export const VoiceNoteRecorderModal: React.FC<VoiceNoteRecorderModalProps> = ({
       }
       subtitle="امکان ضبط زنده با میکروفون یا بارگذاری فایل‌های صوتی مکالمات و الصاق به پرونده‌ها"
     >
-      <form onSubmit={handleSubmit} className="space-y-5 text-right">
+      <form onSubmit={handleSubmit} className="space-y-5 text-end">
         {/* Mode Selector (Record vs Upload) */}
         <div className="flex rounded-2xl bg-slate-950 p-1 border border-slate-800 gap-1">
           <button
@@ -721,7 +721,7 @@ export const VoiceNoteRecorderModal: React.FC<VoiceNoteRecorderModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-rose-400 text-slate-400 mr-0.5"
+                    className="hover:text-rose-400 text-slate-400 me-0.5"
                   >
                     ×
                   </button>

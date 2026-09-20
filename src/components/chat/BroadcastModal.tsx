@@ -176,7 +176,7 @@ export const BroadcastModal: React.FC<BroadcastModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setTargetType('ALL')}
-                  className={`p-2.5 rounded-xl border text-right transition-all ${
+                  className={`p-2.5 rounded-xl border text-end transition-all ${
                     targetType === 'ALL'
                       ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 ring-1 ring-indigo-500'
                       : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -188,7 +188,7 @@ export const BroadcastModal: React.FC<BroadcastModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setTargetType('SELECTED')}
-                  className={`p-2.5 rounded-xl border text-right transition-all ${
+                  className={`p-2.5 rounded-xl border text-end transition-all ${
                     targetType === 'SELECTED'
                       ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 ring-1 ring-indigo-500'
                       : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -205,7 +205,7 @@ export const BroadcastModal: React.FC<BroadcastModalProps> = ({
                 <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   {isRtl ? 'انتخاب کاربران گیرنده:' : 'Select Recipients:'} ({selectedUserIds.length} {isRtl ? 'نفر' : 'selected'})
                 </p>
-                <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
+                <div className="max-h-36 overflow-y-auto space-y-1 pe-1">
                   {allUsers.filter((u) => u.isActive !== false).map((u) => {
                     const selected = selectedUserIds.includes(u.id);
                     return (
@@ -265,7 +265,7 @@ export const BroadcastModal: React.FC<BroadcastModalProps> = ({
                 <p className="text-xs">{isRtl ? 'تاکنون پیام همگانی ثبت نشده است.' : 'No broadcasts yet.'}</p>
               </div>
             ) : (
-              <div className="max-h-96 overflow-y-auto space-y-2.5 pr-1">
+              <div className="max-h-96 overflow-y-auto space-y-2.5 pe-1">
                 {broadcasts.map((b) => (
                   <div
                     key={b.id}

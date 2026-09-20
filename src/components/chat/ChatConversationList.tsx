@@ -156,7 +156,7 @@ export const ChatConversationList: React.FC<ChatConversationListProps> = ({
               <div
                 key={c.id}
                 onClick={() => onSelect(c.id)}
-                className={`w-full group/card flex items-center gap-2.5 p-2.5 rounded-xl text-right transition-all cursor-pointer border ${
+                className={`w-full group/card flex items-center gap-2.5 p-2.5 rounded-xl text-end transition-all cursor-pointer border ${
                   active
                     ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
                     : 'bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800/80 border-slate-200 dark:border-slate-800'

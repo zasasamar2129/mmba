@@ -230,7 +230,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
                 </div>
               </div>
 
-              <div className="text-left text-xs space-y-1 text-slate-700 font-mono">
+              <div className="text-start text-xs space-y-1 text-slate-700 font-mono">
                 {documentNumber && (
                   <div>
                     <span className="text-slate-500 font-sans">شماره سند: </span>
@@ -263,7 +263,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
         </div>
 
         {/* Informative Tip */}
-        <div className="text-[11px] text-slate-500 dark:text-slate-400 text-right flex items-center gap-1.5 justify-end">
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 text-end flex items-center gap-1.5 justify-end">
           <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
           <span>جهت ذخیره فایل PDF، در پنجره بازشده چاپ مرورگر، مقصد (Destination) را روی «Save as PDF» قرار دهید.</span>
         </div>

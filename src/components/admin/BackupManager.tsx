@@ -467,7 +467,7 @@ export const BackupManager: React.FC<BackupManagerProps> = ({ currentUser, onRef
                 </p>
               </div>
             ) : (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-[600px] overflow-y-auto pe-1">
                 {backups.map((backup) => {
                   const isSuccess = backup.status === BackupStatus.SUCCESSFUL || backup.status === BackupStatus.RESTORED;
                   const isSelected = selectedBackup?.id === backup.id;

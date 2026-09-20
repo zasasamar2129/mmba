@@ -57,8 +57,8 @@ export const Drawer: React.FC<DrawerProps> = ({
   };
 
   const posClasses = {
-    right: 'inset-y-0 right-0 w-full max-w-md sm:max-w-lg border-l border-slate-200 dark:border-slate-800',
-    left: 'inset-y-0 left-0 w-full max-w-md sm:max-w-lg border-r border-slate-200 dark:border-slate-800',
+    right: 'inset-y-0 end-0 w-full max-w-md sm:max-w-lg border-l border-slate-200 dark:border-slate-800',
+    left: 'inset-y-0 start-0 w-full max-w-md sm:max-w-lg border-r border-slate-200 dark:border-slate-800',
     bottom: 'inset-x-0 bottom-0 w-full max-h-[85vh] rounded-t-3xl border-t border-slate-200 dark:border-slate-800',
   };
 

@@ -239,7 +239,7 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
               leftIcon={<DollarSign className="w-4 h-4 text-amber-400" />}
             />
             {rawEst > 0 && (
-              <p className="text-xs text-slate-400 text-left pr-2">
+              <p className="text-xs text-slate-400 text-start pe-2">
                 {isRtl ? 'معادل: ' : 'Equivalent: '}{formatCurrency(rawEst)}
               </p>
             )}
@@ -255,7 +255,7 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
               leftIcon={<DollarSign className="w-4 h-4 text-emerald-400" />}
             />
             {rawFin > 0 && (
-              <p className="text-xs text-emerald-400 font-semibold text-left pr-2">
+              <p className="text-xs text-emerald-400 font-semibold text-start pe-2">
                 {isRtl ? 'معادل: ' : 'Equivalent: '}{formatCurrency(rawFin)}
               </p>
             )}

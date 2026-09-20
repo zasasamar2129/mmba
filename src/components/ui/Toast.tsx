@@ -65,7 +65,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
       {children}
-      <div className="fixed bottom-4 left-4 right-4 sm:right-auto sm:left-6 z-[200] flex flex-col gap-2.5 max-w-md pointer-events-none">
+      <div className="fixed bottom-4 start-4 end-4 sm:right-auto sm:start-6 z-[200] flex flex-col gap-2.5 max-w-md pointer-events-none">
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
@@ -79,7 +79,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               )}
             >
               {icons[t.type]}
-              <div className="flex-1 text-right">
+              <div className="flex-1 text-end">
                 <h4 className="text-xs sm:text-sm font-semibold">{t.title}</h4>
                 {t.message && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.message}</p>}
               </div>

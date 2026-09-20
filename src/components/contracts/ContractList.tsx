@@ -263,7 +263,7 @@ export const ContractList: React.FC<ContractListProps> = ({
       ) : viewMode === 'list' ? (
         /* ROW / LIST VIEW (TABLE) */
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="p-3 w-32">شماره قرارداد</th>
@@ -274,7 +274,7 @@ export const ContractList: React.FC<ContractListProps> = ({
                 <th className="p-3 w-32">پیش‌پرداخت</th>
                 <th className="p-3 w-28">وضعیت</th>
                 <th className="p-3 w-32">تاریخ شروع</th>
-                <th className="p-3 text-left w-48">اقدامات</th>
+                <th className="p-3 text-start w-48">اقدامات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -327,7 +327,7 @@ export const ContractList: React.FC<ContractListProps> = ({
                   </td>
 
                   {/* Actions */}
-                  <td className="p-3 text-left whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                  <td className="p-3 text-start whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1.5">
                       <Button
                         variant="outline"

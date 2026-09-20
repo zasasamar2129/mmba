@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -f /tmp/checkpoints /tmp/verify*.mjs /tmp/results*.json)",
+      "Bash(rm -rf /tmp/)",
+      "Bash(npx tsx *)"
+    ]
+  }
+}

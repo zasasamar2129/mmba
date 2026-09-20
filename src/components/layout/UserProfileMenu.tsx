@@ -399,7 +399,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                   {t('profile.switchPrompt')}
                 </p>
 
-                <div className="grid grid-cols-1 gap-2 max-h-[320px] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 gap-2 max-h-[320px] overflow-y-auto pe-1">
                   {(allUsers || []).map((u) => {
                     const isCurrent = u.id === currentUser.id;
                     return (
@@ -490,9 +490,9 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                         setSwitchError(null);
                       }}
                       autoFocus
-                      className="w-full h-11 px-3.5 pr-10 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full h-11 px-3.5 pe-10 rounded-xl bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-indigo-500 font-mono"
                     />
-                    <div className="absolute right-3.5 top-3 text-slate-400 pointer-events-none">
+                    <div className="absolute end-3.5 top-3 text-slate-400 pointer-events-none">
                       <Lock className="w-4 h-4" />
                     </div>
                   </div>

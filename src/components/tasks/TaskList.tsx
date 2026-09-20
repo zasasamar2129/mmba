@@ -345,7 +345,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       ) : viewMode === 'list' ? (
         /* ROW / LIST VIEW (TABLE) */
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="p-3 w-10 text-center">وضعیت</th>
@@ -354,7 +354,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 <th className="p-3 w-36">مسئول انجام</th>
                 <th className="p-3 w-32">مشتری مرتبط</th>
                 <th className="p-3 w-36">مهلت انجام (سررسید)</th>
-                <th className="p-3 text-left w-36">عملیات</th>
+                <th className="p-3 text-start w-36">عملیات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -443,7 +443,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     </td>
 
                     {/* Actions */}
-                    <td className="p-3 text-left whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                    <td className="p-3 text-start whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1.5">
                         {canShare && (
                           <button
@@ -504,7 +504,7 @@ export const TaskList: React.FC<TaskListProps> = ({
               <div
                 key={t.id}
                 onClick={() => onEditTask(t)}
-                className={`p-4 rounded-2xl liquid-glass-card border transition-all cursor-pointer text-right space-y-3 bg-white dark:bg-slate-900 ${
+                className={`p-4 rounded-2xl liquid-glass-card border transition-all cursor-pointer text-end space-y-3 bg-white dark:bg-slate-900 ${
                   isCompleted
                     ? 'border-slate-200 dark:border-slate-800/60 opacity-60 bg-slate-100/50 dark:bg-slate-950/40'
                     : overdue

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { RegisteredHolder, SimCard, User, UserRole } from '../../types';
 import { storage, subscribeToStorage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -51,6 +52,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
   onSelectHolderForFilter,
 }) => {
   const { success, error, info } = useToast();
+  const { t, isRtl } = useTranslation();
   const [holders, setHolders] = useState<RegisteredHolder[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddingOrEditing, setIsAddingOrEditing] = useState(false);
@@ -145,7 +147,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
     if (h.nationalIdImageUrl) {
       setIdCardFile({
         url: h.nationalIdImageUrl,
-        name: h.nationalIdImageName || 'کارت_ملی.jpg',
+        name: h.nationalIdImageName || (isRtl ? 'کارت_ملی.jpg' : 'national_id.jpg'),
         size: h.nationalIdImageSize || 0,
         type: h.nationalIdImageType || 'image/jpeg',
       });
@@ -159,7 +161,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
   const processUploadedFile = async (file: File) => {
     if (!file) return;
     if (file.size > 25 * 1024 * 1024) {
-      error('حجم فایل نمی‌تواند بیشتر از ۲۵ مگابایت باشد.');
+      error(isRtl ? 'حجم فایل نمی‌تواند بیشتر از ۲۵ مگابایت باشد.' : 'File size cannot exceed 25 MB.');
       return;
     }
 
@@ -172,9 +174,9 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
         size: compressed.size,
         type: compressed.type,
       });
-      success('تصویر کارت ملی با موفقیت فشرده و آماده ذخیره شد.');
+      success(isRtl ? 'تصویر کارت ملی با موفقیت فشرده و آماده ذخیره شد.' : 'National ID image compressed and ready for save.');
     } catch (err: any) {
-      error(err.message || 'خطا در بهینه‌سازی و پردازش تصویر مدرک');
+      error(err.message || (isRtl ? 'خطا در بهینه‌سازی و پردازش تصویر مدرک' : 'Error processing document image'));
     } finally {
       setIsCompressingImage(false);
     }
@@ -206,7 +208,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
     }
 
     if (file.size > 25 * 1024 * 1024) {
-      error('حجم فایل نمی‌تواند بیشتر از ۲۵ مگابایت باشد.');
+      error(isRtl ? 'حجم فایل نمی‌تواند بیشتر از ۲۵ مگابایت باشد.' : 'File size cannot exceed 25 MB.');
       if (quickUploadInputRef.current) quickUploadInputRef.current.value = '';
       return;
     }
@@ -214,7 +216,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
     setIsCompressingImage(true);
     try {
       const compressed = await compressIdCardImage(file, { maxWidth: 1400, maxHeight: 1400, quality: 0.82 });
-      
+
       const cleanNational = cleanDigits(target.nationalId || '').padStart(10, '0');
       let cleanMobile = cleanDigits(target.mobile || '');
       if (cleanMobile.length === 10 && cleanMobile.startsWith('9')) {
@@ -223,21 +225,21 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
 
       await storage.saveRegisteredHolder({
         ...target,
-        fullName: target.fullName || 'کاربر ثبت‌کننده',
+        fullName: target.fullName || (isRtl ? 'کاربر ثبت‌کننده' : 'Registered Holder'),
         nationalId: cleanNational,
         mobile: cleanMobile,
         nationalIdImageUrl: compressed.dataUrl,
         nationalIdImageName: compressed.name,
         nationalIdImageSize: compressed.size,
         nationalIdImageType: compressed.type,
-        nationalIdImageUploadedBy: currentUser?.name || currentUser?.id || 'کاربر سیستم',
+        nationalIdImageUploadedBy: currentUser?.name || currentUser?.id || (isRtl ? 'کاربر سیستم' : 'System User'),
         nationalIdImageUploadedAt: new Date().toISOString(),
       });
 
-      success(`تصویر کارت ملی برای «${target.fullName}» با موفقیت ذخیره شد.`);
+      success(isRtl ? `تصویر کارت ملی برای «${target.fullName}» با موفقیت ذخیره شد.` : `National ID image for "${target.fullName}" saved successfully.`);
       loadData();
     } catch (err: any) {
-      error(err.message || 'خطا در بارگذاری و ذخیره مدرک');
+      error(err.message || (isRtl ? 'خطا در بارگذاری و ذخیره مدرک' : 'Error uploading and saving document'));
     } finally {
       setIsCompressingImage(false);
       setQuickUploadTargetHolder(null);
@@ -260,20 +262,20 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
     }
 
     if (!cleanName) {
-      errors.fullName = 'نام و نام خانوادگی فرد الزامی است.';
+      errors.fullName = isRtl ? 'نام و نام خانوادگی فرد الزامی است.' : 'Full name is required.';
     }
 
     if (!rawNational || rawNational.length < 8) {
-      errors.nationalId = 'کد ملی معتبر حداقل ۸ تا ۱۰ رقم الزامی است.';
+      errors.nationalId = isRtl ? 'کد ملی معتبر حداقل ۸ تا ۱۰ رقم الزامی است.' : 'Valid national ID (8-10 digits) is required.';
     }
 
     if (!rawMobile || rawMobile.length < 10) {
-      errors.mobile = 'شماره همراه معتبر حداقل ۱۰ تا ۱۱ رقم الزامی است.';
+      errors.mobile = isRtl ? 'شماره همراه معتبر حداقل ۱۰ تا ۱۱ رقم الزامی است.' : 'Valid mobile number (10-11 digits) is required.';
     }
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      error('لطفاً فیلدهای الزامی مشخص شده را تکمیل فرمایید.');
+      error(isRtl ? 'لطفاً فیلدهای الزامی مشخص شده را تکمیل فرمایید.' : 'Please complete the required fields.');
       return;
     }
 
@@ -293,17 +295,17 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
         nationalIdImageName: idCardFile?.name || undefined,
         nationalIdImageSize: idCardFile?.size || undefined,
         nationalIdImageType: idCardFile?.type || undefined,
-        nationalIdImageUploadedBy: idCardFile ? (currentUser?.name || currentUser?.id || 'کاربر') : undefined,
+        nationalIdImageUploadedBy: idCardFile ? (currentUser?.name || currentUser?.id || (isRtl ? 'کاربر' : 'User')) : undefined,
         nationalIdImageUploadedAt: idCardFile ? new Date().toISOString() : undefined,
       };
 
       await storage.saveRegisteredHolder(payload);
 
-      success(editingHolder ? 'اطلاعات فرد ثبت‌کننده بروزرسانی گردید.' : 'شخص ثبت‌کننده جدید با موفقیت ذخیره شد.');
+      success(editingHolder ? (isRtl ? 'اطلاعات فرد ثبت‌کننده بروزرسانی گردید.' : 'Registered holder details updated.') : (isRtl ? 'شخص ثبت‌کننده جدید با موفقیت ذخیره شد.' : 'New registered holder saved successfully.'));
       setIsAddingOrEditing(false);
       loadData();
     } catch (err: any) {
-      error(err.message || 'خطا در ذخیره‌سازی اطلاعات فرد ثبت‌کننده');
+      error(err.message || (isRtl ? 'خطا در ذخیره‌سازی اطلاعات فرد ثبت‌کننده' : 'Error saving registered holder information'));
     } finally {
       setIsSubmitting(false);
     }
@@ -327,7 +329,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
   const handleViewIdCard = async (holder: RegisteredHolder) => {
     const imgUrl = await resolveHolderIdCard(holder);
     if (!imgUrl) {
-      error('تصویر یا سندی برای این شخص یافت نشد.');
+      error(isRtl ? 'تصویر یا سندی برای این شخص یافت نشد.' : 'No image or document found for this person.');
       return;
     }
     setViewingHolder({ ...holder, nationalIdImageUrl: imgUrl });
@@ -337,7 +339,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
   const handleDownloadIdCard = async (holder: RegisteredHolder) => {
     const imgUrl = await resolveHolderIdCard(holder);
     if (!imgUrl) {
-      error('تصویر یا سندی برای دانلود موجود نیست.');
+      error(isRtl ? 'تصویر یا سندی برای دانلود موجود نیست.' : 'No image or document available for download.');
       return;
     }
 
@@ -345,14 +347,14 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
       const link = document.createElement('a');
       link.href = imgUrl;
       const ext = holder.nationalIdImageName ? holder.nationalIdImageName.split('.').pop() : 'jpg';
-      const cleanFileName = `کارت_ملی_${holder.fullName.replace(/\s+/g, '_')}_${holder.nationalId}.${ext}`;
+      const cleanFileName = `${isRtl ? 'کارت_ملی_' : 'national_id_'}_${holder.fullName.replace(/\s+/g, '_')}_${holder.nationalId}.${ext}`;
       link.download = cleanFileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      success('دانلود مدرک شناسایی آغاز شد.');
+      success(isRtl ? 'دانلود مدرک شناسایی آغاز شد.' : 'Identity document download started.');
     } catch (err) {
-      error('خطا در دانلود فایل مدرک شناسایی');
+      error(isRtl ? 'خطا در دانلود فایل مدرک شناسایی' : 'Error downloading identity document');
     }
   };
 
@@ -360,12 +362,12 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
   const handleShareIdCard = async (holder: RegisteredHolder) => {
     const imgUrl = await resolveHolderIdCard(holder);
     if (!imgUrl) {
-      error('تصویر یا سندی برای اشتراک‌گذاری موجود نیست.');
+      error(isRtl ? 'تصویر یا سندی برای اشتراک‌گذاری موجود نیست.' : 'No image or document available for sharing.');
       return;
     }
 
-    const shareTitle = `کارت ملی ${holder.fullName}`;
-    const shareText = `مدرک شناسایی / کارت ملی ${holder.fullName} (کد ملی: ${holder.nationalId} - موبایل: ${holder.mobile}) ثبت شده در سامانه MMBA`;
+    const shareTitle = isRtl ? `کارت ملی ${holder.fullName}` : `National ID: ${holder.fullName}`;
+    const shareText = isRtl ? `مدرک شناسایی / کارت ملی ${holder.fullName} (کد ملی: ${holder.nationalId} - موبایل: ${holder.mobile}) ثبت شده در سامانه MMBA` : `National ID / Identity document for ${holder.fullName} (National ID: ${holder.nationalId} - Mobile: ${holder.mobile}) registered in MMBA system`;
 
     // Try Web Share API with file if supported
     if (navigator.share) {
@@ -375,7 +377,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
           const res = await fetch(imgUrl);
           const blob = await res.blob();
           const ext = holder.nationalIdImageName?.split('.').pop() || 'jpg';
-          const file = new File([blob], `کارت_ملی_${holder.fullName}_${holder.nationalId}.${ext}`, { type: blob.type });
+          const file = new File([blob], `${isRtl ? 'کارت_ملی_' : 'national_id_'}${holder.fullName}_${holder.nationalId}.${ext}`, { type: blob.type });
 
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
@@ -383,7 +385,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
               text: shareText,
               files: [file],
             });
-            success('مدرک شناسایی با موفقیت به اشتراک گذاشته شد.');
+            success(isRtl ? 'مدرک شناسایی با موفقیت به اشتراک گذاشته شد.' : 'Identity document shared successfully.');
             return;
           }
         }
@@ -394,7 +396,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
           text: shareText,
           url: window.location.href,
         });
-        success('اطلاعات مدرک به اشتراک گذاشته شد.');
+        success(isRtl ? 'اطلاعات مدرک به اشتراک گذاشته شد.' : 'Document information shared.');
         return;
       } catch (err: any) {
         if (err.name !== 'AbortError') {
@@ -409,24 +411,24 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
 
   // Copy ID card link or info to clipboard
   const handleCopyIdCardInfo = (holder: RegisteredHolder) => {
-    const text = `کارت ملی: ${holder.fullName}\nکد ملی: ${holder.nationalId}\nشماره همراه: ${holder.mobile}\nثبت‌شده در سامانه MMBA`;
+    const text = isRtl ? `کارت ملی: ${holder.fullName}\nکد ملی: ${holder.nationalId}\nشماره همراه: ${holder.mobile}\nثبت‌شده در سامانه MMBA` : `National ID: ${holder.fullName}\nNational ID number: ${holder.nationalId}\nMobile: ${holder.mobile}\nRegistered in MMBA system`;
     navigator.clipboard.writeText(text).then(() => {
       setCopySuccess(true);
-      success('اطلاعات مدرک در کلیپ‌بورد کپی گردید.');
+      success(isRtl ? 'اطلاعات مدرک در کلیپ‌بورد کپی گردید.' : 'Document information copied to clipboard.');
       setTimeout(() => setCopySuccess(false), 2500);
     }).catch(() => {
-      error('خطا در کپی اطلاعات');
+      error(isRtl ? 'خطا در کپی اطلاعات' : 'Error copying information');
     });
   };
 
   const handleConfirmDelete = async () => {
     if (!deletingHolder) return;
     if (!isManager) {
-      error('تنها مدیران ارشد و سرپرست سامانه مجاز به حذف افراد ثبت‌کننده هستند.');
+      error(isRtl ? 'تنها مدیران ارشد و سرپرست سامانه مجاز به حذف افراد ثبت‌کننده هستند.' : 'Only senior administrators and system supervisors can delete registered holders.');
       return;
     }
     if (!deleteReason.trim()) {
-      error('لطفاً دلیل حذف را جهت ثبت در لاگ نظارتی سیستم وارد نمایید.');
+      error(isRtl ? 'لطفاً دلیل حذف را جهت ثبت در لاگ نظارتی سیستم وارد نمایید.' : 'Please enter a deletion reason to record in the system audit log.');
       return;
     }
 
@@ -434,15 +436,15 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
     try {
       const res = await storage.deleteRegisteredHolder(deletingHolder.id, deleteReason.trim());
       if (res.success) {
-        success('شخص ثبت‌کننده با موفقیت حذف گردید و لاگ نظارتی ثبت شد.');
+        success(isRtl ? 'شخص ثبت‌کننده با موفقیت حذف گردید و لاگ نظارتی ثبت شد.' : 'Registered holder deleted and audit log recorded.');
         setDeletingHolder(null);
         setDeleteReason('');
         loadData();
       } else {
-        error(res.message || 'امکان حذف این شخص وجود ندارد.');
+        error(res.message || (isRtl ? 'امکان حذف این شخص وجود ندارد.' : 'Unable to delete this person.'));
       }
     } catch (err: any) {
-      error(err.message || 'خطا در فرآیند حذف');
+      error(err.message || (isRtl ? 'خطا در فرآیند حذف' : 'Error during deletion process'));
     } finally {
       setIsDeleting(false);
     }
@@ -748,7 +750,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
         )}
 
         {/* Holders List */}
-        <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[520px] overflow-y-auto pe-1">
           {filteredHolders.length === 0 ? (
             <div className="p-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 text-slate-400">
               <Users className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
@@ -894,7 +896,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                     {/* Actions & Capacity Bar */}
                     <div className="flex sm:flex-col items-end justify-between sm:justify-center gap-2 shrink-0">
                       {/* Capacity Visual Progress */}
-                      <div className="w-36 space-y-1 text-left">
+                      <div className="w-36 space-y-1 text-start">
                         <div className="flex justify-between text-[10px] text-slate-400">
                           <span>ظرفیت:</span>
                           <span className="font-bold">{activeCount} / {maxCap}</span>
@@ -922,7 +924,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                             className="text-xs text-indigo-600 dark:text-indigo-400 h-8 px-2"
                             title="مشاهده سیم‌کارت‌های این فرد"
                           >
-                            <Smartphone className="w-3.5 h-3.5 ml-1" />
+                            <Smartphone className="w-3.5 h-3.5 ms-1" />
                             سیم‌کارت‌ها
                           </Button>
                         )}

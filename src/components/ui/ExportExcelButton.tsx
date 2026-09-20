@@ -66,7 +66,7 @@ export const ExportExcelButton: React.FC<ExportExcelButtonProps> = ({
     >
       <span>{exportedRecently ? 'دانلود شد!' : label}</span>
       {itemCount !== undefined && !exportedRecently && (
-        <span className="text-[10px] opacity-75 font-mono mr-1">({itemCount})</span>
+        <span className="text-[10px] opacity-75 font-mono me-1">({itemCount})</span>
       )}
     </Button>
   );

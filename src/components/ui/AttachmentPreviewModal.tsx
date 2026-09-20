@@ -482,7 +482,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
               id="preview-btn-close"
               onClick={onClose}
               title={t('preview.close')}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 border border-transparent transition-all ml-1"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/40 border border-transparent transition-all ms-1"
             >
               <X className="w-5 h-5" />
             </button>
@@ -677,7 +677,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
               </div>
 
               {/* Metadata Stats Grid */}
-              <div className="grid grid-cols-2 gap-2 text-right bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-end bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80 text-xs">
                 <div className="space-y-1">
                   <span className="text-[11px] text-slate-500 flex items-center gap-1">
                     <HardDrive className="w-3 h-3" />

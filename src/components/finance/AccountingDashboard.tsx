@@ -285,8 +285,8 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                 <th className="border border-slate-300 dark:border-slate-700 p-2 w-28 text-center">کد حساب</th>
                 <th className="border border-slate-300 dark:border-slate-700 p-2">نام حساب</th>
                 <th className="border border-slate-300 dark:border-slate-700 p-2">شرح سطر</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2 text-left w-36">بدهکار (ریال)</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2 text-left w-36">بستانکار (ریال)</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 text-start w-36">بدهکار (ریال)</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 text-start w-36">بستانکار (ریال)</th>
               </tr>
             </thead>
             <tbody>
@@ -296,20 +296,20 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                   <td className="border border-slate-300 dark:border-slate-700 p-2 text-center font-mono">{line.account_code || '—'}</td>
                   <td className="border border-slate-300 dark:border-slate-700 p-2 font-medium">{line.account_name || '—'}</td>
                   <td className="border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400">{line.description || entry.description}</td>
-                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-left font-mono font-bold">
+                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono font-bold">
                     {line.debit > 0 ? Number(line.debit).toLocaleString() : '—'}
                   </td>
-                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-left font-mono font-bold">
+                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono font-bold">
                     {line.credit > 0 ? Number(line.credit).toLocaleString() : '—'}
                   </td>
                 </tr>
               ))}
               <tr className="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-slate-100">
-                <td colSpan={4} className="border border-slate-300 dark:border-slate-700 p-2 text-right">جمع کل سند (تراز):</td>
-                <td className="border border-slate-300 dark:border-slate-700 p-2 text-left font-mono text-emerald-700 dark:text-emerald-400">
+                <td colSpan={4} className="border border-slate-300 dark:border-slate-700 p-2 text-end">جمع کل سند (تراز):</td>
+                <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono text-emerald-700 dark:text-emerald-400">
                   {Number(entry.totalDebit || 0).toLocaleString()}
                 </td>
-                <td className="border border-slate-300 dark:border-slate-700 p-2 text-left font-mono text-indigo-700 dark:text-indigo-300">
+                <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono text-indigo-700 dark:text-indigo-300">
                   {Number(entry.totalCredit || 0).toLocaleString()}
                 </td>
               </tr>
@@ -327,7 +327,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
   };
 
   return (
-    <div className="space-y-6 text-right animate-blur-fade-up">
+    <div className="space-y-6 text-end animate-blur-fade-up">
       {/* Official Architecture Notice */}
       <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
         <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -431,15 +431,15 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       {activeTab === 'JOURNAL' && (
         <div className="space-y-4">
           <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
-            <table className="w-full text-right text-xs">
+            <table className="w-full text-end text-xs">
               <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="p-3 w-12 text-center">شماره</th>
                   <th className="p-3 w-28">تاریخ سند</th>
                   <th className="p-3">شرح سند حسابداری</th>
                   <th className="p-3 w-28 text-center">نوع عطف</th>
-                  <th className="p-3 text-left w-36">مجموع بدهکار</th>
-                  <th className="p-3 text-left w-36">مجموع بستانکار</th>
+                  <th className="p-3 text-start w-36">مجموع بدهکار</th>
+                  <th className="p-3 text-start w-36">مجموع بستانکار</th>
                   <th className="p-3 w-24 text-center">وضعیت</th>
                   <th className="p-3 w-28 text-center">عملیات</th>
                 </tr>
@@ -462,10 +462,10 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                         <td className="p-3 text-center">
                           <Badge variant="indigo">{entry.reference_type || 'MANUAL'}</Badge>
                         </td>
-                        <td className="p-3 text-left font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        <td className="p-3 text-start font-mono font-bold text-emerald-600 dark:text-emerald-400">
                           {Number(entry.totalDebit || 0).toLocaleString()}
                         </td>
-                        <td className="p-3 text-left font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        <td className="p-3 text-start font-mono font-bold text-indigo-600 dark:text-indigo-400">
                           {Number(entry.totalCredit || 0).toLocaleString()}
                         </td>
                         <td className="p-3 text-center">
@@ -501,15 +501,15 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                               <h4 className="font-bold text-xs text-indigo-900 dark:text-indigo-300">
                                 سطرهای آرتیکل سند ({entry.lines?.length || 0} سطر):
                               </h4>
-                              <table className="w-full text-xs text-right border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
+                              <table className="w-full text-xs text-end border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
                                 <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
                                   <tr>
                                     <th className="p-2 w-10 text-center">#</th>
                                     <th className="p-2 w-28 text-center">کد حساب</th>
                                     <th className="p-2">نام حساب</th>
                                     <th className="p-2">شرح آرتیکل</th>
-                                    <th className="p-2 text-left w-32">بدهکار (ریال)</th>
-                                    <th className="p-2 text-left w-32">بستانکار (ریال)</th>
+                                    <th className="p-2 text-start w-32">بدهکار (ریال)</th>
+                                    <th className="p-2 text-start w-32">بستانکار (ریال)</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -519,10 +519,10 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                                       <td className="p-2 text-center font-mono">{line.account_code || '—'}</td>
                                       <td className="p-2 font-medium text-slate-800 dark:text-slate-200">{line.account_name || '—'}</td>
                                       <td className="p-2 text-slate-500">{line.description}</td>
-                                      <td className="p-2 text-left font-mono text-emerald-600 font-bold">
+                                      <td className="p-2 text-start font-mono text-emerald-600 font-bold">
                                         {line.debit > 0 ? Number(line.debit).toLocaleString() : '—'}
                                       </td>
-                                      <td className="p-2 text-left font-mono text-indigo-600 font-bold">
+                                      <td className="p-2 text-start font-mono text-indigo-600 font-bold">
                                         {line.credit > 0 ? Number(line.credit).toLocaleString() : '—'}
                                       </td>
                                     </tr>
@@ -560,7 +560,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                   <Badge variant="indigo">{list.length} حساب</Badge>
                 </h3>
               </div>
-              <table className="w-full text-right text-xs">
+              <table className="w-full text-end text-xs">
                 <thead className="text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
                     <th className="p-3 w-28 text-center">کد حساب</th>
@@ -635,7 +635,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         title="ثبت سند حسابداری دوطرفه (Double-Entry Journal Entry)"
         maxWidth="max-w-4xl"
       >
-        <form onSubmit={handleSaveJournalEntry} className="space-y-4 text-right">
+        <form onSubmit={handleSaveJournalEntry} className="space-y-4 text-end">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -673,7 +673,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             </div>
 
             <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-              <table className="w-full text-right text-xs">
+              <table className="w-full text-end text-xs">
                 <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-2 w-10 text-center">#</th>
@@ -721,7 +721,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                             handleLineChange(idx, 'debit', val);
                             if (val > 0) handleLineChange(idx, 'credit', 0);
                           }}
-                          className="text-xs font-mono p-1.5 text-left"
+                          className="text-xs font-mono p-1.5 text-start"
                           placeholder="0"
                         />
                       </td>
@@ -735,7 +735,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                             handleLineChange(idx, 'credit', val);
                             if (val > 0) handleLineChange(idx, 'debit', 0);
                           }}
-                          className="text-xs font-mono p-1.5 text-left"
+                          className="text-xs font-mono p-1.5 text-start"
                           placeholder="0"
                         />
                       </td>
@@ -809,7 +809,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         title="تعریف حساب جدید در کدینگ"
         maxWidth="max-w-md"
       >
-        <form onSubmit={handleSaveAccount} className="space-y-4 text-right">
+        <form onSubmit={handleSaveAccount} className="space-y-4 text-end">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               کد حساب (عددی):
@@ -868,7 +868,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         title="تعریف دوره مالی جدید"
         maxWidth="max-w-md"
       >
-        <form onSubmit={handleSavePeriod} className="space-y-4 text-right">
+        <form onSubmit={handleSavePeriod} className="space-y-4 text-end">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               سال دوره مالی:

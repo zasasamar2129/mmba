@@ -33,6 +33,7 @@ import {
   ArrowUpRight
 } from 'lucide-react';
 import { LeadConvertModal } from '../leads/LeadConvertModal';
+import { useTranslation } from '../../lib/i18n';
 
 export interface CallFormModalProps {
   isOpen: boolean;
@@ -58,6 +59,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
   onOpenCustomerDetail,
 }) => {
   const { success, error } = useToast();
+  const { t, isRtl } = useTranslation();
   const currentUser = storage.getCurrentUser();
   const availableUsers = (allUsers && allUsers.length > 0) ? allUsers : (storage.getUsers() || []);
 
@@ -70,7 +72,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
   const [showOptionalLeadFields, setShowOptionalLeadFields] = useState(false);
   const [leadName, setLeadName] = useState('');
   const [leadCompany, setLeadCompany] = useState('');
-  const [leadSource, setLeadSource] = useState('تماس ورودی');
+  const [leadSource, setLeadSource] = useState(isRtl ? 'تماس ورودی' : 'Inbound Call');
 
   // Call / Interaction details
   const [callType, setCallType] = useState<string>(InteractionType.INCOMING_CALL);
@@ -164,23 +166,23 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
 
     const effectiveQuery = contactQuery.trim();
     if (!effectiveQuery) {
-      error('لطفاً شماره تماس، نام یا کد مخاطب را وارد کنید');
+      error(isRtl ? 'لطفاً شماره تماس، نام یا کد مخاطب را وارد کنید' : 'Please enter the phone number, name, or customer code');
       return;
     }
 
     if (!subject.trim()) {
-      error('لطفاً موضوع مکالمه را مشخص کنید');
+      error(isRtl ? 'لطفاً موضوع مکالمه را مشخص کنید' : 'Please specify the conversation topic');
       return;
     }
 
     const isFollowUp = forceFollowUp || followUpRequired;
     if (isFollowUp) {
       if (!followUpDate) {
-        error('در صورت تنظیم پیگیری، تعیین تاریخ و ساعت الزامی است');
+        error(isRtl ? 'در صورت تنظیم پیگیری، تعیین تاریخ و ساعت الزامی است' : 'Setting a follow-up requires a date and time');
         return;
       }
       if (!followUpUserId) {
-        error('در صورت تنظیم پیگیری، انتخاب کارشناس مسئول الزامی است');
+        error(isRtl ? 'در صورت تنظیم پیگیری، انتخاب کارشناس مسئول الزامی است' : 'Setting a follow-up requires selecting a responsible expert');
         return;
       }
     }
@@ -198,14 +200,14 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
           mobile: effectiveQuery,
           name: leadName.trim() || undefined,
           company: leadCompany.trim() || undefined,
-          source: leadSource || 'تماس ورودی',
+          source: leadSource || (isRtl ? 'تماس ورودی' : 'Inbound Call'),
           notes: notes.trim() || customerRequest.trim() || undefined,
           status: isFollowUp ? LeadStatus.FOLLOW_UP : LeadStatus.CONTACTED,
           assignedUserId: currentUser.id,
           assignedUserName: currentUser.name,
         });
         targetLeadId = newLead.id;
-        targetCustomerName = newLead.name || `سرنخ ${newLead.leadCode}`;
+        targetCustomerName = newLead.name || (isRtl ? `سرنخ ${newLead.leadCode}` : `Lead ${newLead.leadCode}`);
       } else if (resolvedContactType === 'LEAD' && resolvedLead) {
         // Update existing lead status & note
         storage.saveLead({
@@ -216,7 +218,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
           status: isFollowUp ? LeadStatus.FOLLOW_UP : LeadStatus.CONTACTED,
         });
         targetLeadId = resolvedLead.id;
-        targetCustomerName = resolvedLead.name || `سرنخ ${resolvedLead.leadCode}`;
+        targetCustomerName = resolvedLead.name || (isRtl ? `سرنخ ${resolvedLead.leadCode}` : `Lead ${resolvedLead.leadCode}`);
       }
 
       const assignedUser = availableUsers.find((u) => u.id === followUpUserId);
@@ -277,8 +279,10 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
       if (isFollowUp && createTaskForFollowUp) {
         storage.saveTask({
           id: '',
-          title: `پیگیری تماس: ${subject.trim()} (${targetCustomerName || effectiveQuery})`,
-          description: `درخواست مخاطب: ${customerRequest.trim() || '—'}\nنتیجه مذاکره: ${outcome.trim() || '—'}\nیادداشت: ${notes.trim() || '—'}`,
+          title: isRtl ? `پیگیری تماس: ${subject.trim()} (${targetCustomerName || effectiveQuery})` : `Call follow-up: ${subject.trim()} (${targetCustomerName || effectiveQuery})`,
+          description: isRtl
+                ? `درخواست مخاطب: ${customerRequest.trim() || '—'}\nنتیجه مذاکره: ${outcome.trim() || '—'}\nیادداشت: ${notes.trim() || '—'}`
+                : `Customer request: ${customerRequest.trim() || '—'}\nOutcome: ${outcome.trim() || '—'}\nNotes: ${notes.trim() || '—'}`,
           customerId: targetCustomerId || targetLeadId,
           customerName: targetCustomerName || effectiveQuery,
           assignedUserId: followUpUserId || currentUser.id,
@@ -295,27 +299,35 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
 
       success(
         resolvedContactType === 'UNKNOWN'
-          ? 'سرنخ و تعامل ورودی با موفقیت در سامانه ثبت گردید'
-          : 'مکالمه و تعامل با موفقیت در پرونده ثبت شد'
+          ? (isRtl ? 'سرنخ و تعامل ورودی با موفقیت در سامانه ثبت گردید' : 'Lead and incoming interaction registered successfully in the system')
+          : (isRtl ? 'مکالمه و تعامل با موفقیت در پرونده ثبت شد' : 'Call and interaction successfully recorded in the file')
       );
 
       onSaved(savedCall);
       onClose();
     } catch (err: any) {
       console.error(err);
-      error(err.message || 'خطا در ثبت تعامل');
+      error(err.message || (isRtl ? 'خطا در ثبت تعامل' : 'Error recording the interaction'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const subjectPresets = [
-    'استعلام قیمت سیم‌کارت',
-    'پیگیری سفارش و تحویل',
-    'درخواست پیش‌فاکتور',
-    'پشتیبانی و رفع مشکل',
-    'مشاوره بسته و خدمات',
-  ];
+  const subjectPresets = isRtl
+    ? [
+        'استعلام قیمت سیم‌کارت',
+        'پیگیری سفارش و تحویل',
+        'درخواست پیش‌فاکتور',
+        'پشتیبانی و رفع مشکل',
+        'مشاوره بسته و خدمات',
+      ]
+    : [
+        'SIM card price inquiry',
+        'Order and delivery follow-up',
+        'Proforma invoice request',
+        'Support and issue resolution',
+        'Package and services consultation',
+      ];
 
   return (
     <Modal
@@ -328,23 +340,23 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
             <PhoneCall className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-base">ثبت تماس و تعامل جدید (Incoming & Outgoing Center)</h3>
+            <h3 className="font-bold text-base">{isRtl ? 'ثبت تماس و تعامل جدید (Incoming & Outgoing Center)' : 'Log New Call & Interaction (Incoming & Outgoing Center)'}</h3>
             <p className="text-xs text-slate-500 font-normal">
-              پشتیبانی از ثبت فوری شماره‌های ناشناس (سرنخ) و مشتریان دائمی
+              {isRtl ? 'پشتیبانی از ثبت فوری شماره‌های ناشناس (سرنخ) و مشتریان دائمی' : 'Supports instant logging of unknown numbers (leads) and permanent customers'}
             </p>
           </div>
         </div>
       }
     >
-      <form onSubmit={(e) => handleSubmit(e)} className="space-y-4 text-right">
+      <form onSubmit={(e) => handleSubmit(e)} className="space-y-4 text-end">
         {/* Contact Lookup Bar */}
         <div className="space-y-2">
           <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-between">
-            <span>شماره تماس، نام مخاطب یا کد پرونده *</span>
-            {resolvedContactType === 'CUSTOMER' && <Badge variant="success">مشتری دائمی</Badge>}
-            {resolvedContactType === 'LEAD' && <Badge variant="warning">سرنخ موجود</Badge>}
+            <span>{isRtl ? 'شماره تماس، نام مخاطب یا کد پرونده *' : 'Phone number, contact name, or case code *'}</span>
+            {resolvedContactType === 'CUSTOMER' && <Badge variant="success">{isRtl ? 'مشتری دائمی' : 'Permanent Customer'}</Badge>}
+            {resolvedContactType === 'LEAD' && <Badge variant="warning">{isRtl ? 'سرنخ موجود' : 'Existing Lead'}</Badge>}
             {resolvedContactType === 'UNKNOWN' && contactQuery.trim() && (
-              <Badge variant="info">تماس ناشناس (ثبت به عنوان سرنخ)</Badge>
+              <Badge variant="info">{isRtl ? 'تماس ناشناس (ثبت به عنوان سرنخ)' : 'Unknown Call (Log as Lead)'}</Badge>
             )}
           </label>
 
@@ -353,12 +365,12 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               type="text"
               value={contactQuery}
               onChange={(e) => handleContactQueryChange(e.target.value)}
-              placeholder="شماره موبایل (مثال: 09121234567) یا نام مشتری..."
-              className="w-full h-11 px-4 pr-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 text-sm font-medium shadow-xs"
+              placeholder={isRtl ? 'شماره موبایل (مثال: 09121234567) یا نام مشتری...' : 'Mobile number (e.g. 09121234567) or customer name...'}
+              className="w-full h-11 px-4 pe-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 text-sm font-medium shadow-xs"
               dir="auto"
               autoFocus
             />
-            <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+            <div className="absolute end-3.5 top-1/2 -translate-y-1/2 text-slate-400">
               <Search className="w-4 h-4" />
             </div>
           </div>
@@ -375,12 +387,12 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
                 <span className="text-[11px] font-mono bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300">
                   {resolvedCustomer.code}
                 </span>
-                <Badge variant="success">{resolvedCustomer.status || 'فعال'}</Badge>
+                <Badge variant="success">{resolvedCustomer.status || (isRtl ? 'فعال' : 'Active')}</Badge>
               </div>
               <p className="text-[11px] text-emerald-800 dark:text-emerald-400">
                 {resolvedCustomer.companyName ? `${resolvedCustomer.companyName} | ` : ''}
-                موبایل: {resolvedCustomer.mobile || '—'}
-                {resolvedStats.interactionCount ? ` | سوابق تعاملات: ${resolvedStats.interactionCount} بار` : ''}
+                {isRtl ? 'موبایل' : 'Mobile'}: {resolvedCustomer.mobile || '—'}
+                {resolvedStats.interactionCount ? (isRtl ? ` | سوابق تعاملات: ${resolvedStats.interactionCount} بار` : ` | Interaction history: ${resolvedStats.interactionCount} times`) : ''}
               </p>
             </div>
 
@@ -393,7 +405,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
                 leftIcon={<ArrowUpRight className="w-3.5 h-3.5" />}
                 className="shrink-0 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700"
               >
-                مشاهده پرونده مشتری
+                {isRtl ? 'مشاهده پرونده مشتری' : 'View Customer Profile'}
               </Button>
             )}
           </div>
@@ -412,8 +424,8 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
                 <Badge variant="warning">{resolvedLead.status}</Badge>
               </div>
               <p className="text-[11px] text-amber-800 dark:text-amber-400">
-                شماره: {resolvedLead.mobile} | منبع: {resolvedLead.source || 'تماس ورودی'}
-                {resolvedStats.interactionCount ? ` | سابقه: ${resolvedStats.interactionCount} تعامل` : ''}
+                {isRtl ? 'شماره' : 'Phone'}: {resolvedLead.mobile} | {isRtl ? 'منبع' : 'Source'}: {resolvedLead.source || (isRtl ? 'تماس ورودی' : 'Inbound Call')}
+                {resolvedStats.interactionCount ? (isRtl ? ` | سابقه: ${resolvedStats.interactionCount} تعامل` : ` | History: ${resolvedStats.interactionCount} interactions`) : ''}
               </p>
             </div>
 

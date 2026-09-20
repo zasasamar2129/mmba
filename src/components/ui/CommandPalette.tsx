@@ -255,7 +255,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="جستجو در مشتریان، شماره تماس، وظایف، چک‌ها، تعمیرات، سیم‌کارت و..."
-              className="w-full bg-transparent border-none text-slate-900 dark:text-slate-100 text-sm focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-right"
+              className="w-full bg-transparent border-none text-slate-900 dark:text-slate-100 text-sm focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-end"
               autoFocus
             />
             {query && (
@@ -295,7 +295,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                   }}
                   className="flex items-center justify-between p-3 hover:bg-slate-100/70 dark:hover:bg-slate-800/70 rounded-xl cursor-pointer transition-colors group"
                 >
-                  <div className="flex items-center gap-3 min-w-0 flex-1 text-right">
+                  <div className="flex items-center gap-3 min-w-0 flex-1 text-end">
                     <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800/90 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-600/20 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                       {item.icon}
                     </div>
@@ -311,7 +311,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
                       <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">{item.subtitle}</p>
                     </div>
                   </div>
-                  <ArrowLeft className="w-4 h-4 text-slate-400 dark:text-slate-600 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 shrink-0 mr-2" />
+                  <ArrowLeft className="w-4 h-4 text-slate-400 dark:text-slate-600 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 shrink-0 me-2" />
                 </div>
               ))
             )}

@@ -120,7 +120,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
         </div>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 text-right">
+      <form onSubmit={handleSubmit} className="space-y-4 text-end">
         {/* Category & Priority */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
@@ -213,7 +213,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
               <button
                 type="button"
                 onClick={() => setScreenshot(null)}
-                className="absolute top-2 right-2 p-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-md transition-transform active:scale-90"
+                className="absolute top-2 end-2 p-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-md transition-transform active:scale-90"
                 title="حذف تصویر"
               >
                 <Trash2 className="w-4 h-4" />

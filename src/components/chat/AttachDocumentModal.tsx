@@ -57,7 +57,7 @@ export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
           rightIcon={<Search className="w-4 h-4 text-slate-400" />}
         />
 
-        <div className="max-h-64 overflow-y-auto space-y-1.5 pr-1">
+        <div className="max-h-64 overflow-y-auto space-y-1.5 pe-1">
           {filtered.length === 0 ? (
             <div className="text-center py-8 text-slate-400 text-xs">
               {isRtl ? 'سندی برای انتخاب یافت نشد.' : 'No documents available.'}
@@ -70,7 +70,7 @@ export const AttachDocumentModal: React.FC<AttachDocumentModalProps> = ({
                   key={att.id}
                   type="button"
                   onClick={() => setSelectedId(att.id)}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-right transition-all ${
+                  className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-end transition-all ${
                     isSelected
                       ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 ring-1 ring-indigo-500'
                       : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'

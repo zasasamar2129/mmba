@@ -110,10 +110,10 @@ export const CustomerShareLinkModal: React.FC<CustomerShareLinkModalProps> = ({
           </div>
         </form>
       ) : (
-        <div className="space-y-4 text-right">
+        <div className="space-y-4 text-end">
           <div className="p-4 rounded-2xl bg-slate-900/90 border border-indigo-500/40 text-center space-y-3">
             <p className="text-xs text-slate-300">لینک امن آماده ارسال به مشتری است:</p>
-            <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-indigo-300 break-all select-all text-left">
+            <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-indigo-300 break-all select-all text-start">
               {getFullUrl(createdLink.token)}
             </div>
             <div className="flex items-center justify-center gap-2">

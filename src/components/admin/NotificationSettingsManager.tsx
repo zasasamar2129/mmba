@@ -229,7 +229,7 @@ export const NotificationSettingsManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 text-right animate-blur-fade-up">
+    <div className="space-y-6 text-end animate-blur-fade-up">
       {/* Top Banner / Device Status */}
       <div className="p-5 rounded-2xl liquid-glass-card border border-indigo-200 dark:border-indigo-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-start gap-3">

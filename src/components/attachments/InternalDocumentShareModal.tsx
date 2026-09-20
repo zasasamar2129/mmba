@@ -94,7 +94,7 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
       title="اشتراک‌گذاری سند با همکاران داخلی"
       maxWidth="max-w-lg"
     >
-      <form onSubmit={handleSubmit} className="space-y-4 text-right">
+      <form onSubmit={handleSubmit} className="space-y-4 text-end">
         {/* Document Info Card */}
         <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">

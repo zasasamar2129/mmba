@@ -114,7 +114,7 @@ export const DebugLogViewer: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 text-right animate-blur-fade-up">
+    <div className="space-y-4 text-end animate-blur-fade-up">
       {/* Header & Controls Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
@@ -227,7 +227,7 @@ export const DebugLogViewer: React.FC = () => {
             <span className="w-3 h-3 rounded-full bg-rose-500/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-amber-500/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-emerald-500/80 inline-block" />
-            <span className="text-xs text-slate-400 font-mono mr-2">mmba-debug-engine.log</span>
+            <span className="text-xs text-slate-400 font-mono me-2">mmba-debug-engine.log</span>
           </div>
 
           <span className="text-xs font-mono text-slate-400">
@@ -238,7 +238,7 @@ export const DebugLogViewer: React.FC = () => {
         {/* Terminal Body */}
         <div
           ref={scrollRef}
-          className="p-3 sm:p-4 max-h-[500px] overflow-y-auto font-mono text-xs space-y-2.5 text-left"
+          className="p-3 sm:p-4 max-h-[500px] overflow-y-auto font-mono text-xs space-y-2.5 text-start"
           dir="ltr"
         >
           {filteredLogs.length === 0 ? (

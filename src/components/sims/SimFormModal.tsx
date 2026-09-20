@@ -262,7 +262,7 @@ export const SimFormModal: React.FC<SimFormModalProps> = ({
               placeholder="85000000"
             />
             {rawCost > 0 && (
-              <p className="text-xs text-slate-400 text-left pr-2">
+              <p className="text-xs text-slate-400 text-start pe-2">
                 {isRtl ? 'معادل: ' : 'Equivalent: '}{formatCurrency(rawCost)}
               </p>
             )}
@@ -278,7 +278,7 @@ export const SimFormModal: React.FC<SimFormModalProps> = ({
               leftIcon={<DollarSign className="w-4 h-4 text-emerald-400" />}
             />
             {rawSale > 0 && (
-              <p className="text-xs text-emerald-400 font-semibold text-left pr-2">
+              <p className="text-xs text-emerald-400 font-semibold text-start pe-2">
                 {isRtl ? 'معادل: ' : 'Equivalent: '}{formatCurrency(rawSale)}
               </p>
             )}

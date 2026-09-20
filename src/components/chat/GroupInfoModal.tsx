@@ -138,7 +138,7 @@ export const GroupInfoModal: React.FC<GroupInfoModalProps> = ({
             </div>
           )}
 
-          <div className="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+          <div className="max-h-60 overflow-y-auto space-y-1.5 pe-1">
             {memberIds.map((uid) => {
               const u = allUsers.find((x) => x.id === uid);
               const m = currentMembers.find((mb) => mb.user_id === uid);

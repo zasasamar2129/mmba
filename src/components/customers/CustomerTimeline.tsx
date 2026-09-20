@@ -1,5 +1,6 @@
 import React from 'react';
 import { CustomerTimelineEvent } from '../../types';
+import { useTranslation } from '../../lib/i18n';
 import {
   PhoneCall, CheckSquare, FileText, CreditCard,
   Wrench, Smartphone, Paperclip, MessageSquare, Clock
@@ -13,6 +14,7 @@ export interface CustomerTimelineProps {
 }
 
 export const CustomerTimeline: React.FC<CustomerTimelineProps> = ({ events, onEventClick }) => {
+  const { isRtl } = useTranslation();
   const getEventIcon = (type: string) => {
     switch (type) {
       case 'CALL':
@@ -62,7 +64,7 @@ export const CustomerTimeline: React.FC<CustomerTimelineProps> = ({ events, onEv
   }
 
   return (
-    <div className="relative border-r-2 border-slate-800/80 mr-3 pr-6 space-y-6 text-right">
+    <div className="relative border-r-2 border-slate-800/80 me-3 pe-6 space-y-6 text-end">
       {events.map((evt) => {
         const badgeInfo = getEventBadge(evt.type);
         return (

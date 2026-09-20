@@ -18,6 +18,7 @@ import { Modal } from '../ui/Modal';
 import { AudioPlayer } from '../ui/AudioPlayer';
 import { storage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import { hasPermission, isAdmin, canViewTask } from '../../lib/permissions';
 import { AttachmentPreview } from '../attachments/AttachmentPreview';
 import { GlobalPrintModal } from '../common/GlobalPrintModal';
@@ -58,6 +59,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onOpenNewVoiceNote,
 }) => {
   const { success, error } = useToast();
+  const { t, isRtl } = useTranslation();
   const [activeTab, setActiveTab] = useState<'TIMELINE' | 'VOICENOTES' | 'CALLS' | 'TASKS' | 'FINANCES' | 'CHECKS' | 'CONTRACTS' | 'SIMS' | 'REPAIRS' | 'FILES'>('TIMELINE');
   const [copiedVoiceId, setCopiedVoiceId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -214,8 +216,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           onClick={onBack}
           className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-400 font-semibold transition-colors"
         >
-          <ArrowRight className="w-4 h-4" />
-          <span>بازگشت به فهرست مشتریان</span>
+          <ArrowRight className="w-4 h-4 rtl-flip" />
+          <span>{isRtl ? 'بازگشت به فهرست مشتریان' : 'Back to Customers List'}</span>
         </button>
 
         <div className="flex items-center gap-2">
@@ -225,7 +227,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onClick={() => setIsPrintModalOpen(true)}
             leftIcon={<Printer className="w-4 h-4" />}
           >
-            چاپ پرونده (A4/A5)
+            {isRtl ? 'چاپ پرونده (A4/A5)' : 'Print Dossier (A4/A5)'}
           </Button>
           <Button
             variant="glass"
@@ -233,7 +235,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onClick={handleCopyLink}
             leftIcon={<Share2 className="w-4 h-4" />}
           >
-            اشتراک پرونده
+            {isRtl ? 'اشتراک پرونده' : 'Share Dossier'}
           </Button>
           {canEdit && (
             <Button
@@ -242,7 +244,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               onClick={() => onEditCustomer(customer)}
               leftIcon={<Edit3 className="w-4 h-4" />}
             >
-              ویرایش مشخصات
+              {isRtl ? 'ویرایش مشخصات' : 'Edit Profile'}
             </Button>
           )}
           {canDelete && (
@@ -253,14 +255,14 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               leftIcon={<Trash2 className="w-4 h-4" />}
               className="border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/50"
             >
-              حذف پرونده
+              {isRtl ? 'حذف پرونده' : 'Delete Dossier'}
             </Button>
           )}
         </div>
       </div>
 
       {/* Customer Header Dossier */}
-      <div className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right space-y-5 shadow-xs">
+      <div className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end space-y-5 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-500/20 dark:to-purple-600/30 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xl shrink-0 shadow-xs">
@@ -275,10 +277,10 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                   {customer.category}
                 </Badge>
                 <Badge variant="default">
-                  مرحله: {customer.leadStage}
+                  {isRtl ? 'مرحله:' : 'Stage:'} {customer.leadStage}
                 </Badge>
                 <Badge variant="warning">
-                  دلیل ثبت: {customer.registrationReason || 'مشتری'}
+                  {isRtl ? 'دلیل ثبت:' : 'Reg. Reason:'} {customer.registrationReason || (isRtl ? 'مشتری' : 'Customer')}
                   {customer.registrationReasonOther ? ` (${customer.registrationReasonOther})` : ''}
                 </Badge>
                 <span className="text-xs font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-800">
@@ -294,7 +296,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 )}
                 {customer.jobTitle && (
                   <span className="text-indigo-600 dark:text-indigo-400 font-medium">
-                    سمت: {customer.jobTitle}
+                    {isRtl ? 'سمت:' : 'Position:'} {customer.jobTitle}
                   </span>
                 )}
               </div>
@@ -303,13 +305,13 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
           <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex items-center gap-4 text-xs">
             <div>
-              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">سقف اعتبار مصوب</span>
+              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">{isRtl ? 'سقف اعتبار مصوب' : 'Approved Credit Limit'}</span>
               <span className="font-bold text-emerald-600 dark:text-emerald-400 text-sm">
                 {formatToman(customer.creditLimit || 0)}
               </span>
             </div>
-            <div className="border-r border-slate-200 dark:border-slate-800 pr-4">
-              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">تاریخ ثبت در MMBA</span>
+            <div className="border-r border-slate-200 dark:border-slate-800 pe-4">
+              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">{isRtl ? 'تاریخ ثبت در MMBA' : 'MMBA Registration Date'}</span>
               <span className="text-slate-700 dark:text-slate-200 font-bold">{formatPersianDate(customer.createdAt)}</span>
             </div>
           </div>
@@ -320,7 +322,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-transparent">
             <Phone className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
             <div>
-              <span className="text-[10px] text-slate-500 block">تلفن همراه</span>
+              <span className="text-[10px] text-slate-500 block">{isRtl ? 'تلفن همراه' : 'Mobile Phone'}</span>
               <a href={`tel:${customer.phone}`} className="font-semibold text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400">
                 {customer.phone}
               </a>
@@ -359,7 +361,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         {/* Tags */}
         {customer.tags && customer.tags.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <Tag className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 mr-1" />
+            <Tag className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 me-1" />
             {customer.tags.map((t) => (
               <span
                 key={t}
@@ -579,7 +581,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               {timelineEvents.map((evt) => (
                 <div
                   key={evt.id}
-                  className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right space-y-2 shadow-xs"
+                  className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end space-y-2 shadow-xs"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -656,7 +658,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               {customerVoiceNotes.map((vn) => (
                 <div
                   key={vn.id}
-                  className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right space-y-3 shadow-xs"
+                  className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end space-y-3 shadow-xs"
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -729,7 +731,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {activeTab === 'CALLS' && (
         <div className="space-y-3">
           {customerCalls.map((c) => (
-            <div key={c.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right space-y-2 shadow-xs">
+            <div key={c.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end space-y-2 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{c.subject}</span>
                 <Badge variant="indigo" size="sm">{c.callType}</Badge>
@@ -749,7 +751,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {activeTab === 'TASKS' && (
         <div className="space-y-3">
           {customerTasks.map((t) => (
-            <div key={t.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right space-y-2 shadow-xs">
+            <div key={t.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end space-y-2 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{t.title}</span>
                 <Badge variant={t.priority === 'URGENT' ? 'danger' : 'warning'} size="sm">{t.priority}</Badge>
@@ -768,7 +770,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             customerPayments.map((p) => {
               const paymentAtts = storage.getAttachmentsByEntity('PAYMENT', p.id);
               return (
-                <div key={p.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right space-y-2 shadow-xs">
+                <div key={p.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end space-y-2 shadow-xs">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatToman(p.amount)}</span>
@@ -804,7 +806,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {activeTab === 'CHECKS' && (
         <div className="space-y-3">
           {customerChecks.map((chk) => (
-            <div key={chk.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right flex items-center justify-between shadow-xs">
+            <div key={chk.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end flex items-center justify-between shadow-xs">
               <div>
                 <span className="text-sm font-bold text-amber-600 dark:text-amber-300">{formatToman(chk.amount)}</span>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">بانک {chk.bankName} • سررسید: {formatPersianDate(chk.dueDate)}</p>
@@ -818,7 +820,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {activeTab === 'CONTRACTS' && (
         <div className="space-y-3">
           {customerContracts.map((cnt) => (
-            <div key={cnt.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right space-y-1.5 shadow-xs">
+            <div key={cnt.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end space-y-1.5 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{cnt.title}</span>
                 <Badge variant="indigo" size="sm">{cnt.status}</Badge>
@@ -832,7 +834,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {activeTab === 'SIMS' && (
         <div className="space-y-3">
           {customerSims.map((sim) => (
-            <div key={sim.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right flex items-center justify-between shadow-xs">
+            <div key={sim.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end flex items-center justify-between shadow-xs">
               <div>
                 <span className="text-sm font-bold font-mono text-cyan-600 dark:text-cyan-400">{sim.phoneNumber}</span>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">اپراتور: {sim.operator} • وضعیت: {sim.status}</p>
@@ -846,7 +848,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {activeTab === 'REPAIRS' && (
         <div className="space-y-3">
           {customerRepairs.map((rep) => (
-            <div key={rep.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-right space-y-1.5 shadow-xs">
+            <div key={rep.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end space-y-1.5 shadow-xs">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{rep.deviceModel} ({rep.trackingCode})</span>
                 <Badge variant="info" size="sm">{rep.status}</Badge>
@@ -884,7 +886,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         }
         subtitle="این عملیات غیرقابل بازگشت است و تمام سوابق مخاطب حذف خواهند شد."
       >
-        <div className="space-y-4 text-right">
+        <div className="space-y-4 text-end">
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
             آیا از حذف پرونده مخاطب «<strong className="text-white font-bold">{customer.name}</strong>» با شماره{' '}
             <span className="font-mono text-rose-300 font-bold" dir="ltr">{customer.mobile}</span> و کد سیستم{' '}

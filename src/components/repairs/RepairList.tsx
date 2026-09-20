@@ -200,7 +200,7 @@ export const RepairList: React.FC<RepairListProps> = ({
                   </div>
                 </div>
 
-                <div className="text-left sm:text-right flex sm:flex-col items-center sm:items-end justify-between">
+                <div className="text-start sm:text-end flex sm:flex-col items-center sm:items-end justify-between">
                   <div className="text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">
                     {r.finalCost ? formatToman(r.finalCost) : r.estimatedCost ? `${isRtl ? 'برآورد: ' : 'Est: '}${formatToman(r.estimatedCost)}` : (isRtl ? 'تعیین نشده' : 'Not specified')}
                   </div>
@@ -244,7 +244,7 @@ export const RepairList: React.FC<RepairListProps> = ({
                   <button
                     type="button"
                     onClick={() => onSelectCustomer(r.customerId)}
-                    className="text-indigo-600 dark:text-indigo-400 hover:underline ml-2"
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline ms-2"
                   >
                     {isRtl ? 'پرونده مشتری ←' : 'Customer Profile →'}
                   </button>

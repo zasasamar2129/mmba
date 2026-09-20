@@ -245,7 +245,7 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                             key={i}
                             type="button"
                             onClick={() => att && setPreviewAtt(att)}
-                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-[10px] transition-all text-right ${
+                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-[10px] transition-all text-end ${
                               mine
                                 ? 'bg-white/15 border-white/25 text-white hover:bg-white/20'
                                 : 'bg-slate-50 dark:bg-slate-900/80 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100'

@@ -82,6 +82,13 @@
   }
 }
 
+/* Directional icon flips for RTL — use .rtl-flip on icons whose arrow
+   must point opposite in RTL (back/forward chevrons). Non-directional
+   icons are NOT flipped. */
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
 /* RTL and BiDi Numeric Presets */
 .bidi-isolate, [data-bidi-isolate] {
   unicode-bidi: isolate;

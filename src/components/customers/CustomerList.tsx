@@ -179,7 +179,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
   const handlePromptSingleDelete = (customer: Customer, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     if (!canDelete) {
-      error('شما مجوز حذف پرونده مشتریان را ندارید');
+      error(isRtl ? 'شما مجوز حذف پرونده مشتریان را ندارید' : 'You do not have permission to delete customer records');
       return;
     }
     setDeleteModalState({
@@ -191,7 +191,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
   // Open delete confirmation for multiple selected customers
   const handlePromptBulkDelete = () => {
     if (!canDelete) {
-      error('شما مجوز حذف پرونده مشتریان را ندارید');
+      error(isRtl ? 'شما مجوز حذف پرونده مشتریان را ندارید' : 'You do not have permission to delete customer records');
       return;
     }
     if (selectedCustomersList.length === 0) return;
@@ -209,11 +209,11 @@ export const CustomerList: React.FC<CustomerListProps> = ({
     try {
       if (targets.length === 1) {
         storage.deleteCustomer(targets[0].id);
-        success(`پرونده مخاطب «${targets[0].name}» با موفقیت حذف شد`);
+        success(isRtl ? `پرونده مخاطب «${targets[0].name}» با موفقیت حذف شد` : `Customer record "${targets[0].name}" deleted successfully`);
       } else {
         const ids = targets.map((t) => t.id);
         storage.deleteMultipleCustomers(ids);
-        success(`تعداد ${targets.length} پرونده مخاطب با موفقیت حذف شدند`);
+        success(isRtl ? `تعداد ${targets.length} پرونده مخاطب با موفقیت حذف شدند` : `Successfully deleted ${targets.length} customer records`);
       }
 
       // Remove from selected set
@@ -224,7 +224,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
       setDeleteModalState({ isOpen: false, targets: [] });
       if (onRefreshCustomers) onRefreshCustomers();
     } catch (err: any) {
-      error(err?.message || 'خطا در حذف پرونده‌های مخاطبان');
+      error(err?.message || isRtl ? 'خطا در حذف پرونده‌های مخاطبان' : 'Error deleting customer records');
     }
   };
 
@@ -232,7 +232,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
   const handleExportSelected = () => {
     if (selectedCustomersList.length === 0) return;
     exportCustomersToExcel(selectedCustomersList);
-    info(`فایل اکسل شامل ${selectedCustomersList.length} مخاطب انتخاب‌شده آماده دانلود گردید`);
+    info(isRtl ? `فایل اکسل شامل ${selectedCustomersList.length} مخاطب انتخاب‌شده آماده دانلود گردید` : `Excel file with ${selectedCustomersList.length} selected contacts ready for download`);
   };
 
   // Statistics
@@ -253,7 +253,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
     <div className="space-y-6 animate-blur-fade-up pb-24 sm:pb-12">
       {/* Header & Stats Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="text-right">
+        <div className="text-end">
           <div className="flex items-center gap-2.5">
             <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100">
               {t('customers.title')}
@@ -283,10 +283,10 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                   ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-300 shadow-xs font-bold'
                   : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
-              title="نمای کارت‌ها"
+              title={isRtl ? 'نمای کارت‌ها' : 'Card View'}
             >
               <LayoutGrid className="w-4 h-4" />
-              <span className="hidden md:inline">کارت‌ها</span>
+              <span className="hidden md:inline">{isRtl ? 'کارت‌ها' : 'Cards'}</span>
             </button>
             <button
               type="button"
@@ -301,10 +301,10 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                   ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-300 shadow-xs font-bold'
                   : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
-              title="نمای جدول و فهرست فشرده"
+              title={isRtl ? 'نمای جدول و فهرست فشرده' : 'Compact Table View'}
             >
               <List className="w-4 h-4" />
-              <span className="hidden md:inline">جدول فشرده</span>
+              <span className="hidden md:inline">{isRtl ? 'جدول فشرده' : 'Table'}</span>
             </button>
           </div>
 
@@ -314,7 +314,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
             onClick={() => setIsImportModalOpen(true)}
             leftIcon={<Upload className="w-4 h-4" />}
           >
-            ورود گروهی (Excel / vCard)
+            {isRtl ? 'ورود گروهی (Excel / vCard)' : 'Bulk Import (Excel / vCard)'}
           </Button>
 
           <Button
@@ -323,7 +323,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
             onClick={() => setIsPrintListModalOpen(true)}
             leftIcon={<Printer className="w-4 h-4" />}
           >
-            چاپ فهرست
+            {isRtl ? 'چاپ فهرست' : 'Print List'}
           </Button>
 
           <ExportExcelButton
@@ -345,19 +345,19 @@ export const CustomerList: React.FC<CustomerListProps> = ({
 
       {/* Stats Counter Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900/90 liquid-glass-card border border-slate-200 dark:border-slate-800 text-right shadow-sm">
+        <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-900/90 liquid-glass-card border border-slate-200 dark:border-slate-800 text-end shadow-sm">
           <span className="text-[11px] text-slate-500 dark:text-slate-400 block">{t('customers.totalCustomers')}</span>
           <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100"><RTLNumber value={totalCount} type="count" suffix="" /></span>
         </div>
-        <div className="p-3.5 rounded-2xl liquid-glass-card border border-indigo-200 dark:border-indigo-500/20 text-right bg-indigo-50/70 dark:bg-indigo-950/20 shadow-sm">
+        <div className="p-3.5 rounded-2xl liquid-glass-card border border-indigo-200 dark:border-indigo-500/20 text-end bg-indigo-50/70 dark:bg-indigo-950/20 shadow-sm">
           <span className="text-[11px] text-indigo-700 dark:text-indigo-300 block font-medium">{t('customers.vipCustomers')}</span>
           <span className="text-base sm:text-lg font-bold text-indigo-900 dark:text-indigo-200"><RTLNumber value={vipCount} type="count" suffix="" /></span>
         </div>
-        <div className="p-3.5 rounded-2xl liquid-glass-card border border-emerald-200 dark:border-emerald-500/20 text-right bg-emerald-50/70 dark:bg-emerald-950/20 shadow-sm">
+        <div className="p-3.5 rounded-2xl liquid-glass-card border border-emerald-200 dark:border-emerald-500/20 text-end bg-emerald-50/70 dark:bg-emerald-950/20 shadow-sm">
           <span className="text-[11px] text-emerald-700 dark:text-emerald-300 block font-medium">{t('customers.activeCustomers')}</span>
           <span className="text-base sm:text-lg font-bold text-emerald-900 dark:text-emerald-200"><RTLNumber value={activeCount} type="count" suffix="" /></span>
         </div>
-        <div className="p-3.5 rounded-2xl liquid-glass-card border border-amber-200 dark:border-amber-500/20 text-right bg-amber-50/70 dark:bg-amber-950/20 shadow-sm">
+        <div className="p-3.5 rounded-2xl liquid-glass-card border border-amber-200 dark:border-amber-500/20 text-end bg-amber-50/70 dark:bg-amber-950/20 shadow-sm">
           <span className="text-[11px] text-amber-700 dark:text-amber-300 block font-medium">{t('customers.prospectCustomers')}</span>
           <span className="text-base sm:text-lg font-bold text-amber-900 dark:text-amber-200"><RTLNumber value={prospectCount} type="count" suffix="" /></span>
         </div>
@@ -436,7 +436,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
 
           {/* Status & Tag Filter Pills */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">{t('customers.filterStatus')}:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ms-1">{t('customers.filterStatus')}:</span>
             {['ALL', 'VIP', 'ACTIVE', 'PROSPECT', 'INACTIVE', 'BLACKLISTED'].map((st) => (
               <button
                 key={st}
@@ -454,7 +454,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
 
             {allTags.length > 0 && (
               <>
-                <span className="text-xs text-slate-400 dark:text-slate-500 mr-2">| برچسب:</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 me-2">{isRtl ? '| برچسب:' : '| Tag:'}</span>
                 <button
                   type="button"
                   onClick={() => setTagFilter('ALL')}
@@ -464,7 +464,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                       : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800'
                   }`}
                 >
-                  همه
+                  {isRtl ? 'همه' : 'All'}
                 </button>
                 {allTags.slice(0, 4).map((tag) => (
                   <button
@@ -486,7 +486,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
 
           {/* Registration Reason Filter */}
           <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-slate-100 dark:border-slate-800/80">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">علت ثبت شماره:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ms-1">{isRtl ? 'علت ثبت شماره:' : 'Registration Reason:'}</span>
             {['ALL', 'مشتری', 'مشتری بالقوه', 'همکار', 'تأمین‌کننده', 'دوست/آشنا', 'تماس کاری', 'پیگیری فروش', 'سایر'].map((reason) => (
               <button
                 key={reason}
@@ -501,7 +501,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                     : 'bg-slate-100 dark:bg-slate-900/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border border-slate-200 dark:border-slate-800'
                 }`}
               >
-                {reason === 'ALL' ? 'همه دلایل' : reason}
+                {reason === 'ALL' ? (isRtl ? 'همه دلایل' : 'All Reasons') : reason}
               </button>
             ))}
           </div>
@@ -542,7 +542,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
       ) : viewMode === 'table' ? (
         /* Table View */
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-end text-xs">
             <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="p-3 w-10 text-center">
@@ -553,14 +553,14 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                     className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                   />
                 </th>
-                <th className="p-3">کد و نام مخاطب</th>
-                <th className="p-3">شماره همراه و تلفن</th>
-                <th className="p-3">شرکت و سمت شغلی</th>
-                <th className="p-3">علت ثبت شماره</th>
-                <th className="p-3">تاریخ ثبت (شمسی)</th>
-                <th className="p-3">سقف اعتبار</th>
-                <th className="p-3">وضعیت</th>
-                <th className="p-3 text-center">عملیات</th>
+                <th className="p-3">{isRtl ? 'کد و نام مخاطب' : 'Code & Contact Name'}</th>
+                <th className="p-3">{isRtl ? 'شماره همراه و تلفن' : 'Mobile & Phone'}</th>
+                <th className="p-3">{isRtl ? 'شرکت و سمت شغلی' : 'Company & Position'}</th>
+                <th className="p-3">{isRtl ? 'علت ثبت شماره' : 'Registration Reason'}</th>
+                <th className="p-3">{isRtl ? 'تاریخ ثبت (شمسی)' : 'Registration Date (Jalali)'}</th>
+                <th className="p-3">{isRtl ? 'سقف اعتبار' : 'Credit Limit'}</th>
+                <th className="p-3">{isRtl ? 'وضعیت' : 'Status'}</th>
+                <th className="p-3 text-center">{isRtl ? 'عملیات' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -598,8 +598,8 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                       </div>
                     </td>
                     <td className="p-3">
-                      <div className="font-mono text-sky-700 dark:text-sky-300 dir-ltr text-right">{c.mobile}</div>
-                      {c.phone && <div className="font-mono text-slate-400 text-[11px] dir-ltr text-right">{c.phone}</div>}
+                      <div className="font-mono text-sky-700 dark:text-sky-300 dir-ltr text-end">{c.mobile}</div>
+                      {c.phone && <div className="font-mono text-slate-400 text-[11px] dir-ltr text-end">{c.phone}</div>}
                     </td>
                     <td className="p-3 text-slate-600 dark:text-slate-300">
                       <div>{c.companyName || '—'}</div>
@@ -607,7 +607,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                     </td>
                     <td className="p-3">
                       <Badge variant="warning" size="sm">
-                        {c.registrationReason || 'مشتری'}
+                        {c.registrationReason || (isRtl ? 'مشتری' : 'Customer')}
                       </Badge>
                     </td>
                     <td className="p-3 font-mono text-slate-600 dark:text-slate-400">
@@ -627,7 +627,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                           type="button"
                           onClick={() => onSelectCustomer(c)}
                           className="p-1 rounded-md text-slate-500 hover:text-indigo-600 hover:bg-slate-100 dark:hover:bg-slate-800"
-                          title="مشاهده پرونده"
+                          title={isRtl ? 'مشاهده پرونده' : 'View Profile'}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -635,7 +635,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                           type="button"
                           onClick={() => onQuickCall(c)}
                           className="p-1 rounded-md text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/40"
-                          title="تماس سریع"
+                          title={isRtl ? 'تماس سریع' : 'Quick Call'}
                         >
                           <PhoneCall className="w-4 h-4" />
                         </button>
@@ -643,7 +643,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                           type="button"
                           onClick={() => onQuickTask(c)}
                           className="p-1 rounded-md text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                          title="ثبت وظیفه"
+                          title={isRtl ? 'ثبت وظیفه' : 'Create Task'}
                         >
                           <CheckSquare className="w-4 h-4" />
                         </button>
@@ -652,7 +652,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                             type="button"
                             onClick={() => onEditCustomer(c)}
                             className="p-1 rounded-md text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-                            title="ویرایش"
+                            title={isRtl ? 'ویرایش' : 'Edit'}
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -662,7 +662,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                             type="button"
                             onClick={(e) => handlePromptSingleDelete(c, e)}
                             className="p-1 rounded-md text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
-                            title="حذف"
+                            title={isRtl ? 'حذف' : 'Delete'}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -685,7 +685,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
               <div
                 key={c.id}
                 onClick={() => onSelectCustomer(c)}
-                className={`p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 liquid-glass-card border transition-all cursor-pointer text-right flex flex-col justify-between group relative shadow-sm ${
+                className={`p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900/90 liquid-glass-card border transition-all cursor-pointer text-end flex flex-col justify-between group relative shadow-sm ${
                   isSelected
                     ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/25 shadow-lg shadow-indigo-500/10 dark:shadow-indigo-950/40 ring-1 ring-indigo-500/40'
                     : 'border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/10 dark:hover:shadow-indigo-950/30'
@@ -698,8 +698,8 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                       {/* Checkbox */}
                       <div
                         onClick={(e) => handleToggleSelectOne(c.id, e)}
-                        className="p-1 -mr-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
-                        title="انتخاب مخاطب"
+                        className="p-1 -me-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors"
+                        title={isRtl ? 'انتخاب مخاطب' : 'Select Contact'}
                       >
                         <input
                           type="checkbox"
@@ -770,7 +770,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                   {/* Reason and Date info */}
                   <div className="flex items-center justify-between gap-1 pt-1 text-[11px] border-t border-slate-100 dark:border-slate-800/60">
                     <Badge variant="warning" size="sm">
-                      علت: {c.registrationReason || 'مشتری'}
+                      {isRtl ? 'علت: ' : 'Reason: '}{c.registrationReason || (isRtl ? 'مشتری' : 'Customer')}
                     </Badge>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                       ثبت: {formatPersianDate(c.createdAt)}
@@ -864,7 +864,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-2xl p-3 sm:p-4 rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-indigo-300 dark:border-indigo-500/40 shadow-2xl shadow-slate-900/20 dark:shadow-black/80 flex items-center justify-between gap-3 text-right"
+            className="fixed bottom-6 start-1/2 -translate-x-1/2 z-40 w-[95%] max-w-2xl p-3 sm:p-4 rounded-3xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-indigo-300 dark:border-indigo-500/40 shadow-2xl shadow-slate-900/20 dark:shadow-black/80 flex items-center justify-between gap-3 text-end"
           >
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-600/30 border border-indigo-200 dark:border-indigo-500/50 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-bold text-xs shrink-0">
@@ -872,10 +872,10 @@ export const CustomerList: React.FC<CustomerListProps> = ({
               </div>
               <div className="text-xs sm:text-sm">
                 <span className="font-bold text-slate-900 dark:text-white block sm:inline">
-                  {selectedIds.size} مخاطب انتخاب شده
+                  {selectedIds.size} {isRtl ? 'مخاطب انتخاب شده' : 'contacts selected'}
                 </span>
-                <span className="text-slate-500 dark:text-slate-400 text-[11px] hidden sm:inline mr-2">
-                  (از مجموع {filteredCustomers.length} مخاطب)
+                <span className="text-slate-500 dark:text-slate-400 text-[11px] hidden sm:inline me-2">
+                  ({isRtl ? `از مجموع ${filteredCustomers.length} مخاطب` : `out of ${filteredCustomers.length} contacts`})
                 </span>
               </div>
             </div>
@@ -907,7 +907,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                 </Button>
               ) : (
                 <span
-                  title="شما مجوز حذف پرونده‌ها را ندارید"
+                  title={isRtl ? 'شما مجوز حذف پرونده‌ها را ندارید' : 'You do not have permission to delete records'}
                   className="text-xs text-rose-600 dark:text-rose-400/80 flex items-center gap-1 px-2 py-1 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 rounded-lg"
                 >
                   <ShieldAlert className="w-3.5 h-3.5" />
@@ -946,7 +946,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
         }
         subtitle={t('customers.deleteWarning')}
       >
-        <div className="space-y-4 text-right">
+        <div className="space-y-4 text-end">
           <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
             {deleteModalState.targets.length === 1 ? (
               <>
@@ -1031,7 +1031,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
         documentDate={new Date().toISOString()}
       >
         <div className="space-y-4 text-slate-800">
-          <table className="w-full text-right text-xs border border-slate-300 dark:border-slate-700 border-collapse">
+          <table className="w-full text-end text-xs border border-slate-300 dark:border-slate-700 border-collapse">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-300 dark:border-slate-700">
                 <th className="p-2 border-l border-slate-300 dark:border-slate-700 w-12 text-center">ردیف</th>

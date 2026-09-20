@@ -13,6 +13,7 @@ import {
   AlertTriangle, ExternalLink, Edit3, UserCheck, ShieldAlert
 } from 'lucide-react';
 import { normalizePhoneNumber } from '../../lib/numberUtils';
+import { useTranslation } from '../../lib/i18n';
 
 export interface CustomerFormModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   onSelectCustomer,
 }) => {
   const { success, error, warning } = useToast();
+  const { t, isRtl } = useTranslation();
 
   const [activeEditingCustomer, setActiveEditingCustomer] = useState<Customer | null>(externalCustomerToEdit || null);
   const [name, setName] = useState('');
@@ -39,9 +41,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
-  const [registrationReason, setRegistrationReason] = useState('مشتری');
+  const [registrationReason, setRegistrationReason] = useState(isRtl ? 'مشتری' : 'Customer');
   const [registrationReasonOther, setRegistrationReasonOther] = useState('');
-  const [city, setCity] = useState('تهران');
+  const [city, setCity] = useState(isRtl ? 'تهران' : 'Tehran');
   const [address, setAddress] = useState('');
   const [status, setStatus] = useState<CustomerStatus>(CustomerStatus.ACTIVE);
   const [tagInput, setTagInput] = useState('');
@@ -78,9 +80,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         setEmail(savedDraft.email ?? activeEditingCustomer.email ?? '');
         setCompanyName(savedDraft.companyName ?? activeEditingCustomer.companyName ?? '');
         setJobTitle(savedDraft.jobTitle ?? activeEditingCustomer.jobTitle ?? '');
-        setRegistrationReason(savedDraft.registrationReason ?? activeEditingCustomer.registrationReason ?? 'مشتری');
+        setRegistrationReason(savedDraft.registrationReason ?? activeEditingCustomer.registrationReason ?? (isRtl ? 'مشتری' : 'Customer'));
         setRegistrationReasonOther(savedDraft.registrationReasonOther ?? activeEditingCustomer.registrationReasonOther ?? '');
-        setCity(savedDraft.city ?? activeEditingCustomer.city ?? 'تهران');
+        setCity(savedDraft.city ?? activeEditingCustomer.city ?? (isRtl ? 'تهران' : 'Tehran'));
         setAddress(savedDraft.address ?? activeEditingCustomer.address ?? '');
         setStatus(savedDraft.status ?? activeEditingCustomer.status ?? CustomerStatus.ACTIVE);
         setTags(savedDraft.tags ?? activeEditingCustomer.tags ?? []);
@@ -95,9 +97,9 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         setEmail(activeEditingCustomer.email || '');
         setCompanyName(activeEditingCustomer.companyName || '');
         setJobTitle(activeEditingCustomer.jobTitle || '');
-        setRegistrationReason(activeEditingCustomer.registrationReason || 'مشتری');
+        setRegistrationReason(activeEditingCustomer.registrationReason || (isRtl ? 'مشتری' : 'Customer'));
         setRegistrationReasonOther(activeEditingCustomer.registrationReasonOther || '');
-        setCity(activeEditingCustomer.city || 'تهران');
+        setCity(activeEditingCustomer.city || (isRtl ? 'تهران' : 'Tehran'));
         setAddress(activeEditingCustomer.address || '');
         setStatus(activeEditingCustomer.status ? (activeEditingCustomer.status as CustomerStatus) : CustomerStatus.ACTIVE);
         setTags(activeEditingCustomer.tags || []);
@@ -114,12 +116,12 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         setEmail(savedDraft.email || '');
         setCompanyName(savedDraft.companyName || '');
         setJobTitle(savedDraft.jobTitle || '');
-        setRegistrationReason(savedDraft.registrationReason || 'مشتری');
+        setRegistrationReason(savedDraft.registrationReason || (isRtl ? 'مشتری' : 'Customer'));
         setRegistrationReasonOther(savedDraft.registrationReasonOther || '');
-        setCity(savedDraft.city || 'تهران');
+        setCity(savedDraft.city || (isRtl ? 'تهران' : 'Tehran'));
         setAddress(savedDraft.address || '');
         setStatus(savedDraft.status || CustomerStatus.ACTIVE);
-        setTags(savedDraft.tags || ['مشتری جدید']);
+        setTags(savedDraft.tags || (isRtl ? ['مشتری جدید'] : ['New customer']));
         setNotes(savedDraft.notes || '');
         setCreditLimit(String(savedDraft.creditLimit || 0));
         setHasRestoredDraft(true);
@@ -131,12 +133,12 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         setEmail('');
         setCompanyName('');
         setJobTitle('');
-        setRegistrationReason('مشتری');
+        setRegistrationReason(isRtl ? 'مشتری' : 'Customer');
         setRegistrationReasonOther('');
-        setCity('تهران');
+        setCity(isRtl ? 'تهران' : 'Tehran');
         setAddress('');
         setStatus(CustomerStatus.ACTIVE);
-        setTags(['مشتری جدید']);
+        setTags(isRtl ? ['مشتری جدید'] : ['New customer']);
         setNotes('');
         setCreditLimit('0');
         setHasRestoredDraft(false);
@@ -587,7 +589,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(t)}
-                  className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 font-bold ml-1"
+                  className="text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 font-bold ms-1"
                 >
                   ×
                 </button>

@@ -216,7 +216,7 @@ export const CallList: React.FC<CallListProps> = ({
     <div className="space-y-6 animate-blur-fade-up">
       {/* Header & Main Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="text-right">
+        <div className="text-end">
           <div className="flex items-center gap-2.5">
             <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100">
               {t('calls.title')}
@@ -248,29 +248,29 @@ export const CallList: React.FC<CallListProps> = ({
 
       {/* Overview Metric Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-right">
+        <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-end">
           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{t('calls.totalCalls')}</span>
           <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{stats.total} رکورد</div>
         </div>
 
-        <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-right">
+        <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-end">
           <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">{t('calls.pendingFollowups')}</span>
           <div className="text-lg sm:text-xl font-bold text-amber-600 dark:text-amber-300 mt-1">{stats.followUpPending} مورد</div>
         </div>
 
-        <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-right">
+        <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-end">
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{t('calls.completedFollowups')}</span>
           <div className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-300 mt-1">{stats.followUpDone} مورد</div>
         </div>
 
-        <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-right">
+        <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-end">
           <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">{t('calls.totalDuration')}</span>
           <div className="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-300 mt-1">{stats.totalDurationMin} دقیقه</div>
         </div>
       </div>
 
       {/* Filter & Search Panel */}
-      <div className="p-4 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 space-y-3.5 text-right">
+      <div className="p-4 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 space-y-3.5 text-end">
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <div className="w-full sm:flex-1">
             <Input
@@ -286,7 +286,7 @@ export const CallList: React.FC<CallListProps> = ({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-200 dark:border-slate-800/60 text-xs">
           {/* Interaction Type Filter */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-slate-600 dark:text-slate-400 font-medium ml-1">{t('calls.filterType')}:</span>
+            <span className="text-slate-600 dark:text-slate-400 font-medium ms-1">{t('calls.filterType')}:</span>
             {[
               { id: 'ALL', label: t('common.all') },
               { id: InteractionType.OUTGOING_CALL, label: 'تماس خروجی' },
@@ -311,7 +311,7 @@ export const CallList: React.FC<CallListProps> = ({
 
           {/* Follow-up State Filter */}
           <div className="flex flex-wrap items-center gap-1.5">
-            <span className="text-slate-600 dark:text-slate-400 font-medium ml-1">{t('calls.filterFollowUp')}:</span>
+            <span className="text-slate-600 dark:text-slate-400 font-medium ms-1">{t('calls.filterFollowUp')}:</span>
             {[
               { id: 'ALL', label: 'همه' },
               { id: 'REQUIRED', label: 'دارای پیگیری' },
@@ -355,7 +355,7 @@ export const CallList: React.FC<CallListProps> = ({
             return (
               <div
                 key={cl.id}
-                className="p-4 sm:p-5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all text-right space-y-3.5 relative overflow-hidden"
+                className="p-4 sm:p-5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition-all text-end space-y-3.5 relative overflow-hidden"
               >
                 {/* Top Row: Type, Customer, Subject, Time */}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 border-b border-slate-200 dark:border-slate-800/80 pb-3">
@@ -395,7 +395,7 @@ export const CallList: React.FC<CallListProps> = ({
                   </div>
 
                   {/* Date & Duration */}
-                  <div className="text-left sm:text-left text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
+                  <div className="text-start sm:text-start text-[11px] text-slate-500 dark:text-slate-400 shrink-0">
                     <div className="flex items-center gap-1.5 sm:justify-end text-slate-700 dark:text-slate-300 font-medium">
                       <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                       <span>{formatDuration(cl.durationSeconds)}</span>
@@ -484,7 +484,7 @@ export const CallList: React.FC<CallListProps> = ({
                           {cl.followUpDate ? formatPersianDate(cl.followUpDate, true) : 'بدون تاریخ مشخص'}
                         </span>
                         {cl.followUpUserName && (
-                          <span className="text-slate-500 dark:text-slate-400 mr-2">
+                          <span className="text-slate-500 dark:text-slate-400 me-2">
                             (مسئول: {cl.followUpUserName})
                           </span>
                         )}

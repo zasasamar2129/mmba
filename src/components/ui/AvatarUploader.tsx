@@ -252,7 +252,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         </div>
 
         {/* Action Controls & Instructions */}
-        <div className="flex-1 text-center sm:text-right space-y-2">
+        <div className="flex-1 text-center sm:text-end space-y-2">
           <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
             <Button
               type="button"

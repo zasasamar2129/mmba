@@ -339,7 +339,7 @@ export const SimList: React.FC<SimListProps> = ({
       ) : viewMode === 'list' ? (
         /* ROW / LIST VIEW (TABLE) */
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="p-3 w-40">شماره سیم‌کارت</th>
@@ -349,7 +349,7 @@ export const SimList: React.FC<SimListProps> = ({
                 <th className="p-3 w-28">وضعیت</th>
                 <th className="p-3 w-36">سندزن (دارنده)</th>
                 <th className="p-3">رزرو / خریدار / رهن</th>
-                <th className="p-3 text-left w-52">اقدامات</th>
+                <th className="p-3 text-start w-52">اقدامات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -390,7 +390,7 @@ export const SimList: React.FC<SimListProps> = ({
                   <td className="p-3 whitespace-nowrap">
                     {getStatusBadge(s.status, s.isConsigned)}
                     {s.isMortgaged && (
-                      <span className="mr-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-600 dark:text-purple-300 font-bold border border-purple-500/30">
+                      <span className="me-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-600 dark:text-purple-300 font-bold border border-purple-500/30">
                         رهنی
                       </span>
                     )}
@@ -419,7 +419,7 @@ export const SimList: React.FC<SimListProps> = ({
                   </td>
 
                   {/* Actions */}
-                  <td className="p-3 text-left whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                  <td className="p-3 text-start whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1.5">
                       {s.status === SimStatus.AVAILABLE || s.status === 'AVAILABLE' ? (
                         <>

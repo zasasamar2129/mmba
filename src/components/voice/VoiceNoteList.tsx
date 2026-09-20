@@ -450,7 +450,7 @@ export const VoiceNoteList: React.FC<VoiceNoteListProps> = ({
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed max-h-24 overflow-y-auto pr-1">
+                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed max-h-24 overflow-y-auto pe-1">
                     {note.transcription}
                   </p>
                 </div>

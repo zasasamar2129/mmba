@@ -139,8 +139,8 @@ export const LockScreen: React.FC<LockScreenProps> = ({
         dir="rtl"
       >
         {/* Subtle Background Glows */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 start-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 end-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Lock Screen Container */}
         <div className="w-full max-w-md relative z-10">
@@ -183,7 +183,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
                 </div>
               </div>
 
-              <div className="absolute -bottom-1 -left-1 p-1.5 rounded-xl bg-slate-900 border border-slate-700 text-amber-400 shadow-md">
+              <div className="absolute -bottom-1 -start-1 p-1.5 rounded-xl bg-slate-900 border border-slate-700 text-amber-400 shadow-md">
                 <KeyRound className="w-4 h-4" />
               </div>
             </div>
@@ -200,7 +200,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
             </div>
 
             {/* Unlock Form */}
-            <form onSubmit={handleUnlock} className="space-y-4 text-right">
+            <form onSubmit={handleUnlock} className="space-y-4 text-end">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
                   <span>کلمه عبور جهت بازگشایی:</span>
@@ -220,13 +220,13 @@ export const LockScreen: React.FC<LockScreenProps> = ({
                     }}
                     placeholder="کلمه عبور خود را وارد فرمایید..."
                     disabled={isLoading}
-                    className="w-full h-11 px-3.5 pl-10 rounded-xl bg-slate-950 border border-slate-700 text-sm text-slate-100 font-mono text-right focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 transition-all placeholder:text-slate-600"
+                    className="w-full h-11 px-3.5 ps-10 rounded-xl bg-slate-950 border border-slate-700 text-sm text-slate-100 font-mono text-end focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 transition-all placeholder:text-slate-600"
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1"
+                    className="absolute start-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>

@@ -145,7 +145,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
   };
 
   return (
-    <div className="space-y-6 animate-blur-fade-up text-right">
+    <div className="space-y-6 animate-blur-fade-up text-end">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
@@ -253,7 +253,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
           {filteredReports.map((report) => (
             <div
               key={report.id}
-              className={`p-4 rounded-2xl border transition-all text-right space-y-3 ${
+              className={`p-4 rounded-2xl border transition-all text-end space-y-3 ${
                 report.status === 'RESOLVED'
                   ? 'bg-slate-50/70 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700'
                   : report.priority === 'CRITICAL'
@@ -396,7 +396,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
             </div>
           }
         >
-          <div className="space-y-4 text-right text-xs">
+          <div className="space-y-4 text-end text-xs">
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
               <div className="flex justify-between items-center">
                 <span className="font-bold text-slate-800 dark:text-slate-200">شرح ارسالی کاربر ({selectedReport.userName}):</span>

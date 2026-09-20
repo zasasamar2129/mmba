@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTranslation } from '../../lib/i18n';
 import {
   Customer, Call, Task, Contract, Payment, Check,
   SimCard, Repair, Attachment, CustomerTimelineEvent
@@ -60,6 +61,8 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
   const [activeTab, setActiveTab] = useState<'TIMELINE' | 'CALLS' | 'TASKS' | 'FINANCES' | 'CONTRACTS' | 'TECH' | 'FILES'>('TIMELINE');
   const [showDateModal, setShowDateModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  const { t, isRtl } = useTranslation();
 
   const currentUser = storage.getCurrentUser();
   const visibleTasks = useMemo(() => {
@@ -187,11 +190,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
   }, [calls, tasks, payments, checks, contracts, repairs, sims, attachments]);
 
   const customerStatusBadges: Record<string, { label: string; variant: 'purple' | 'success' | 'warning' | 'default' | 'danger' }> = {
-    VIP: { label: 'مشتری VIP', variant: 'purple' },
-    ACTIVE: { label: 'فعال', variant: 'success' },
-    PROSPECT: { label: 'لید / در حال مذاکره', variant: 'warning' },
-    INACTIVE: { label: 'غیرفعال', variant: 'default' },
-    BLACKLISTED: { label: 'لیست سیاه', variant: 'danger' },
+    VIP: { label: isRtl ? 'مشتری VIP' : 'VIP Customer', variant: 'purple' },
+    ACTIVE: { label: isRtl ? 'فعال' : 'Active', variant: 'success' },
+    PROSPECT: { label: isRtl ? 'لید / در حال مذاکره' : 'Lead / In Negotiation', variant: 'warning' },
+    INACTIVE: { label: isRtl ? 'غیرفعال' : 'Inactive', variant: 'default' },
+    BLACKLISTED: { label: isRtl ? 'لیست سیاه' : 'Blacklisted', variant: 'danger' },
   };
 
   return (
@@ -203,8 +206,8 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
           onClick={onBack}
           className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-indigo-400 font-semibold transition-colors"
         >
-          <ArrowRight className="w-4 h-4" />
-          <span>بازگشت به فهرست مشتریان</span>
+          <ArrowRight className="w-4 h-4 rtl-flip" />
+          <span>{isRtl ? 'بازگشت به فهرست مشتریان' : 'Back to Customer List'}</span>
         </button>
 
         <div className="flex items-center gap-2">
@@ -214,7 +217,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => setShowShareModal(true)}
             leftIcon={<Link2 className="w-4 h-4" />}
           >
-            لینک امن مشتری
+            {isRtl ? 'لینک امن مشتری' : 'Secure Customer Link'}
           </Button>
           <Button
             variant="outline"
@@ -222,13 +225,13 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => onEditCustomer(customer)}
             leftIcon={<Edit3 className="w-4 h-4" />}
           >
-            ویرایش پرونده
+            {isRtl ? 'ویرایش پرونده' : 'Edit Profile'}
           </Button>
         </div>
       </div>
 
       {/* Customer Hero Profile Header Card */}
-      <div className="p-5 sm:p-7 rounded-3xl liquid-glass-card border border-slate-800 text-right space-y-5">
+      <div className="p-5 sm:p-7 rounded-3xl liquid-glass-card border border-slate-800 text-end space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-600/30 border border-indigo-500/30 flex items-center justify-center text-indigo-300 font-bold text-xl shrink-0">
@@ -258,13 +261,13 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
           {/* Quick Stat Pill */}
           <div className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-4 text-xs">
             <div>
-              <span className="text-slate-400 block text-[11px]">سقف اعتبار مالی</span>
+              <span className="text-slate-400 block text-[11px]">{isRtl ? 'سقف اعتبار مالی' : 'Credit Limit'}</span>
               <span className="font-bold text-emerald-400 text-sm">
                 {formatPrice(customer.creditLimit)}
               </span>
             </div>
-            <div className="border-r border-slate-800 pr-4">
-              <span className="text-slate-400 block text-[11px]">عضویت</span>
+            <div className="border-r border-slate-800 pe-4">
+              <span className="text-slate-400 block text-[11px]">{isRtl ? 'عضویت' : 'Member Since'}</span>
               <span className="text-slate-200">{formatPersianDate(customer.createdAt)}</span>
             </div>
           </div>
@@ -275,7 +278,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900/40">
             <Phone className="w-4 h-4 text-sky-400 shrink-0" />
             <div>
-              <span className="text-[10px] text-slate-500 block">موبایل</span>
+              <span className="text-[10px] text-slate-500 block">{isRtl ? 'موبایل' : 'Mobile'}</span>
               <a href={`tel:${customer.mobile}`} className="font-semibold hover:text-indigo-400">
                 {customer.mobile}
               </a>
@@ -286,7 +289,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900/40">
               <Phone className="w-4 h-4 text-slate-400 shrink-0" />
               <div>
-                <span className="text-[10px] text-slate-500 block">تلفن دفتر</span>
+                <span className="text-[10px] text-slate-500 block">{isRtl ? 'تلفن دفتر' : 'Office Phone'}</span>
                 <span>{customer.phone}</span>
               </div>
             </div>
@@ -296,7 +299,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900/40">
               <Mail className="w-4 h-4 text-purple-400 shrink-0" />
               <div>
-                <span className="text-[10px] text-slate-500 block">ایمیل</span>
+                <span className="text-[10px] text-slate-500 block">{isRtl ? 'ایمیل' : 'Email'}</span>
                 <span className="truncate max-w-[150px]">{customer.email}</span>
               </div>
             </div>
@@ -305,8 +308,8 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-900/40">
             <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
             <div className="truncate">
-              <span className="text-[10px] text-slate-500 block">موقعیت</span>
-              <span className="truncate">{customer.city || 'تهران'}</span>
+              <span className="text-[10px] text-slate-500 block">{isRtl ? 'موقعیت' : 'Location'}</span>
+              <span className="truncate">{customer.city || (isRtl ? 'تهران' : 'Tehran')}</span>
             </div>
           </div>
         </div>
@@ -315,7 +318,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
         <div className="space-y-2 pt-1">
           {customer.tags && customer.tags.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
-              <Tag className="w-3.5 h-3.5 text-slate-500 mr-1" />
+              <Tag className="w-3.5 h-3.5 text-slate-500 me-1" />
               {customer.tags.map((t) => (
                 <span
                   key={t}
@@ -329,7 +332,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
 
           {customer.notes && (
             <div className="p-3 rounded-xl bg-indigo-950/20 border border-indigo-500/20 text-xs text-indigo-200/90 leading-relaxed">
-              <span className="font-bold text-indigo-300 block mb-0.5">یادداشت پرونده:</span>
+              <span className="font-bold text-indigo-300 block mb-0.5">{isRtl ? 'یادداشت پرونده:' : 'Case Notes:'}</span>
               {customer.notes}
             </div>
           )}
@@ -343,7 +346,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => onOpenQuickCall(customer)}
             leftIcon={<PhoneCall className="w-4 h-4" />}
           >
-            ثبت تماس صوتی
+            {isRtl ? 'ثبت تماس صوتی' : 'Log Voice Call'}
           </Button>
           <Button
             variant="glass"
@@ -351,7 +354,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => onOpenQuickTask(customer)}
             leftIcon={<CheckSquare className="w-4 h-4" />}
           >
-            وظیفه جدید
+            {isRtl ? 'وظیفه جدید' : 'New Task'}
           </Button>
           <Button
             variant="glass"
@@ -359,7 +362,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => onOpenQuickPayment(customer)}
             leftIcon={<CreditCard className="w-4 h-4" />}
           >
-            ثبت پرداخت
+            {isRtl ? 'ثبت پرداخت' : 'Log Payment'}
           </Button>
           <Button
             variant="glass"
@@ -367,7 +370,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => onOpenQuickRepair(customer)}
             leftIcon={<Wrench className="w-4 h-4" />}
           >
-            پذیرش تعمیر
+            {isRtl ? 'پذیرش تعمیر' : 'Submit Repair'}
           </Button>
           <Button
             variant="glass"
@@ -375,7 +378,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => onOpenQuickContract(customer)}
             leftIcon={<FileText className="w-4 h-4" />}
           >
-            قرارداد جدید
+            {isRtl ? 'قرارداد جدید' : 'New Contract'}
           </Button>
           <Button
             variant="glass"
@@ -383,7 +386,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => onOpenQuickAttachment(customer)}
             leftIcon={<Paperclip className="w-4 h-4" />}
           >
-            پیوست مدرک
+            {isRtl ? 'پیوست مدرک' : 'Attach Document'}
           </Button>
           <Button
             variant="outline"
@@ -391,7 +394,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
             onClick={() => setShowDateModal(true)}
             leftIcon={<Calendar className="w-4 h-4" />}
           >
-            پیشنهاد زمان جلسه
+            {isRtl ? 'پیشنهاد زمان جلسه' : 'Suggest Meeting Time'}
           </Button>
         </div>
       </div>
@@ -407,7 +410,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          تایم‌لاین جامع رویدادها ({timelineEvents.length})
+          {isRtl ? `تایم‌لاین جامع رویدادها (${timelineEvents.length})` : `Comprehensive Event Timeline (${timelineEvents.length})`}
         </button>
 
         <button
@@ -419,7 +422,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          مکالمات ({calls.length})
+          {isRtl ? `مکالمات (${calls.length})` : `Conversations (${calls.length})`}
         </button>
 
         <button
@@ -431,7 +434,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          وظایف ({tasks.length})
+          {isRtl ? `وظایف (${tasks.length})` : `Tasks (${tasks.length})`}
         </button>
 
         <button
@@ -443,7 +446,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          مالی و چک‌ها ({payments.length + checks.length})
+          {isRtl ? `مالی و چک‌ها (${payments.length + checks.length})` : `Finances & Checks (${payments.length + checks.length})`}
         </button>
 
         <button
@@ -455,7 +458,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          قراردادها ({contracts.length})
+          {isRtl ? `قراردادها (${contracts.length})` : `Contracts (${contracts.length})`}
         </button>
 
         <button
@@ -467,7 +470,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          تعمیرات و سیم‌کارت ({repairs.length + sims.length})
+          {isRtl ? `تعمیرات و سیم‌کارت (${repairs.length + sims.length})` : `Repairs & SIMs (${repairs.length + sims.length})`}
         </button>
 
         <button
@@ -479,7 +482,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
           }`}
         >
-          پیوست‌ها ({attachments.length})
+          {isRtl ? `پیوست‌ها (${attachments.length})` : `Attachments (${attachments.length})`}
         </button>
       </div>
 
@@ -493,30 +496,30 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       {activeTab === 'CALLS' && (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-200">تاریخچه تماس‌های این مشتری</h3>
+            <h3 className="text-sm font-bold text-slate-200">{isRtl ? 'تاریخچه تماس‌های این مشتری' : 'Customer Call History'}</h3>
             <Button
               variant="primary"
               size="xs"
               onClick={() => onOpenQuickCall(customer)}
               leftIcon={<Plus className="w-3.5 h-3.5" />}
             >
-              ثبت تماس جدید
+              {isRtl ? 'ثبت تماس جدید' : 'Log New Call'}
             </Button>
           </div>
           {calls.length === 0 ? (
             <div className="text-center py-10 text-slate-500 rounded-2xl liquid-glass-subtle">
-              هیچ تماسی ثبت نشده است
+              {isRtl ? 'هیچ تماسی ثبت نشده است' : 'No calls have been recorded'}
             </div>
           ) : (
             calls.map((c) => (
-              <div key={c.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-right space-y-1.5">
+              <div key={c.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-end space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-bold text-slate-100">{c.subject}</span>
                   <Badge variant="purple" size="sm">{c.callType}</Badge>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">{c.notes}</p>
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-800/60">
-                  <span>ثبت توسط: {c.userName}</span>
+                  <span>{isRtl ? `ثبت توسط: ${c.userName}` : `Logged by: ${c.userName}`}</span>
                   <span>{formatPersianDate(c.dateTime, true)}</span>
                 </div>
               </div>
@@ -528,23 +531,23 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       {activeTab === 'TASKS' && (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-200">وظایف مرتبط با این مشتری</h3>
+            <h3 className="text-sm font-bold text-slate-200">{isRtl ? 'وظایف مرتبط با این مشتری' : 'Tasks Related to This Customer'}</h3>
             <Button
               variant="primary"
               size="xs"
               onClick={() => onOpenQuickTask(customer)}
               leftIcon={<Plus className="w-3.5 h-3.5" />}
             >
-              ایجاد وظیفه
+              {isRtl ? 'ایجاد وظیفه' : 'Create Task'}
             </Button>
           </div>
           {visibleTasks.length === 0 ? (
             <div className="text-center py-10 text-slate-500 rounded-2xl liquid-glass-subtle">
-              هیچ وظیفه قابل مشاهده‌ای ثبت نشده است
+              {isRtl ? 'هیچ وظیفه قابل مشاهده‌ای ثبت نشده است' : 'No visible tasks have been recorded'}
             </div>
           ) : (
             visibleTasks.map((t) => (
-              <div key={t.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-right space-y-1.5">
+              <div key={t.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-end space-y-1.5">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-bold text-slate-100">{t.title}</span>
                   <Badge variant={t.priority === 'URGENT' ? 'danger' : 'warning'} size="sm">
@@ -553,8 +556,8 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                 </div>
                 {t.description && <p className="text-xs text-slate-300">{t.description}</p>}
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-800/60">
-                  <span>مسئول: {t.assignedUserName}</span>
-                  <span>سررسید: {formatPersianDate(t.dueDate)}</span>
+                  <span>{isRtl ? `مسئول: ${t.assignedUserName}` : `Assigned to: ${t.assignedUserName}`}</span>
+                  <span>{isRtl ? `سررسید: ${formatPersianDate(t.dueDate)}` : `Due: ${formatPersianDate(t.dueDate)}`}</span>
                 </div>
               </div>
             ))
@@ -565,13 +568,13 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       {activeTab === 'FINANCES' && (
         <div className="space-y-5">
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-200">رسیدهای پرداختی</h3>
+            <h3 className="text-sm font-bold text-slate-200">{isRtl ? 'رسیدهای پرداختی' : 'Payment Receipts'}</h3>
             {payments.map((p) => (
-              <div key={p.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-right flex items-center justify-between">
+              <div key={p.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-end flex items-center justify-between">
                 <div>
                   <span className="text-sm font-bold text-emerald-400">{formatPrice(p.amount)}</span>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    رسید: {p.receiptNumber} • روش: {p.method} • {p.notes || ''}
+                    {isRtl ? `رسید: ${p.receiptNumber} • روش: ${p.method} • ${p.notes || ''}` : `Receipt: ${p.receiptNumber} • Method: ${p.method} • ${p.notes || ''}`}
                   </p>
                 </div>
                 <Badge variant={p.status === 'COMPLETED' ? 'success' : 'warning'} size="sm">
@@ -582,13 +585,13 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-200">چک‌های صیادی</h3>
+            <h3 className="text-sm font-bold text-slate-200">{isRtl ? 'چک‌های صیادی' : 'Checks'}</h3>
             {checks.map((chk) => (
-              <div key={chk.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-right flex items-center justify-between">
+              <div key={chk.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-end flex items-center justify-between">
                 <div>
                   <span className="text-sm font-bold text-purple-300">{formatPrice(chk.amount)}</span>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    بانک {chk.bankName} • سررسید: {formatPersianDate(chk.dueDate)} • شماره: {chk.checkNumber}
+                    {isRtl ? `بانک ${chk.bankName} • سررسید: ${formatPersianDate(chk.dueDate)} • شماره: ${chk.checkNumber}` : `Bank ${chk.bankName} • Due: ${formatPersianDate(chk.dueDate)} • No: ${chk.checkNumber}`}
                   </p>
                 </div>
                 <Badge variant={chk.status === 'CLEARED' ? 'success' : 'purple'} size="sm">
@@ -603,7 +606,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       {activeTab === 'CONTRACTS' && (
         <div className="space-y-3">
           {contracts.map((cnt) => (
-            <div key={cnt.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-right space-y-2">
+            <div key={cnt.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-end space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-bold text-slate-100">{cnt.title}</span>
                 <Badge variant="purple" size="sm">{cnt.status}</Badge>
@@ -619,26 +622,26 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       {activeTab === 'TECH' && (
         <div className="space-y-5">
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-200">دستگاه‌های تعمیراتی</h3>
+            <h3 className="text-sm font-bold text-slate-200">{isRtl ? 'دستگاه‌های تعمیراتی' : 'Repair Devices'}</h3>
             {repairs.map((r) => (
-              <div key={r.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-right space-y-1.5">
+              <div key={r.id} className="p-4 rounded-2xl liquid-glass-card border border-slate-800 text-end space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-slate-100">{r.brand} {r.model} ({r.trackingCode})</span>
                   <Badge variant="amber" size="sm">{r.status}</Badge>
                 </div>
                 <p className="text-xs text-slate-300">{r.problemDescription}</p>
-                <p className="text-[11px] text-slate-500">هزینه نهایی: {formatPrice(r.finalCost || r.estimatedCost)}</p>
+                <p className="text-[11px] text-slate-500">{isRtl ? `هزینه نهایی: ${formatPrice(r.finalCost || r.estimatedCost)}` : `Final Cost: ${formatPrice(r.finalCost || r.estimatedCost)}`}</p>
               </div>
             ))}
           </div>
 
           <div className="space-y-3">
-            <h3 className="text-sm font-bold text-slate-200">سیم‌کارت‌های تخصیص یافته</h3>
+            <h3 className="text-sm font-bold text-slate-200">{isRtl ? 'سیم‌کارت‌های تخصیص یافته' : 'Assigned SIM Cards'}</h3>
             {sims.map((s) => (
-              <div key={s.id} className="p-3.5 rounded-2xl liquid-glass-card border border-slate-800 text-right flex items-center justify-between">
+              <div key={s.id} className="p-3.5 rounded-2xl liquid-glass-card border border-slate-800 text-end flex items-center justify-between">
                 <div>
                   <span className="text-sm font-bold text-cyan-400">{s.phoneNumber}</span>
-                  <p className="text-xs text-slate-400">اپراتور: {s.operator} • ICCID: {s.iccid}</p>
+                  <p className="text-xs text-slate-400">{isRtl ? `اپراتور: ${s.operator} • ICCID: ${s.iccid}` : `Operator: ${s.operator} • ICCID: ${s.iccid}`}</p>
                 </div>
                 <Badge variant="info" size="sm">{s.status}</Badge>
               </div>
@@ -650,24 +653,24 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       {activeTab === 'FILES' && (
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-bold text-slate-200">اسناد و پیوست‌های پرونده</h3>
+            <h3 className="text-sm font-bold text-slate-200">{isRtl ? 'اسناد و پیوست‌های پرونده' : 'Case Documents & Attachments'}</h3>
             <Button
               variant="primary"
               size="xs"
               onClick={() => onOpenQuickAttachment(customer)}
               leftIcon={<Plus className="w-3.5 h-3.5" />}
             >
-              افزودن مدرک
+              {isRtl ? 'افزودن مدرک' : 'Add Document'}
             </Button>
           </div>
           {attachments.length === 0 ? (
             <div className="text-center py-10 text-slate-500 rounded-2xl liquid-glass-subtle">
-              هیچ مدرکی پیوست نشده است
+              {isRtl ? 'هیچ مدرکی پیوست نشده است' : 'No documents have been attached'}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {attachments.map((a) => (
-                <div key={a.id} className="p-3.5 rounded-2xl liquid-glass-card border border-slate-800 flex items-center justify-between text-right">
+                <div key={a.id} className="p-3.5 rounded-2xl liquid-glass-card border border-slate-800 flex items-center justify-between text-end">
                   <div className="flex items-center gap-3">
                     <Paperclip className="w-5 h-5 text-indigo-400 shrink-0" />
                     <div>

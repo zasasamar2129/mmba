@@ -351,7 +351,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             ) : isPlaying ? (
               <Pause className="w-4 h-4 fill-current" />
             ) : (
-              <Play className="w-4 h-4 fill-current ml-0.5" />
+              <Play className="w-4 h-4 fill-current ms-0.5" />
             )}
           </button>
 
@@ -455,7 +455,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
                 ) : isPlaying ? (
                   <Pause className="w-4 h-4 fill-current" />
                 ) : (
-                  <Play className="w-4 h-4 fill-current ml-0.5" />
+                  <Play className="w-4 h-4 fill-current ms-0.5" />
                 )}
               </button>
 

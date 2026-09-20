@@ -59,7 +59,7 @@ export const UserSearchModal: React.FC<UserSearchModalProps> = ({
                 key={u.id}
                 type="button"
                 onClick={() => { onCreate(u.id, u.name); onClose(); }}
-                className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 transition-colors text-right"
+                className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700/80 transition-colors text-end"
               >
                 <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-tr from-indigo-600 to-sky-500 text-white flex items-center justify-center text-xs font-bold shrink-0 ring-2 ring-white dark:ring-slate-800">
                   {u.avatar ? <img src={u.avatar} alt={u.name} className="w-full h-full object-cover" /> : (u.name?.charAt(0) || '?')}

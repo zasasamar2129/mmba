@@ -635,7 +635,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
           onClose={() => setLinkingAttachment(null)}
           title={isRtl ? 'اتصال یا تغییر مشتری سند' : 'Link Attachment to Customer'}
         >
-          <div className="space-y-4 text-right">
+          <div className="space-y-4 text-end">
             <p className="text-xs text-slate-600 dark:text-slate-300">
               {isRtl
                 ? `برای سند "${linkingAttachment.fileName}"، مشتری هدف را تعیین نمایید:`

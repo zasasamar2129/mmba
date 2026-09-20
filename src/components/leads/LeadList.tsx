@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import { formatPersianDate } from '../../lib/dateUtils';
+import { useTranslation } from '../../lib/i18n';
 
 export interface LeadListProps {
   currentUser?: User;
@@ -28,6 +29,7 @@ export const LeadList: React.FC<LeadListProps> = ({
   onOpenCustomerDetail,
 }) => {
   const { success, error } = useToast();
+  const { t, isRtl } = useTranslation();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -45,7 +47,7 @@ export const LeadList: React.FC<LeadListProps> = ({
   const [quickMobile, setQuickMobile] = useState('');
   const [quickName, setQuickName] = useState('');
   const [quickNotes, setQuickNotes] = useState('');
-  const [quickSource, setQuickSource] = useState('تماس ورودی');
+  const [quickSource, setQuickSource] = useState(isRtl ? 'تماس ورودی' : 'Inbound Call');
 
   const refreshLeads = () => {
     setLeads(storage.getLeads());
@@ -161,10 +163,10 @@ export const LeadList: React.FC<LeadListProps> = ({
         <div>
           <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            <span>مدیریت سرنخ‌ها، تایم‌لاین پیگیری و جلوگیری از تماس تکراری</span>
+            <span>{isRtl ? 'مدیریت سرنخ‌ها، تایم‌لاین پیگیری و جلوگیری از تماس تکراری' : 'Lead Management, Timeline Tracking & Duplicate Call Prevention'}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            ثبت سریع تماس‌ها، تاریخچه دقیق مکالمات اپراتورها، هشدارهای تداخل تماس، و تبدیل فوری به پرونده مشتری
+            {isRtl ? 'ثبت سریع تماس‌ها، تاریخچه دقیق مکالمات اپراتورها، هشدارهای تداخل تماس، و تبدیل فوری به پرونده مشتری' : 'Fast call logging, detailed operator conversation history, collision alerts, and instant conversion to customer file'}
           </p>
         </div>
 
@@ -176,7 +178,7 @@ export const LeadList: React.FC<LeadListProps> = ({
             leftIcon={<Plus className="w-4 h-4" />}
             className="w-full sm:w-auto"
           >
-            ثبت سرنخ جدید
+            {isRtl ? 'ثبت سرنخ جدید' : 'New Lead'}
           </Button>
         </div>
       </div>
@@ -190,7 +192,7 @@ export const LeadList: React.FC<LeadListProps> = ({
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="جستجو بر اساس شماره موبایل، کد سرنخ، نام، یادداشت یا نتیجه پیگیری..."
+            placeholder={isRtl ? 'جستجو بر اساس شماره موبایل، کد سرنخ، نام، یادداشت یا نتیجه پیگیری...' : 'Search by mobile, lead code, name, note or follow-up result...'}
             leftIcon={<Search className="w-4 h-4 text-slate-400" />}
           />
         </div>
@@ -204,13 +206,13 @@ export const LeadList: React.FC<LeadListProps> = ({
             }}
             className="w-full h-9 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
           >
-            <option value="ALL">همه وضعیت‌ها ({leads.length})</option>
-            <option value={LeadStatus.NEW_LEAD}>سرنخ‌های جدید</option>
-            <option value={LeadStatus.CONTACTED}>تماس گرفته شده</option>
-            <option value={LeadStatus.FOLLOW_UP}>در انتظار پیگیری</option>
-            <option value={LeadStatus.NEGOTIATION}>در حال مذاکره</option>
-            <option value={LeadStatus.CONVERTED}>تبدیل شده به مشتری</option>
-            <option value={LeadStatus.LOST}>لغو شده / ناموفق</option>
+            <option value="ALL">{isRtl ? `همه وضعیت‌ها (${leads.length})` : `All Statuses (${leads.length})`}</option>
+            <option value={LeadStatus.NEW_LEAD}>{isRtl ? 'سرنخ‌های جدید' : 'New Leads'}</option>
+            <option value={LeadStatus.CONTACTED}>{isRtl ? 'تماس گرفته شده' : 'Contacted'}</option>
+            <option value={LeadStatus.FOLLOW_UP}>{isRtl ? 'در انتظار پیگیری' : 'Pending Follow-up'}</option>
+            <option value={LeadStatus.NEGOTIATION}>{isRtl ? 'در حال مذاکره' : 'In Negotiation'}</option>
+            <option value={LeadStatus.CONVERTED}>{isRtl ? 'تبدیل شده به مشتری' : 'Converted to Customer'}</option>
+            <option value={LeadStatus.LOST}>{isRtl ? 'لغو شده / ناموفق' : 'Lost / Cancelled'}</option>
           </select>
         </div>
 
@@ -252,7 +254,7 @@ export const LeadList: React.FC<LeadListProps> = ({
       ) : viewMode === 'list' ? (
         /* ROW / LIST VIEW (TABLE) */
         <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
-          <table className="w-full text-right text-xs">
+          <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="p-3 w-28">کد سرنخ</th>
@@ -262,7 +264,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                 <th className="p-3 w-28">منبع</th>
                 <th className="p-3 min-w-[220px]">آخرین پیگیری / اپراتور</th>
                 <th className="p-3 w-36">وضعیت هشدار</th>
-                <th className="p-3 text-left w-52">اقدامات</th>
+                <th className="p-3 text-start w-52">اقدامات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -343,7 +345,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                     </td>
 
                     {/* Actions */}
-                    <td className="p-3 text-left whitespace-nowrap">
+                    <td className="p-3 text-start whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1.5">
                         <Button
                           variant="outline"
@@ -437,7 +439,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                     </h3>
                   </div>
 
-                  <div className="text-left">
+                  <div className="text-start">
                     <span className="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg" dir="ltr">
                       {lead.mobile}
                     </span>
@@ -582,7 +584,7 @@ export const LeadList: React.FC<LeadListProps> = ({
           </div>
         }
       >
-        <form onSubmit={handleCreateQuickLead} className="space-y-3.5 text-right">
+        <form onSubmit={handleCreateQuickLead} className="space-y-3.5 text-end">
           <Input
             label="شماره موبایل *"
             value={quickMobile}

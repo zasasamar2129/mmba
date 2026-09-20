@@ -431,7 +431,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
     >
       {/* Step 1: Upload */}
       {step === 'UPLOAD' && (
-        <div className="space-y-6 text-right">
+        <div className="space-y-6 text-end">
           <div className="bg-indigo-50/70 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-800/60 text-xs text-indigo-900 dark:text-indigo-200 leading-relaxed flex items-start gap-3">
             <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
             <div>
@@ -497,7 +497,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
 
       {/* Step 2: Preview & Duplicate Handling */}
       {step === 'PREVIEW' && (
-        <div className="space-y-4 text-right">
+        <div className="space-y-4 text-end">
           {/* Top Status & Duplicate Options */}
           <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4">
             <div>
@@ -586,7 +586,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
 
           {/* Preview Table */}
           <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden max-h-[46vh] overflow-y-auto">
-            <table className="w-full text-right text-xs">
+            <table className="w-full text-end text-xs">
               <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="p-3 w-12 text-center">ردیف</th>
@@ -607,7 +607,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
                       {row.status === 'INVALID' && <Badge variant="danger">نامعتبر</Badge>}
                     </td>
                     <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{row.data.name || '—'}</td>
-                    <td className="p-3 font-mono text-slate-700 dark:text-slate-300 dir-ltr text-right">{row.normalizedMobile || row.data.mobile || '—'}</td>
+                    <td className="p-3 font-mono text-slate-700 dark:text-slate-300 dir-ltr text-end">{row.normalizedMobile || row.data.mobile || '—'}</td>
                     <td className="p-3 text-slate-500">
                       {row.data.companyName || ''} {row.data.jobTitle ? `(${row.data.jobTitle})` : ''}
                       {!row.data.companyName && !row.data.jobTitle && '—'}
@@ -656,7 +656,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
 
       {/* Step 3: Summary */}
       {step === 'SUMMARY' && summary && (
-        <div className="space-y-6 text-right">
+        <div className="space-y-6 text-end">
           <div className="w-16 h-16 rounded-3xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-10 h-10" />
           </div>

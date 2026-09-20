@@ -12,6 +12,7 @@ import { useAudioRecorder } from '../../lib/audioRecorder';
 import { useSpeechRecognition } from '../../lib/speechRecognition';
 import { storage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import {
   CheckSquare, User as UserIcon, Calendar, Check, AlertTriangle, RotateCcw,
   Share2, Users, Clock, Zap, Mic, Square, Pause, Play, Trash2, Upload, FileAudio,
@@ -40,6 +41,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   onSaved,
 }) => {
   const { success, error } = useToast();
+  const { t, isRtl } = useTranslation();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -279,7 +281,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         } catch (e) {}
       }
     } else {
-      error(recorderError || 'دسترسی به میکروفون میسر نشد. لطفاً مجوز مرورگر را بررسی نمایید.');
+      error(recorderError || (isRtl ? 'دسترسی به میکروفون میسر نشد. لطفاً مجوز مرورگر را بررسی نمایید.' : 'Microphone access failed. Please check your browser permissions.'));
     }
   };
 
@@ -314,12 +316,12 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
   const handleProcessAudioFile = (file: File) => {
     if (!file.type.startsWith('audio/') && !file.name.match(/\.(mp3|wav|ogg|m4a|aac|webm|opus|flac)$/i)) {
-      error('لطفاً یک فایل صوتی معتبر (MP3, WAV, M4A, OGG, WebM) انتخاب نمایید.');
+      error(isRtl ? 'لطفاً یک فایل صوتی معتبر (MP3, WAV, M4A, OGG, WebM) انتخاب نمایید.' : 'Please select a valid audio file (MP3, WAV, M4A, OGG, WebM).');
       return;
     }
 
     if (file.size > 25 * 1024 * 1024) {
-      error('حداکثر حجم مجاز فایل صوتی ۲۵ مگابایت است.');
+      error(isRtl ? 'حداکثر حجم مجاز فایل صوتی ۲۵ مگابایت است.' : 'The maximum allowed audio file size is 25 MB.');
       return;
     }
 
@@ -336,7 +338,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         setVoiceNoteDuration(dur);
       };
 
-      success(`فایل صوتی ${file.name} پیوست شد`);
+      success(isRtl ? `فایل صوتی ${file.name} پیوست شد` : `Audio file ${file.name} attached`);
     };
     reader.readAsDataURL(file);
   };
@@ -344,11 +346,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      error('لطفاً عنوان وظیفه را مشخص کنید');
+      error(isRtl ? 'لطفاً عنوان وظیفه را مشخص کنید' : 'Please specify the task title.');
       return;
     }
     if (!dueDate) {
-      error('لطفاً مهلت سررسید را تعیین کنید');
+      error(isRtl ? 'لطفاً مهلت سررسید را تعیین کنید' : 'Please set a due date.');
       return;
     }
 
@@ -734,7 +736,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
                   {/* Browser Permission Prompt Banner */}
                   {isRequestingPermission && (
-                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-right text-xs text-amber-300 animate-fade-in flex items-start gap-2">
+                    <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-end text-xs text-amber-300 animate-fade-in flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
                       <p className="text-[11px] text-amber-200">
                         لطفاً در پیام بالای صفحه مرورگر روی <strong>Allow (اجازه دادن)</strong> کلیک کنید.
@@ -744,7 +746,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
                   {/* Error & Instructions Card if Permission Denied */}
                   {errorInfo && (
-                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-right text-xs text-rose-200 space-y-2 animate-fade-in">
+                    <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-end text-xs text-rose-200 space-y-2 animate-fade-in">
                       <div className="flex items-start gap-2">
                         <ShieldAlert className="w-4 h-4 flex-shrink-0 text-rose-400 mt-0.5" />
                         <div className="space-y-0.5">

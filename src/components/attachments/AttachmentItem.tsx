@@ -107,7 +107,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
           </div>
 
           {/* Details */}
-          <div className="min-w-0 flex-1 text-right">
+          <div className="min-w-0 flex-1 text-end">
             <h4
               className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"
               title={fileName}
@@ -280,7 +280,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
       </div>
 
       {/* Card Body & Metadata */}
-      <div className="p-3.5 space-y-2.5 text-right flex-1 flex flex-col justify-between">
+      <div className="p-3.5 space-y-2.5 text-end flex-1 flex flex-col justify-between">
         <div>
           <h4
             className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate cursor-pointer group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors"

@@ -144,7 +144,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
               <p className="font-extrabold text-base text-slate-100">{contract.title || contract.contractNumber}</p>
               <p className="text-xs text-indigo-300 font-mono mt-0.5">{contract.customerName}</p>
             </div>
-            <div className="text-left">
+            <div className="text-start">
               <span className="text-xs text-slate-400">وصول شده:</span>
               <p className="text-lg font-mono font-extrabold text-emerald-400">
                 <RTLNumber value={summary.paidAmount} type="price" />
@@ -169,7 +169,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
         </div>
 
         {/* Installments Table */}
-        <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+        <div className="space-y-2.5 max-h-[420px] overflow-y-auto pe-1">
           {installments.length === 0 ? (
             <div className="p-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 text-slate-400">
               <Calendar className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />

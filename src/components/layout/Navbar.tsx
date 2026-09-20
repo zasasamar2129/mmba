@@ -238,7 +238,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-950 animate-pulse" />
+            <span className="absolute top-1.5 end-1.5 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-950 animate-pulse" />
           )}
         </button>
 
@@ -246,7 +246,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={onOpenProfile}
-          className="flex items-center gap-2 p-1 pl-2 sm:pl-3 rounded-xl bg-slate-100 dark:bg-slate-900/60 hover:bg-slate-200 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 transition-all text-start group"
+          className="flex items-center gap-2 p-1 ps-2 sm:ps-3 rounded-xl bg-slate-100 dark:bg-slate-900/60 hover:bg-slate-200 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 transition-all text-start group"
         >
           <div className="relative w-7 h-7 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700">
             <img
@@ -254,7 +254,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               alt={currentUser.name}
               className="w-full h-full object-cover"
             />
-            <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-slate-950" />
+            <span className="absolute bottom-0 end-0 w-2 h-2 rounded-full bg-emerald-500 ring-1 ring-white dark:ring-slate-950" />
           </div>
           <div className="hidden sm:block text-start">
             <span className="block text-xs font-semibold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 truncate max-w-[100px]">

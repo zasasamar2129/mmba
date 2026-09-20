@@ -106,7 +106,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                 key={p.key}
                 type="button"
                 onClick={() => setPriority(p.key)}
-                className={`p-2.5 rounded-xl border text-right transition-all ${
+                className={`p-2.5 rounded-xl border text-end transition-all ${
                   priority === p.key
                     ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 ring-1 ring-indigo-500'
                     : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -145,7 +145,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
             rightIcon={<Search className="w-4 h-4 text-slate-400" />}
           />
 
-          <div className="mt-2 max-h-56 overflow-y-auto space-y-1.5 pr-1">
+          <div className="mt-2 max-h-56 overflow-y-auto space-y-1.5 pe-1">
             {availableUsers.length === 0 ? (
               <p className="text-xs text-slate-400 text-center py-4">{isRtl ? 'کاربری یافت نشد' : 'No users found'}</p>
             ) : (
@@ -156,7 +156,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
                     key={u.id}
                     type="button"
                     onClick={() => toggleUser(u.id)}
-                    className={`w-full flex items-center gap-3 p-2 rounded-xl border transition-all text-right ${
+                    className={`w-full flex items-center gap-3 p-2 rounded-xl border transition-all text-end ${
                       selected
                         ? 'border-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/30'
                         : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'

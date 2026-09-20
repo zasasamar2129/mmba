@@ -196,7 +196,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   };
 
   return (
-    <div className="space-y-3 text-right">
+    <div className="space-y-3 text-end">
       <div className="flex items-center justify-between">
         <div>
           <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
@@ -300,7 +300,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
                     </div>
                   )}
 
-                  <div className="truncate text-right">
+                  <div className="truncate text-end">
                     <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors" title={fileName}>
                       {fileName}
                     </p>
@@ -349,7 +349,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
           })}
         </div>
       ) : readOnly ? (
-        <p className="text-xs text-slate-500 italic text-right py-2">
+        <p className="text-xs text-slate-500 italic text-end py-2">
           هیچ فیش یا سندی به این تراکنش پیوست نشده است.
         </p>
       ) : null}

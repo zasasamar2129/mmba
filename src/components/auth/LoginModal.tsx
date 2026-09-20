@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from '../../lib/i18n';
 import { User, UserRole } from '../../types';
 import { storage } from '../../services/storage';
 import { Button } from '../ui/Button';
@@ -23,6 +24,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   availableUsers,
   onClose,
 }) => {
+  const { isRtl } = useTranslation();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -53,12 +55,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     const loginId = selectedQuickUser ? selectedQuickUser.username : identifier;
 
     if (!loginId.trim()) {
-      setErrorMsg('لطفاً نام کاربری، ایمیل یا شماره موبایل را وارد نمایید.');
+      setErrorMsg(isRtl ? 'لطفاً نام کاربری، ایمیل یا شماره موبایل را وارد نمایید.' : 'Please enter your username, email, or mobile number.');
       return;
     }
 
     if (!password) {
-      setErrorMsg('لطفاً رمز عبور خود را وارد نمایید.');
+      setErrorMsg(isRtl ? 'لطفاً رمز عبور خود را وارد نمایید.' : 'Please enter your password.');
       return;
     }
 
@@ -75,25 +77,25 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       }
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMsg(err.message || 'خطا در ارتباط با سرور مرکزی');
+      setErrorMsg(err.message || (isRtl ? 'خطا در ارتباط با سرور مرکزی' : 'Error communicating with the central server'));
     }
   };
 
   const roleLabels: Record<string, string> = {
-    [UserRole.GOD]: '⚡ دسترسی مطلق و نامحدود (GOD)',
-    god: '⚡ دسترسی مطلق و نامحدود (GOD)',
-    [UserRole.OWNER]: 'مالک و مدیریت ارشد',
-    [UserRole.SUPER_ADMIN]: 'مدیریت ارشد سامانه',
-    [UserRole.SUPERVISOR]: 'سرپرستی عملیات',
-    [UserRole.ACCOUNTING_ADMIN]: 'مدیریت مالی و حسابداری',
-    [UserRole.FINANCE_MANAGER]: 'مدیریت مالی و خزانه‌دار',
-    [UserRole.SALES]: 'کارشناس فروش',
-    [UserRole.SALES_AGENT]: 'کارشناس فروش و قرارداد',
-    [UserRole.STORE_OPERATIONS]: 'عملیات فروشگاه',
-    [UserRole.REPAIR_TECHNICIAN]: 'کارگاه تعمیرات',
-    [UserRole.TECHNICIAN]: 'تکنسین فنی',
-    [UserRole.TECHNICAL]: 'فنی و زیرساخت',
-    [UserRole.READ_ONLY]: 'کاربر فقط مشاهده',
+    [UserRole.GOD]: isRtl ? '⚡ دسترسی مطلق و نامحدود (GOD)' : '⚡ Absolute & Unlimited Access (GOD)',
+    god: isRtl ? '⚡ دسترسی مطلق و نامحدود (GOD)' : '⚡ Absolute & Unlimited Access (GOD)',
+    [UserRole.OWNER]: isRtl ? 'مالک و مدیریت ارشد' : 'Owner & Executive Management',
+    [UserRole.SUPER_ADMIN]: isRtl ? 'مدیریت ارشد سامانه' : 'System Senior Admin',
+    [UserRole.SUPERVISOR]: isRtl ? 'سرپرستی عملیات' : 'Operations Supervision',
+    [UserRole.ACCOUNTING_ADMIN]: isRtl ? 'مدیریت مالی و حسابداری' : 'Finance & Accounting Admin',
+    [UserRole.FINANCE_MANAGER]: isRtl ? 'مدیریت مالی و خزانه‌دار' : 'Finance & Treasury Manager',
+    [UserRole.SALES]: isRtl ? 'کارشناس فروش' : 'Sales Specialist',
+    [UserRole.SALES_AGENT]: isRtl ? 'کارشناس فروش و قرارداد' : 'Sales & Contract Specialist',
+    [UserRole.STORE_OPERATIONS]: isRtl ? 'عملیات فروشگاه' : 'Store Operations',
+    [UserRole.REPAIR_TECHNICIAN]: isRtl ? 'کارگاه تعمیرات' : 'Repair Workshop',
+    [UserRole.TECHNICIAN]: isRtl ? 'تکنسین فنی' : 'Technical Technician',
+    [UserRole.TECHNICAL]: isRtl ? 'فنی و زیرساخت' : 'Technical & Infrastructure',
+    [UserRole.READ_ONLY]: isRtl ? 'کاربر فقط مشاهده' : 'Read-Only User',
   };
 
   return (
@@ -105,7 +107,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="absolute left-4 top-4 p-2 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+              className="absolute start-4 top-4 p-2 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -118,15 +120,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             />
           </div>
           <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-            ورود به سامانه جامع MMBA
+            {isRtl ? 'ورود به سامانه جامع MMBA' : 'MMBA Comprehensive System Login'}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            سیستم یکپارچه مدیریت مشتریان، خطوط رند، مکالمات صوتی، مالی و تعمیرات
+            {isRtl ? 'سیستم یکپارچه مدیریت مشتریان، خطوط رند، مکالمات صوتی، مالی و تعمیرات' : 'Integrated system for customer management, production lines, voice calls, finance, and repairs'}
           </p>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-5 text-right">
+        <div className="p-6 overflow-y-auto space-y-5 text-end">
           {/* Quick User Picker Card */}
           {!selectedQuickUser && (
             <div className="space-y-2.5">
@@ -138,13 +140,13 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <span className="text-[11px] text-slate-500 font-mono">رمز پیش‌فرض: 123</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pe-1">
                 {availableUsers.map((u) => (
                   <button
                     key={u.id}
                     type="button"
                     onClick={() => handleSelectQuickUser(u)}
-                    className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/40 transition-all text-right flex items-center gap-2.5 group"
+                    className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-950/60 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/40 transition-all text-end flex items-center gap-2.5 group"
                   >
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-tr from-indigo-600 to-sky-500 border border-slate-200 dark:border-slate-700 shrink-0 flex items-center justify-center text-white text-xs font-bold">
                       {u.avatar ? (
@@ -233,15 +235,15 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoFocus={!!selectedQuickUser}
-                  className="w-full h-11 px-3.5 pr-10 pl-10 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono transition-all text-right"
+                  className="w-full h-11 px-3.5 pe-10 ps-10 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono transition-all text-end"
                 />
-                <div className="absolute right-3.5 top-3 text-slate-400 pointer-events-none">
+                <div className="absolute end-3.5 top-3 text-slate-400 pointer-events-none">
                   <Lock className="w-4 h-4" />
                 </div>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute left-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                  className="absolute start-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>

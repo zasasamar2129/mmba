@@ -251,7 +251,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
   }, [value, hasTime]);
 
   return (
-    <div ref={containerRef} className={`relative text-right ${className}`}>
+    <div ref={containerRef} className={`relative text-end ${className}`}>
       {label && (
         <label
           htmlFor={id}
@@ -299,7 +299,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5 mr-2">
+          <div className="flex items-center gap-1.5 me-2">
             {value && !isRequired && !disabled && (
               <span
                 onClick={(e) => {
@@ -339,7 +339,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
               zIndex: 999999,
               maxHeight: `calc(100vh - 24px)`,
             }}
-            className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/10 text-right space-y-3.5 text-slate-900 dark:text-slate-100 overflow-y-auto"
+            className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl ring-1 ring-slate-900/5 dark:ring-white/10 text-end space-y-3.5 text-slate-900 dark:text-slate-100 overflow-y-auto"
           >
             {/* Header Month / Year Navigation */}
             <div className="flex items-center justify-between gap-1.5 pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -546,7 +546,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="mr-auto text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-md shadow-indigo-600/30"
+                className="me-auto text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-md shadow-indigo-600/30"
               >
                 تایید و ثبت
               </button>
@@ -557,12 +557,12 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
       )}
 
       {error && (
-        <p className="text-[11px] text-rose-500 dark:text-rose-400 mt-1 font-medium text-right">
+        <p className="text-[11px] text-rose-500 dark:text-rose-400 mt-1 font-medium text-end">
           {error}
         </p>
       )}
       {helperText && !error && (
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 text-right">
+        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 text-end">
           {helperText}
         </p>
       )}
