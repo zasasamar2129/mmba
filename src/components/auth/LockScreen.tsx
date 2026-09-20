@@ -4,11 +4,12 @@ import { storage } from '../../services/storage';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import {
   Lock, Unlock, Eye, EyeOff, KeyRound, ShieldAlert,
   Clock, ArrowRight, Sparkles, User as UserIcon, LogOut, CheckCircle2, UserCheck
 } from 'lucide-react';
-import { formatPersianDate } from '../../lib/dateUtils';
+// dateUtils no longer needed — formatDate from useTranslation handles Jalali/Gregorian
 import { motion, AnimatePresence } from 'motion/react';
 
 export interface LockScreenProps {
@@ -24,7 +25,8 @@ export const LockScreen: React.FC<LockScreenProps> = ({
   onUnlockSuccess,
   onSwitchUser,
 }) => {
-  const { success, error: toastError } = useToast();
+  const { isRtl, formatDate } = useTranslation();
+  const { success } = useToast();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -40,7 +42,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
     const updateTime = () => {
       const now = new Date();
       setCurrentTime(
-        now.toLocaleTimeString('fa-IR', {
+        now.toLocaleTimeString(isRtl ? 'fa-IR' : 'en-US', {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
@@ -48,23 +50,16 @@ export const LockScreen: React.FC<LockScreenProps> = ({
         })
       );
       try {
-        setCurrentDate(
-          now.toLocaleDateString('fa-IR', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })
-        );
+        setCurrentDate(formatDate(now.toISOString(), false));
       } catch {
-        setCurrentDate(formatPersianDate(now.toISOString()));
+        setCurrentDate(formatDate(now.toISOString(), false));
       }
     };
 
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isRtl, formatDate]);
 
   // Focus input when lock screen becomes visible
   useEffect(() => {
@@ -84,7 +79,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
     setErrorMsg(null);
 
     if (!password) {
-      setErrorMsg('لطفاً رمز عبور خود را وارد فرمایید.');
+      setErrorMsg(isRtl ? 'لطفاً رمز عبور خود را وارد فرمایید.' : 'Please enter your password.');
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
       inputRef.current?.focus();
@@ -98,12 +93,12 @@ export const LockScreen: React.FC<LockScreenProps> = ({
       setIsLoading(false);
 
       if (res.success && res.user) {
-        success(`نشست کاری با موفقیت بازگشایی شد. خوش آمدید ${res.user.name}`);
+        success(isRtl ? `نشست کاری با موفقیت بازگشایی شد. خوش آمدید ${res.user.name}` : `Session unlocked successfully. Welcome back ${res.user.name}`);
         setPassword('');
         setErrorMsg(null);
         onUnlockSuccess(res.user);
       } else {
-        setErrorMsg(res.message || 'رمز عبور وارد شده نادرست است.');
+        setErrorMsg(res.message || (isRtl ? 'رمز عبور وارد شده نادرست است.' : 'Incorrect password entered.'));
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 500);
         setPassword('');
@@ -162,7 +157,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
             {/* Lock Status Pill */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold mb-6">
               <Lock className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
-              <span>نشست کاری قفل شده است</span>
+              <span>{isRtl ? 'نشست کاری قفل شده است' : 'Work session is locked'}</span>
             </div>
 
             {/* Locked User Avatar */}
@@ -203,9 +198,9 @@ export const LockScreen: React.FC<LockScreenProps> = ({
             <form onSubmit={handleUnlock} className="space-y-4 text-end">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5 flex items-center justify-between">
-                  <span>کلمه عبور جهت بازگشایی:</span>
+                  <span>{isRtl ? 'کلمه عبور جهت بازگشایی:' : 'Password to unlock:'}</span>
                   <span className="text-[10px] text-slate-500 font-normal">
-                    (پیش‌فرض دمو: <code className="text-indigo-300 font-mono">123</code>)
+                    ({isRtl ? 'پیش‌فرض دمو:' : 'Demo default:'} <code className="text-indigo-300 font-mono">123</code>)
                   </span>
                 </label>
 
@@ -218,7 +213,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
                       setPassword(e.target.value);
                       if (errorMsg) setErrorMsg(null);
                     }}
-                    placeholder="کلمه عبور خود را وارد فرمایید..."
+                    placeholder={isRtl ? 'کلمه عبور خود را وارد فرمایید...' : 'Enter your password...'}
                     disabled={isLoading}
                     className="w-full h-11 px-3.5 ps-10 rounded-xl bg-slate-950 border border-slate-700 text-sm text-slate-100 font-mono text-end focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 transition-all placeholder:text-slate-600"
                   />
@@ -249,7 +244,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
                 isLoading={isLoading}
                 leftIcon={<Unlock className="w-4 h-4" />}
               >
-                بازگشایی و ادامه کار
+                {isRtl ? 'بازگشایی و ادامه کار' : 'Unlock & Continue'}
               </Button>
             </form>
 
@@ -261,7 +256,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
                 className="text-slate-400 hover:text-indigo-300 font-semibold flex items-center gap-1.5 transition-colors"
               >
                 <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
-                <span>ورود با کاربر دیگر</span>
+                <span>{isRtl ? 'ورود با کاربر دیگر' : 'Sign in with another user'}</span>
               </button>
             </div>
           </div>
@@ -269,7 +264,7 @@ export const LockScreen: React.FC<LockScreenProps> = ({
           {/* Helper Shortcut Tip */}
           <div className="text-center mt-4">
             <p className="text-[11px] text-slate-500">
-              کلید میانبر قفل سریع در هر بخش از برنامه: <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 font-mono text-[10px] text-slate-300">Alt + L</kbd>
+              {isRtl ? 'کلید میانبر قفل سریع در هر بخش از برنامه:' : 'Quick lock shortcut anywhere in the app:'} <kbd className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-800 font-mono text-[10px] text-slate-300">Alt + L</kbd>
             </p>
           </div>
         </div>

@@ -224,7 +224,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
       setDeleteModalState({ isOpen: false, targets: [] });
       if (onRefreshCustomers) onRefreshCustomers();
     } catch (err: any) {
-      error(err?.message || isRtl ? 'خطا در حذف پرونده‌های مخاطبان' : 'Error deleting customer records');
+      error(err?.message || (isRtl ? 'خطا در حذف پرونده‌های مخاطبان' : 'Error deleting customer records'));
     }
   };
 
@@ -259,7 +259,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
               {t('customers.title')}
             </h1>
             <Badge variant="purple" size="sm">
-              <RTLNumber value={filteredCustomers.length} type="count" /> از <RTLNumber value={totalCount} type="count" />
+              <RTLNumber value={filteredCustomers.length} type="count" /> {isRtl ? ' از ' : ' of '} <RTLNumber value={totalCount} type="count" />
             </Badge>
           </div>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
@@ -773,7 +773,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                       {isRtl ? 'علت: ' : 'Reason: '}{c.registrationReason || (isRtl ? 'مشتری' : 'Customer')}
                     </Badge>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                      ثبت: {formatPersianDate(c.createdAt)}
+                      {isRtl ? 'ثبت: ' : 'Date: '}{formatPersianDate(c.createdAt)}
                     </span>
                   </div>
 
@@ -920,7 +920,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                 type="button"
                 onClick={handleClearSelection}
                 className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                title="لغو انتخاب‌ها"
+                title={isRtl ? 'لغو انتخاب‌ها' : 'Clear Selection'}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -939,8 +939,8 @@ export const CustomerList: React.FC<CustomerListProps> = ({
             <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
             <span>
               {deleteModalState.targets.length === 1
-                ? 'تأیید حذف پرونده مخاطب'
-                : `تأیید حذف گروهی ${deleteModalState.targets.length} مخاطب`}
+                ? isRtl ? 'تأیید حذف پرونده مخاطب' : 'Confirm Delete Contact'
+                : isRtl ? `تأیید حذف گروهی ${deleteModalState.targets.length} مخاطب` : `Confirm Bulk Delete of ${deleteModalState.targets.length} Contacts`}
             </span>
           </div>
         }
@@ -950,11 +950,15 @@ export const CustomerList: React.FC<CustomerListProps> = ({
           <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
             {deleteModalState.targets.length === 1 ? (
               <>
-                آیا از حذف پرونده مخاطب «<strong className="text-slate-900 dark:text-white font-bold">{deleteModalState.targets[0]?.name}</strong>» اطمینان دارید؟
+                {isRtl ? 'آیا از حذف پرونده مخاطب «' : 'Are you sure you want to delete contact «'}
+                <strong className="text-slate-900 dark:text-white font-bold">{deleteModalState.targets[0]?.name}</strong>
+                {isRtl ? '» اطمینان دارید؟' : '»?'}
               </>
             ) : (
               <>
-                آیا از حذف کامل <strong className="text-rose-600 dark:text-rose-400 font-bold">{deleteModalState.targets.length}</strong> مخاطب انتخاب‌شده اطمینان دارید؟
+                {isRtl ? 'آیا از حذف کامل ' : 'Are you sure you want to delete all '}
+                <strong className="text-rose-600 dark:text-rose-400 font-bold">{deleteModalState.targets.length}</strong>
+                {isRtl ? ' مخاطب انتخاب‌شده اطمینان دارید؟' : ' selected contacts?'}
               </>
             )}
           </p>
@@ -983,7 +987,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
 
             {deleteModalState.targets.length > 5 && (
               <div className="text-center text-[11px] text-slate-500 pt-1">
-                و {deleteModalState.targets.length - 5} مخاطب دیگر...
+                {isRtl ? `و ${deleteModalState.targets.length - 5} مخاطب دیگر...` : `and ${deleteModalState.targets.length - 5} more contacts...`}
               </div>
             )}
           </div>
@@ -1026,22 +1030,22 @@ export const CustomerList: React.FC<CustomerListProps> = ({
       <GlobalPrintModal
         isOpen={isPrintListModalOpen}
         onClose={() => setIsPrintListModalOpen(false)}
-        title="فهرست و کاردکس مخاطبان و مشتریان"
-        subtitle={`گزارش استخراج شده شامل ${filteredCustomers.length} رکورد - سامانه جامع MMBA`}
+        title={isRtl ? 'فهرست و کاردکس مخاطبان و مشتریان' : 'Contact & Customer List and Ledger'}
+        subtitle={isRtl ? `گزارش استخراج شده شامل ${filteredCustomers.length} رکورد - سامانه جامع MMBA` : `Extracted report contains ${filteredCustomers.length} records - MMBA Comprehensive System`}
         documentDate={new Date().toISOString()}
       >
         <div className="space-y-4 text-slate-800">
           <table className="w-full text-end text-xs border border-slate-300 dark:border-slate-700 border-collapse">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold border-b border-slate-300 dark:border-slate-700">
-                <th className="p-2 border-l border-slate-300 dark:border-slate-700 w-12 text-center">ردیف</th>
-                <th className="p-2 border-l border-slate-300 dark:border-slate-700">کد</th>
-                <th className="p-2 border-l border-slate-300 dark:border-slate-700">نام و نام خانوادگی</th>
-                <th className="p-2 border-l border-slate-300 dark:border-slate-700">شرکت / سمت</th>
-                <th className="p-2 border-l border-slate-300 dark:border-slate-700">شماره همراه</th>
-                <th className="p-2 border-l border-slate-300 dark:border-slate-700">علت ثبت</th>
-                <th className="p-2 border-l border-slate-300 dark:border-slate-700">تاریخ ثبت</th>
-                <th className="p-2">وضعیت</th>
+                <th className="p-2 border-l border-slate-300 dark:border-slate-700 w-12 text-center">{isRtl ? 'ردیف' : '#'}</th>
+                <th className="p-2 border-l border-slate-300 dark:border-slate-700">{isRtl ? 'کد' : 'Code'}</th>
+                <th className="p-2 border-l border-slate-300 dark:border-slate-700">{isRtl ? 'نام و نام خانوادگی' : 'Full Name'}</th>
+                <th className="p-2 border-l border-slate-300 dark:border-slate-700">{isRtl ? 'شرکت / سمت' : 'Company / Position'}</th>
+                <th className="p-2 border-l border-slate-300 dark:border-slate-700">{isRtl ? 'شماره همراه' : 'Mobile'}</th>
+                <th className="p-2 border-l border-slate-300 dark:border-slate-700">{isRtl ? 'علت ثبت' : 'Reason'}</th>
+                <th className="p-2 border-l border-slate-300 dark:border-slate-700">{isRtl ? 'تاریخ ثبت' : 'Date'}</th>
+                <th className="p-2">{isRtl ? 'وضعیت' : 'Status'}</th>
               </tr>
             </thead>
             <tbody>
@@ -1054,7 +1058,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
                     {c.companyName ? `${c.companyName} ${c.jobTitle ? `(${c.jobTitle})` : ''}` : c.jobTitle || '—'}
                   </td>
                   <td className="p-2 border-l border-slate-300 dark:border-slate-700 font-mono" dir="ltr">{c.mobile}</td>
-                  <td className="p-2 border-l border-slate-300 dark:border-slate-700">{c.registrationReason || 'مشتری'}</td>
+                  <td className="p-2 border-l border-slate-300 dark:border-slate-700">{c.registrationReason || (isRtl ? 'مشتری' : 'Customer')}</td>
                   <td className="p-2 border-l border-slate-300 dark:border-slate-700 font-mono">{formatPersianDate(c.createdAt)}</td>
                   <td className="p-2">{statusBadges[c.status]?.label || c.status}</td>
                 </tr>

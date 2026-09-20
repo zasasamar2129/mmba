@@ -7,6 +7,7 @@ import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
 import { formatPersianDate, getRelativeTimeFa } from '../../lib/dateUtils';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import {
   AlertTriangle, CheckCircle2, Clock, Eye, Trash2, Filter,
   Search, Shield, User as UserIcon, MessageSquare, Camera, ExternalLink,
@@ -19,6 +20,7 @@ export interface ProblemReportViewerProps {
 
 export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ currentUser }) => {
   const { success, error: toastError } = useToast();
+  const { isRtl } = useTranslation();
   const [reports, setReports] = useState<ProblemReport[]>(() => storage.getProblemReports());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');

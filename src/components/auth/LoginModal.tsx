@@ -73,7 +73,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       if (res.success && res.user) {
         onLoginSuccess(res.user);
       } else {
-        setErrorMsg(res.message || 'نام کاربری یا کلمه عبور اشتباه است.');
+        setErrorMsg(res.message || (isRtl ? 'نام کاربری یا کلمه عبور اشتباه است.' : 'Incorrect username or password.'));
       }
     } catch (err: any) {
       setIsLoading(false);

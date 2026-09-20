@@ -92,11 +92,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       list.push({
         id: `t-task-${t.id}`,
         type: 'TASK',
-        title: `وظیفه: ${t.title} (${t.status})`,
-        description: t.description || 'بدون توضیحات تکمیلی',
+        title: isRtl ? `وظیفه: ${t.title} (${t.status})` : `Task: ${t.title} (${t.status})`,
+        description: t.description || (isRtl ? 'بدون توضیحات تکمیلی' : 'No additional description'),
         timestamp: t.createdAt,
         userId: t.creatorUserId,
-        userName: t.creatorUserName || 'مدیر',
+        userName: t.creatorUserName || (isRtl ? 'مدیر' : 'Manager'),
         entityId: t.id,
       });
     });
@@ -106,11 +106,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       list.push({
         id: `t-pay-${p.id}`,
         type: 'PAYMENT',
-        title: `پرداخت وجه: ${formatPrice(p.amount)} (${p.status})`,
-        description: `شماره رسید: ${p.receiptNumber} • روش پرداخت: ${p.method} • ${p.notes || ''}`,
+        title: isRtl ? `پرداخت وجه: ${formatPrice(p.amount)} (${p.status})` : `Payment: ${formatPrice(p.amount)} (${p.status})`,
+        description: isRtl ? `شماره رسید: ${p.receiptNumber} • روش پرداخت: ${p.method} • ${p.notes || ''}` : `Receipt: ${p.receiptNumber} • Method: ${p.method} • ${p.notes || ''}`,
         timestamp: p.date || p.createdAt,
         userId: p.reportedByUserId,
-        userName: p.reportedByUserName || 'حسابداری',
+        userName: p.reportedByUserName || (isRtl ? 'حسابداری' : 'Accounting'),
         entityId: p.id,
       });
     });
@@ -120,11 +120,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       list.push({
         id: `t-chk-${chk.id}`,
         type: 'CHECK',
-        title: `چک صیادی: ${formatPrice(chk.amount)} (${chk.status})`,
-        description: `بانک ${chk.bankName} • سررسید: ${formatPersianDate(chk.dueDate)} • شماره: ${chk.checkNumber}`,
+        title: isRtl ? `چک صیادی: ${formatPrice(chk.amount)} (${chk.status})` : `Check: ${formatPrice(chk.amount)} (${chk.status})`,
+        description: isRtl ? `بانک ${chk.bankName} • سررسید: ${formatPersianDate(chk.dueDate)} • شماره: ${chk.checkNumber}` : `Bank ${chk.bankName} • Due: ${formatPersianDate(chk.dueDate)} • No: ${chk.checkNumber}`,
         timestamp: chk.createdAt,
         userId: '',
-        userName: 'سیستم چک',
+        userName: isRtl ? 'سیستم چک' : 'Check System',
         entityId: chk.id,
       });
     });
@@ -134,11 +134,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       list.push({
         id: `t-cntr-${cnt.id}`,
         type: 'CONTRACT',
-        title: `قرارداد ${cnt.title} (${cnt.contractNumber})`,
-        description: `مبلغ: ${formatPrice(cnt.amount)} • وضعیت: ${cnt.status}`,
+        title: isRtl ? `قرارداد ${cnt.title} (${cnt.contractNumber})` : `Contract ${cnt.title} (${cnt.contractNumber})`,
+        description: isRtl ? `مبلغ: ${formatPrice(cnt.amount)} • وضعیت: ${cnt.status}` : `Amount: ${formatPrice(cnt.amount)} • Status: ${cnt.status}`,
         timestamp: cnt.createdAt,
         userId: cnt.createdById,
-        userName: 'واحد قرارداد',
+        userName: isRtl ? 'واحد قرارداد' : 'Contracts Unit',
         entityId: cnt.id,
       });
     });
@@ -148,11 +148,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       list.push({
         id: `t-rep-${r.id}`,
         type: 'REPAIR',
-        title: `پذیرش تعمیر: ${r.brand} ${r.model} (${r.trackingCode})`,
-        description: `ایراد: ${r.problemDescription} • وضعیت: ${r.status}`,
+        title: isRtl ? `پذیرش تعمیر: ${r.brand} ${r.model} (${r.trackingCode})` : `Repair: ${r.brand} ${r.model} (${r.trackingCode})`,
+        description: isRtl ? `ایراد: ${r.problemDescription} • وضعیت: ${r.status}` : `Issue: ${r.problemDescription} • Status: ${r.status}`,
         timestamp: r.receivedDate || r.createdAt,
         userId: r.technicianUserId || '',
-        userName: r.technicianUserName || 'کارگاه',
+        userName: r.technicianUserName || (isRtl ? 'کارگاه' : 'Workshop'),
         entityId: r.id,
       });
     });
@@ -162,11 +162,11 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       list.push({
         id: `t-sim-${s.id}`,
         type: 'SIM',
-        title: `سیم‌کارت تخصیص یافته: ${s.phoneNumber}`,
-        description: `اپراتور: ${s.operator} • وضعیت: ${s.status} • ICCID: ${s.iccid}`,
+        title: isRtl ? `سیم‌کارت تخصیص یافته: ${s.phoneNumber}` : `Assigned SIM: ${s.phoneNumber}`,
+        description: isRtl ? `اپراتور: ${s.operator} • وضعیت: ${s.status} • ICCID: ${s.iccid}` : `Operator: ${s.operator} • Status: ${s.status} • ICCID: ${s.iccid}`,
         timestamp: s.createdAt,
         userId: '',
-        userName: 'انبار سیم‌کارت',
+        userName: isRtl ? 'انبار سیم‌کارت' : 'SIM Inventory',
         entityId: s.id,
       });
     });
@@ -176,8 +176,8 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
       list.push({
         id: `t-att-${a.id}`,
         type: 'ATTACHMENT',
-        title: `پیوست فایل: ${a.originalName}`,
-        description: `حجم: ${(a.sizeBytes / 1024).toFixed(1)} KB • آپلود شده توسط: ${a.uploadedByUserName}`,
+        title: isRtl ? `پیوست فایل: ${a.originalName}` : `File Attachment: ${a.originalName}`,
+        description: isRtl ? `حجم: ${(a.sizeBytes / 1024).toFixed(1)} KB • آپلود شده توسط: ${a.uploadedByUserName}` : `Size: ${(a.sizeBytes / 1024).toFixed(1)} KB • Uploaded by: ${a.uploadedByUserName}`,
         timestamp: a.uploadedAt,
         userId: a.uploadedByUserId,
         userName: a.uploadedByUserName,
@@ -612,7 +612,7 @@ export const CustomerDetail: React.FC<CustomerDetailProps> = ({
                 <Badge variant="purple" size="sm">{cnt.status}</Badge>
               </div>
               <p className="text-xs text-slate-400">
-                شماره: {cnt.contractNumber} • مبلغ: {formatPrice(cnt.amount)} • نوع: {cnt.type}
+                {isRtl ? `شماره: ${cnt.contractNumber} • مبلغ: ${formatPrice(cnt.amount)} • نوع: ${cnt.type}` : `No: ${cnt.contractNumber} • Amount: ${formatPrice(cnt.amount)} • Type: ${cnt.type}`}
               </p>
             </div>
           ))}

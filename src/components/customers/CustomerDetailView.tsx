@@ -59,7 +59,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
   onOpenNewVoiceNote,
 }) => {
   const { success, error } = useToast();
-  const { t, isRtl } = useTranslation();
+  const { isRtl } = useTranslation();
   const [activeTab, setActiveTab] = useState<'TIMELINE' | 'VOICENOTES' | 'CALLS' | 'TASKS' | 'FINANCES' | 'CHECKS' | 'CONTRACTS' | 'SIMS' | 'REPAIRS' | 'FILES'>('TIMELINE');
   const [copiedVoiceId, setCopiedVoiceId] = useState<string | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -102,9 +102,9 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     customerVoiceNotes.forEach((vn) => {
       list.push({
         id: `vn-${vn.id}`,
-        type: 'یادداشت صوتی',
+        type: isRtl ? 'یادداشت صوتی' : 'Voice Note',
         title: vn.title,
-        description: vn.transcription || 'فایل صوتی ضمیمه شده به پرونده',
+        description: vn.transcription || (isRtl ? 'فایل صوتی ضمیمه شده به پرونده' : 'Audio file attached to the record'),
         timestamp: vn.createdAt,
         userName: vn.createdByName,
         badgeVariant: 'rose',
@@ -116,7 +116,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     customerCalls.forEach((c) => {
       list.push({
         id: `call-${c.id}`,
-        type: 'مذاکره و تماس',
+        type: isRtl ? 'مذاکره و تماس' : 'Negotiation & Call',
         title: `${c.callType}: ${c.subject}`,
         description: c.notes,
         timestamp: c.createdAt,
@@ -128,11 +128,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     customerTasks.forEach((t) => {
       list.push({
         id: `task-${t.id}`,
-        type: 'اقدام و وظیفه',
+        type: isRtl ? 'اقدام و وظیفه' : 'Action & Task',
         title: `${t.title} (${t.status})`,
-        description: t.description || 'بدون توضیحات',
+        description: t.description || (isRtl ? 'بدون توضیحات' : 'No description'),
         timestamp: t.createdAt,
-        userName: t.assignedUserName || 'مسئول',
+        userName: t.assignedUserName || (isRtl ? 'مسئول' : 'Assignee'),
         badgeVariant: 'warning',
       });
     });
@@ -140,11 +140,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     customerPayments.forEach((p) => {
       list.push({
         id: `pay-${p.id}`,
-        type: 'دریافت وجه',
-        title: `واریز ${formatToman(p.amount)} (${p.method})`,
-        description: `شماره رسید: ${p.receiptNumber} • ${p.notes || ''}`,
+        type: isRtl ? 'دریافت وجه' : 'Payment Received',
+        title: `${isRtl ? 'واریز' : 'Deposit'} ${formatToman(p.amount)} (${p.method})`,
+        description: `${isRtl ? 'شماره رسید:' : 'Receipt No:'} ${p.receiptNumber} • ${p.notes || ''}`,
         timestamp: p.date,
-        userName: 'واحد مالی',
+        userName: isRtl ? 'واحد مالی' : 'Finance Unit',
         badgeVariant: 'emerald',
       });
     });
@@ -152,11 +152,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     customerChecks.forEach((chk) => {
       list.push({
         id: `chk-${chk.id}`,
-        type: 'چک صیادی',
-        title: `چک ${formatToman(chk.amount)} (${chk.bankName})`,
-        description: `سررسید: ${formatPersianDate(chk.dueDate)} • شماره صیاد: ${chk.sayadNumber}`,
+        type: isRtl ? 'چک صیادی' : 'Sayad Check',
+        title: `${isRtl ? 'چک' : 'Check'} ${formatToman(chk.amount)} (${chk.bankName})`,
+        description: `${isRtl ? 'سررسید:' : 'Due:'} ${formatPersianDate(chk.dueDate)} • ${isRtl ? 'شماره صیاد:' : 'Sayad No:'} ${chk.sayadNumber}`,
         timestamp: chk.createdAt,
-        userName: 'خزانه',
+        userName: isRtl ? 'خزانه' : 'Treasury',
         badgeVariant: 'purple',
       });
     });
@@ -164,11 +164,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     customerContracts.forEach((cnt) => {
       list.push({
         id: `cnt-${cnt.id}`,
-        type: 'قرارداد',
-        title: `قرارداد ${cnt.title} (${cnt.contractNumber})`,
-        description: `مبلغ کل: ${formatToman(cnt.totalAmount)} • وضعیت: ${cnt.status}`,
+        type: isRtl ? 'قرارداد' : 'Contract',
+        title: `${isRtl ? 'قرارداد' : 'Contract'} ${cnt.title} (${cnt.contractNumber})`,
+        description: `${isRtl ? 'مبلغ کل:' : 'Total amount:'} ${formatToman(cnt.totalAmount)} • ${isRtl ? 'وضعیت:' : 'Status:'} ${cnt.status}`,
         timestamp: cnt.createdAt,
-        userName: 'واحد قرارداد',
+        userName: isRtl ? 'واحد قرارداد' : 'Contracts Unit',
         badgeVariant: 'indigo',
       });
     });
@@ -176,11 +176,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
     customerRepairs.forEach((r) => {
       list.push({
         id: `rep-${r.id}`,
-        type: 'تعمیرگاه',
-        title: `پذیرش ${r.deviceModel} (${r.trackingCode})`,
-        description: `ایراد: ${r.problemDescription} • وضعیت: ${r.status}`,
+        type: isRtl ? 'تعمیرگاه' : 'Repair Shop',
+        title: `${isRtl ? 'پذیرش' : 'Intake'} ${r.deviceModel} (${r.trackingCode})`,
+        description: `${isRtl ? 'ایراد:' : 'Issue:'} ${r.problemDescription} • ${isRtl ? 'وضعیت:' : 'Status:'} ${r.status}`,
         timestamp: r.receivedDate,
-        userName: r.assignedTechnicianName || 'تکنسین',
+        userName: r.assignedTechnicianName || (isRtl ? 'تکنسین' : 'Technician'),
         badgeVariant: 'info',
       });
     });
@@ -190,20 +190,20 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${window.location.origin}/#customer-${customer.id}`);
-    success('لینک پرونده مشتری در کلیپ‌بورد کپی شد');
+    success(isRtl ? 'لینک پرونده مشتری در کلیپ‌بورد کپی شد' : 'Customer dossier link copied to clipboard');
   };
 
   const handleCopyVoiceTranscript = (id: string, text?: string) => {
     if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedVoiceId(id);
-    success('متن یادداشت صوتی کپی شد');
+    success(isRtl ? 'متن یادداشت صوتی کپی شد' : 'Voice note transcript copied');
     setTimeout(() => setCopiedVoiceId(null), 2000);
   };
 
   const handleDeleteVoiceNote = (id: string) => {
     storage.deleteVoiceNote(id);
-    success('یادداشت صوتی با موفقیت حذف شد');
+    success(isRtl ? 'یادداشت صوتی با موفقیت حذف شد' : 'Voice note deleted successfully');
     onRefreshCustomer();
   };
 
@@ -333,7 +333,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-transparent">
               <Mail className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
               <div>
-                <span className="text-[10px] text-slate-500 block">پست الکترونیک</span>
+                <span className="text-[10px] text-slate-500 block">{isRtl ? 'پست الکترونیک' : 'Email'}</span>
                 <span className="truncate max-w-[150px] font-medium text-slate-800 dark:text-slate-200">{customer.email}</span>
               </div>
             </div>
@@ -343,7 +343,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-transparent">
               <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div>
-                <span className="text-[10px] text-slate-500 block">کد ملی / شناسه</span>
+                <span className="text-[10px] text-slate-500 block">{isRtl ? 'کد ملی / شناسه' : 'National ID'}</span>
                 <span className="font-mono font-medium text-slate-800 dark:text-slate-200">{customer.nationalId}</span>
               </div>
             </div>
@@ -352,8 +352,8 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <div className="flex items-center gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-transparent">
             <MapPin className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <div className="truncate">
-              <span className="text-[10px] text-slate-500 block">آدرس و موقعیت</span>
-              <span className="truncate font-medium text-slate-800 dark:text-slate-200">{customer.address || 'ثبت نشده'}</span>
+              <span className="text-[10px] text-slate-500 block">{isRtl ? 'آدرس و موقعیت' : 'Address & Location'}</span>
+              <span className="truncate font-medium text-slate-800 dark:text-slate-200">{customer.address || (isRtl ? 'ثبت نشده' : 'Not registered')}</span>
             </div>
           </div>
         </div>
@@ -383,7 +383,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               leftIcon={<Mic className="w-4 h-4" />}
               className="shadow-rose-600/20 bg-rose-600 hover:bg-rose-500 font-bold"
             >
-              ضبط یادداشت صوتی (Voice Note)
+              {isRtl ? 'ضبط یادداشت صوتی' : 'Record Voice Note'}
             </Button>
           )}
 
@@ -394,7 +394,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             leftIcon={<PhoneCall className="w-4 h-4" />}
             className="font-bold"
           >
-            ثبت تماس صوتی (AI)
+            {isRtl ? 'ثبت تماس صوتی' : 'Log Voice Call (AI)'}
           </Button>
 
           <Button
@@ -403,7 +403,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onClick={() => onOpenNewTask(customer)}
             leftIcon={<CheckSquare className="w-4 h-4" />}
           >
-            تعریف وظیفه
+            {isRtl ? 'تعریف وظیفه' : 'Create Task'}
           </Button>
 
           <Button
@@ -412,7 +412,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onClick={() => onOpenNewPayment(customer)}
             leftIcon={<DollarSign className="w-4 h-4" />}
           >
-            ثبت دریافت وجه
+            {isRtl ? 'ثبت دریافت وجه' : 'Log Payment'}
           </Button>
 
           <Button
@@ -421,7 +421,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onClick={() => onOpenNewCheck(customer)}
             leftIcon={<FileText className="w-4 h-4" />}
           >
-            ثبت چک صیادی
+            {isRtl ? 'ثبت چک صیادی' : 'Log Sayad Check'}
           </Button>
 
           <Button
@@ -430,7 +430,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onClick={() => onOpenNewContract(customer)}
             leftIcon={<FileText className="w-4 h-4" />}
           >
-            صدور قرارداد
+            {isRtl ? 'صدور قرارداد' : 'Issue Contract'}
           </Button>
 
           <Button
@@ -439,7 +439,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             onClick={() => onOpenNewRepair(customer)}
             leftIcon={<Wrench className="w-4 h-4" />}
           >
-            پذیرش تعمیرگاه
+            {isRtl ? 'پذیرش تعمیرگاه' : 'Repair Intake'}
           </Button>
         </div>
       </div>
