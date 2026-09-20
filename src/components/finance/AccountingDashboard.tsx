@@ -17,6 +17,7 @@ import {
 import { formatPersianDate } from '../../lib/dateUtils';
 import { formatToman } from '../../lib/currencyUtils';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import { GlobalPrintModal } from '../common/GlobalPrintModal';
 
 export interface AccountingDashboardProps {
@@ -24,6 +25,7 @@ export interface AccountingDashboardProps {
 }
 
 export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ currentUser }) => {
+  const { isRtl } = useTranslation();
   const { success, error, warning } = useToast();
   const [activeTab, setActiveTab] = useState<'JOURNAL' | 'ACCOUNTS' | 'PERIODS'>('JOURNAL');
 
@@ -105,7 +107,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
 
   const handleRemoveLine = (index: number) => {
     if (entryLines.length <= 2) {
-      warning('حداقل دو سطر برای سند حسابداری دوبل الزامی است.');
+      warning(isRtl ? 'حداقل دو سطر برای سند حسابداری دوبل الزامی است.' : 'At least two lines are required for a double-entry journal entry.');
       return;
     }
     setEntryLines((prev) => prev.filter((_, i) => i !== index));
@@ -123,7 +125,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
   const handleSaveJournalEntry = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!entryDescription.trim()) {
-      error('شرح کلی سند الزامی است.');
+      error(isRtl ? 'شرح کلی سند الزامی است.' : 'A general description for the entry is required.');
       return;
     }
 
@@ -161,7 +163,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         }))
       );
 
-      success('سند حسابداری با موفقیت ثبت قطعی شد.');
+      success(isRtl ? 'سند حسابداری با موفقیت ثبت قطعی شد.' : 'Journal entry posted successfully.');
       setIsNewEntryModalOpen(false);
       setEntryDescription('');
       setEntryLines([
@@ -170,7 +172,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       ]);
       refreshData();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت سند');
+      error(err.message || (isRtl ? 'خطا در ثبت سند' : 'Error posting journal entry'));
     }
   };
 
@@ -178,7 +180,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
   const handleSaveAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAccountCode.trim() || !newAccountName.trim()) {
-      error('کد و نام حساب الزامی است.');
+      error(isRtl ? 'کد و نام حساب الزامی است.' : 'Account code and name are required.');
       return;
     }
 
@@ -197,7 +199,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       setNewAccountName('');
       refreshData();
     } catch (err: any) {
-      error(err.message || 'خطا در ذخیره حساب');
+      error(err.message || (isRtl ? 'خطا در ذخیره حساب' : 'Error saving account'));
     }
   };
 
@@ -217,7 +219,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       setIsNewPeriodModalOpen(false);
       refreshData();
     } catch (err: any) {
-      error(err.message || 'خطا در ذخیره دوره مالی');
+      error(err.message || (isRtl ? 'خطا در ذخیره دوره مالی' : 'Error saving fiscal period'));
     }
   };
 
@@ -240,11 +242,11 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
 
   const getAccountTypeName = (type: AccountType | string) => {
     switch (type) {
-      case AccountType.ASSET: return 'دارایی‌ها';
-      case AccountType.LIABILITY: return 'بدهی‌ها';
-      case AccountType.EQUITY: return 'حقوق صاحبان سرمایه';
-      case AccountType.REVENUE: return 'درآمدها';
-      case AccountType.EXPENSE: return 'هزینه‌ها';
+      case AccountType.ASSET: return isRtl ? 'دارایی‌ها' : 'Assets';
+      case AccountType.LIABILITY: return isRtl ? 'بدهی‌ها' : 'Liabilities';
+      case AccountType.EQUITY: return isRtl ? 'حقوق صاحبان سرمایه' : 'Equity';
+      case AccountType.REVENUE: return isRtl ? 'درآمدها' : 'Revenue';
+      case AccountType.EXPENSE: return isRtl ? 'هزینه‌ها' : 'Expenses';
       default: return type;
     }
   };
@@ -261,32 +263,32 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         <div className="space-y-4 text-xs">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
             <div>
-              <span className="text-slate-500">شماره سند:</span>{' '}
+              <span className="text-slate-500">{isRtl ? 'شماره سند:' : 'Entry #'}</span>{' '}
               <strong className="text-slate-900">{entry.entry_number || entry.id}</strong>
             </div>
             <div>
-              <span className="text-slate-500">تاریخ سند:</span>{' '}
+              <span className="text-slate-500">{isRtl ? 'تاریخ سند:' : 'Entry Date:'}</span>{' '}
               <strong className="text-slate-900">{formatPersianDate(entry.entry_date || entry.created_at)}</strong>
             </div>
             <div>
-              <span className="text-slate-500">نوع عطف:</span>{' '}
-              <strong className="text-slate-900">{entry.reference_type || 'دستی'}</strong>
+              <span className="text-slate-500">{isRtl ? 'نوع عطف:' : 'Ref Type:'}</span>{' '}
+              <strong className="text-slate-900">{entry.reference_type || (isRtl ? 'دستی' : 'Manual')}</strong>
             </div>
             <div>
-              <span className="text-slate-500">تنظیم‌کننده:</span>{' '}
-              <strong className="text-slate-900">{entry.created_by_name || 'کاربر سیستم'}</strong>
+              <span className="text-slate-500">{isRtl ? 'تنظیم‌کننده:' : 'Prepared by:'}</span>{' '}
+              <strong className="text-slate-900">{entry.created_by_name || (isRtl ? 'کاربر سیستم' : 'System User')}</strong>
             </div>
           </div>
 
           <table className="w-full border-collapse border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
-                <th className="border border-slate-300 dark:border-slate-700 p-2 text-center w-10">ردیف</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2 w-28 text-center">کد حساب</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2">نام حساب</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2">شرح سطر</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2 text-start w-36">بدهکار (ریال)</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2 text-start w-36">بستانکار (ریال)</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 text-center w-10">{isRtl ? 'ردیف' : '#'}</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 w-28 text-center">{isRtl ? 'کد حساب' : 'Acc. Code'}</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">{isRtl ? 'نام حساب' : 'Account Name'}</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2">{isRtl ? 'شرح سطر' : 'Description'}</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 text-start w-36">{isRtl ? 'بدهکار (ریال)' : 'Debit (Rial)'}</th>
+                <th className="border border-slate-300 dark:border-slate-700 p-2 text-start w-36">{isRtl ? 'بستانکار (ریال)' : 'Credit (Rial)'}</th>
               </tr>
             </thead>
             <tbody>
@@ -305,7 +307,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                 </tr>
               ))}
               <tr className="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-slate-100">
-                <td colSpan={4} className="border border-slate-300 dark:border-slate-700 p-2 text-end">جمع کل سند (تراز):</td>
+                <td colSpan={4} className="border border-slate-300 dark:border-slate-700 p-2 text-end">{isRtl ? 'جمع کل سند (تراز):' : 'Total Entry (Balance):'}</td>
                 <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono text-emerald-700 dark:text-emerald-400">
                   {Number(entry.totalDebit || 0).toLocaleString()}
                 </td>
@@ -317,9 +319,9 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           </table>
 
           <div className="grid grid-cols-3 gap-4 pt-10 text-center text-xs text-slate-600">
-            <div className="border-t border-slate-400 pt-1">امضای تنظیم‌کننده</div>
-            <div className="border-t border-slate-400 pt-1">امضای حسابدار مسئول</div>
-            <div className="border-t border-slate-400 pt-1">امضای مدیریت مالی</div>
+            <div className="border-t border-slate-400 pt-1">{isRtl ? 'امضای تنظیم‌کننده' : "Preparer's Signature"}</div>
+            <div className="border-t border-slate-400 pt-1">{isRtl ? 'امضای حسابدار مسئول' : "Chief Accountant's Signature"}</div>
+            <div className="border-t border-slate-400 pt-1">{isRtl ? 'امضای مدیریت مالی' : "Finance Management's Signature"}</div>
           </div>
         </div>
       ),
@@ -332,7 +334,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
         <Info className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
         <div className="leading-relaxed">
-          <strong className="font-bold">پایه‌ریزی ساختار حسابداری دوبل (Accounting Foundation):</strong>
+          <strong className="font-bold">{isRtl ? 'پایه‌ریزی ساختار حسابداری دوبل' : 'Double-Entry Accounting Foundation'}:</strong>
           <p className="mt-0.5">
             سامانه حسابداری هلو (Holo) همچنان مرجع اصلی امور مالی و صدور اسناد نهایی مجموعه است. این بخش زیرساخت حسابداری دوطرفه استاندارد MMBA شامل کدینگ حساب‌ها، دفتر روزنامه و کنترل تراز دقیق بدهکار/بستانکار را جهت آمادگی اتوماسیون آتی فراهم می‌سازد.
           </p>
@@ -346,8 +348,8 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             <Scale className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">پایه حسابداری (Accounting Foundation)</h2>
-            <p className="text-xs text-slate-500">کدینگ حساب‌ها، دفتر روزنامه دوبل و دوره‌های مالی</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{isRtl ? 'پایه حسابداری' : 'Accounting Foundation'}</h2>
+            <p className="text-xs text-slate-500">{isRtl ? 'کدینگ حساب‌ها، دفتر روزنامه دوبل و دوره‌های مالی' : 'Chart of accounts, double-entry journal and fiscal periods'}</p>
           </div>
         </div>
 
@@ -397,7 +399,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>دفتر روزنامه ({journalEntries.length})</span>
+          <span>{isRtl ? 'دفتر روزنامه' : 'Journal'} ({journalEntries.length})</span>
         </button>
 
         <button
@@ -410,7 +412,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span>کدینگ حساب‌ها ({accounts.length})</span>
+          <span>{isRtl ? 'کدینگ حساب‌ها' : 'Chart of Accounts'} ({accounts.length})</span>
         </button>
 
         <button
@@ -423,7 +425,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           }`}
         >
           <Calendar className="w-4 h-4" />
-          <span>دوره‌های مالی ({periods.length})</span>
+          <span>{isRtl ? 'دوره‌های مالی' : 'Fiscal Periods'} ({periods.length})</span>
         </button>
       </div>
 
@@ -434,14 +436,14 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             <table className="w-full text-end text-xs">
               <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th className="p-3 w-12 text-center">شماره</th>
-                  <th className="p-3 w-28">تاریخ سند</th>
-                  <th className="p-3">شرح سند حسابداری</th>
-                  <th className="p-3 w-28 text-center">نوع عطف</th>
-                  <th className="p-3 text-start w-36">مجموع بدهکار</th>
-                  <th className="p-3 text-start w-36">مجموع بستانکار</th>
-                  <th className="p-3 w-24 text-center">وضعیت</th>
-                  <th className="p-3 w-28 text-center">عملیات</th>
+                  <th className="p-3 w-12 text-center">{isRtl ? 'شماره' : '#'}</th>
+                  <th className="p-3 w-28">{isRtl ? 'تاریخ سند' : 'Date'}</th>
+                  <th className="p-3">{isRtl ? 'شرح سند حسابداری' : 'Description'}</th>
+                  <th className="p-3 w-28 text-center">{isRtl ? 'نوع عطف' : 'Ref Type'}</th>
+                  <th className="p-3 text-start w-36">{isRtl ? 'مجموع بدهکار' : 'Total Debit'}</th>
+                  <th className="p-3 text-start w-36">{isRtl ? 'مجموع بستانکار' : 'Total Credit'}</th>
+                  <th className="p-3 w-24 text-center">{isRtl ? 'وضعیت' : 'Status'}</th>
+                  <th className="p-3 w-28 text-center">{isRtl ? 'عملیات' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -469,7 +471,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                           {Number(entry.totalCredit || 0).toLocaleString()}
                         </td>
                         <td className="p-3 text-center">
-                          <Badge variant="success">ثبت قطعی</Badge>
+                          <Badge variant="success">{isRtl ? 'ثبت قطعی' : 'Posted'}</Badge>
                         </td>
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1">
@@ -477,7 +479,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                               type="button"
                               onClick={() => setExpandedEntryId(isExpanded ? null : entry.id)}
                               className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
-                              title="مشاهده سطرهای سند"
+                              title={isRtl ? 'مشاهده سطرهای سند' : 'View entry lines'}
                             >
                               {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                             </button>
@@ -485,7 +487,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                               type="button"
                               onClick={() => handlePrintEntry(entry)}
                               className="p-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 transition-colors"
-                              title="چاپ سند استاندارد"
+                              title={isRtl ? 'چاپ سند استاندارد' : 'Print standard entry'}
                             >
                               <Printer className="w-4 h-4" />
                             </button>
@@ -505,11 +507,11 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                                 <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
                                   <tr>
                                     <th className="p-2 w-10 text-center">#</th>
-                                    <th className="p-2 w-28 text-center">کد حساب</th>
-                                    <th className="p-2">نام حساب</th>
-                                    <th className="p-2">شرح آرتیکل</th>
-                                    <th className="p-2 text-start w-32">بدهکار (ریال)</th>
-                                    <th className="p-2 text-start w-32">بستانکار (ریال)</th>
+                                    <th className="p-2 w-28 text-center">{isRtl ? 'کد حساب' : 'Code'}</th>
+                                    <th className="p-2">{isRtl ? 'نام حساب' : 'Name'}</th>
+                                    <th className="p-2">{isRtl ? 'شرح آرتیکل' : 'Description'}</th>
+                                    <th className="p-2 text-start w-32">{isRtl ? 'بدهکار (ریال)' : 'Debit (Rial)'}</th>
+                                    <th className="p-2 text-start w-32">{isRtl ? 'بستانکار (ریال)' : 'Credit (Rial)'}</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -556,17 +558,17 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             <div key={typeKey} className="border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
               <div className="bg-slate-100 dark:bg-slate-800/80 px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
                 <h3 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>سرفصل {getAccountTypeName(typeKey as any)}</span>
-                  <Badge variant="indigo">{list.length} حساب</Badge>
+                  <span>{isRtl ? 'سرفصل' : 'Category'} {getAccountTypeName(typeKey as any)}</span>
+                  <Badge variant="indigo">{list.length} {isRtl ? 'حساب' : 'accounts'}</Badge>
                 </h3>
               </div>
               <table className="w-full text-end text-xs">
                 <thead className="text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
                   <tr>
-                    <th className="p-3 w-28 text-center">کد حساب</th>
-                    <th className="p-3">نام حساب</th>
-                    <th className="p-3 w-32 text-center">وضعیت</th>
-                    <th className="p-3 w-40">تاریخ ایجاد</th>
+                    <th className="p-3 w-28 text-center">{isRtl ? 'کد حساب' : 'Code'}</th>
+                    <th className="p-3">{isRtl ? 'نام حساب' : 'Name'}</th>
+                    <th className="p-3 w-32 text-center">{isRtl ? 'وضعیت' : 'Status'}</th>
+                    <th className="p-3 w-40">{isRtl ? 'تاریخ ایجاد' : 'Created'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -580,7 +582,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                       </td>
                       <td className="p-3 text-center">
                         <Badge variant={acc.is_active ? 'success' : 'danger'}>
-                          {acc.is_active ? 'فعال' : 'غیرفعال'}
+                          {acc.is_active ? (isRtl ? 'فعال' : 'Active') : (isRtl ? 'غیرفعال' : 'Inactive')}
                         </Badge>
                       </td>
                       <td className="p-3 text-slate-500">
@@ -620,7 +622,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                   </p>
                 </div>
                 <Badge variant={p.status === AccountingPeriodStatus.OPEN ? 'success' : 'danger'}>
-                  {p.status === AccountingPeriodStatus.OPEN ? 'دوره مالی باز' : 'بسته شده'}
+                  {p.status === AccountingPeriodStatus.OPEN ? (isRtl ? 'دوره مالی باز' : 'Open Period') : (isRtl ? 'بسته شده' : 'Closed')}
                 </Badge>
               </div>
             ))}
@@ -632,7 +634,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       <Modal
         isOpen={isNewEntryModalOpen}
         onClose={() => setIsNewEntryModalOpen(false)}
-        title="ثبت سند حسابداری دوطرفه (Double-Entry Journal Entry)"
+        title={isRtl ? 'ثبت سند حسابداری دوطرفه' : 'Double-Entry Journal Entry'}
         maxWidth="max-w-4xl"
       >
         <form onSubmit={handleSaveJournalEntry} className="space-y-4 text-end">
@@ -643,7 +645,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               </label>
               <Input
                 required
-                placeholder="مثال: سند واریز نقدی و تسویه فاکتور مشتری..."
+                placeholder={isRtl ? 'مثال: سند واریز نقدی و تسویه فاکتور مشتری...' : 'e.g. Cash deposit and customer invoice settlement...'}
                 value={entryDescription}
                 onChange={(e) => setEntryDescription(e.target.value)}
               />
@@ -677,11 +679,11 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                 <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
                   <tr>
                     <th className="p-2 w-10 text-center">#</th>
-                    <th className="p-2 w-64">انتخاب حساب</th>
-                    <th className="p-2">شرح سطر</th>
-                    <th className="p-2 w-32">بدهکار (ریال)</th>
-                    <th className="p-2 w-32">بستانکار (ریال)</th>
-                    <th className="p-2 w-12 text-center">حذف</th>
+                    <th className="p-2 w-64">{isRtl ? 'انتخاب حساب' : 'Account'}</th>
+                    <th className="p-2">{isRtl ? 'شرح سطر' : 'Description'}</th>
+                    <th className="p-2 w-32">{isRtl ? 'بدهکار (ریال)' : 'Debit'}</th>
+                    <th className="p-2 w-32">{isRtl ? 'بستانکار (ریال)' : 'Credit'}</th>
+                    <th className="p-2 w-12 text-center">{isRtl ? 'حذف' : 'Del'}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -705,7 +707,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                       </td>
                       <td className="p-2">
                         <Input
-                          placeholder="شرح سطر..."
+                          placeholder={isRtl ? 'شرح سطر...' : 'Line description...'}
                           value={line.description}
                           onChange={(e) => handleLineChange(idx, 'description', e.target.value)}
                           className="text-xs p-1.5"
@@ -722,7 +724,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                             if (val > 0) handleLineChange(idx, 'credit', 0);
                           }}
                           className="text-xs font-mono p-1.5 text-start"
-                          placeholder="0"
+                          placeholder={isRtl ? '۰' : '0'}
                         />
                       </td>
                       <td className="p-2">
@@ -736,7 +738,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                             if (val > 0) handleLineChange(idx, 'debit', 0);
                           }}
                           className="text-xs font-mono p-1.5 text-start"
-                          placeholder="0"
+                          placeholder={isRtl ? '۰' : '0'}
                         />
                       </td>
                       <td className="p-2 text-center">
@@ -744,7 +746,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                           type="button"
                           onClick={() => handleRemoveLine(idx)}
                           className="text-rose-500 hover:text-rose-700 p-1"
-                          title="حذف سطر"
+                          title={isRtl ? 'حذف سطر' : 'Remove line'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -770,7 +772,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               )}
               <div>
                 <strong className="font-bold">
-                  {isEntryBalanced ? 'سند کاملاً تراز است (بدهکار = بستانکار)' : 'سند تراز نیست!'}
+                  {isEntryBalanced ? (isRtl ? 'سند کاملاً تراز است (بدهکار = بستانکار)' : 'Entry is balanced (Debit = Credit)') : (isRtl ? 'سند تراز نیست!' : 'Entry is NOT balanced!')}
                 </strong>
                 {!isEntryBalanced && (
                   <p className="mt-0.5">
@@ -781,8 +783,8 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             </div>
 
             <div className="flex items-center gap-4 font-mono font-bold text-sm">
-              <div>بدهکار: {totalDebitSum.toLocaleString()}</div>
-              <div>بستانکار: {totalCreditSum.toLocaleString()}</div>
+              <div>{isRtl ? 'بدهکار:' : 'Debit:'} {totalDebitSum.toLocaleString()}</div>
+              <div>{isRtl ? 'بستانکار:' : 'Credit:'} {totalCreditSum.toLocaleString()}</div>
             </div>
           </div>
 
@@ -806,7 +808,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       <Modal
         isOpen={isNewAccountModalOpen}
         onClose={() => setIsNewAccountModalOpen(false)}
-        title="تعریف حساب جدید در کدینگ"
+        title={isRtl ? 'تعریف حساب جدید در کدینگ' : 'Add New Account'}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSaveAccount} className="space-y-4 text-end">
@@ -816,7 +818,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             </label>
             <Input
               required
-              placeholder="مثال: 1104"
+              placeholder={isRtl ? 'مثال: 1104' : 'e.g. 1104'}
               value={newAccountCode}
               onChange={(e) => setNewAccountCode(e.target.value)}
             />
@@ -828,7 +830,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             </label>
             <Input
               required
-              placeholder="مثال: صندوق تنخواه‌گردان دفتر مرکزی"
+              placeholder={isRtl ? 'مثال: صندوق تنخواه‌گردان دفتر مرکزی' : 'e.g. Petty cash - head office'}
               value={newAccountName}
               onChange={(e) => setNewAccountName(e.target.value)}
             />
@@ -842,11 +844,11 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               value={newAccountType}
               onChange={(e) => setNewAccountType(e.target.value as AccountType)}
             >
-              <option value={AccountType.ASSET}>دارایی‌ها (Assets)</option>
-              <option value={AccountType.LIABILITY}>بدهی‌ها (Liabilities)</option>
-              <option value={AccountType.EQUITY}>حقوق صاحبان سرمایه (Equity)</option>
-              <option value={AccountType.REVENUE}>درآمدها (Revenue)</option>
-              <option value={AccountType.EXPENSE}>هزینه‌ها (Expense)</option>
+              <option value={AccountType.ASSET}>{isRtl ? 'دارایی‌ها' : 'Assets'}</option>
+              <option value={AccountType.LIABILITY}>{isRtl ? 'بدهی‌ها' : 'Liabilities'}</option>
+              <option value={AccountType.EQUITY}>{isRtl ? 'حقوق صاحبان سرمایه' : 'Equity'}</option>
+              <option value={AccountType.REVENUE}>{isRtl ? 'درآمدها' : 'Revenue'}</option>
+              <option value={AccountType.EXPENSE}>{isRtl ? 'هزینه‌ها' : 'Expenses'}</option>
             </Select>
           </div>
 
@@ -865,7 +867,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       <Modal
         isOpen={isNewPeriodModalOpen}
         onClose={() => setIsNewPeriodModalOpen(false)}
-        title="تعریف دوره مالی جدید"
+        title={isRtl ? 'تعریف دوره مالی جدید' : 'Add Fiscal Period'}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSavePeriod} className="space-y-4 text-end">
@@ -875,7 +877,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             </label>
             <Input
               required
-              placeholder="1404"
+              placeholder={isRtl ? '۱۴۰۴' : '1404'}
               value={newPeriodYear}
               onChange={(e) => setNewPeriodYear(e.target.value)}
             />
