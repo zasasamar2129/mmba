@@ -6,7 +6,7 @@
 // Lifecycle: install → activate → fetch (controlled caching).
 // =================================================
 
-const CACHE_VERSION = 'mmba-v2';
+const CACHE_VERSION = 'mmba-v3';
 const STATIC_CACHE = `mmba-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `mmba-runtime-${CACHE_VERSION}`;
 
@@ -92,6 +92,15 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Static assets: cache-first
+  // Vite dev modules (/src/, /@vite/, and ?v=-versioned deps) must NEVER be
+  // cache-first: in development Vite serves fresh file contents at stable URLs,
+  // so a cached copy goes stale the moment a file changes → stale-module import
+  // mismatch → blank page. Network-only here (dev data, not business data).
+  if (isViteDevAsset(url)) {
+    event.respondWith(networkOnly(request));
+    return;
+  }
+
   if (isStaticAsset(url)) {
     event.respondWith(cacheFirst(request));
     return;
@@ -106,6 +115,16 @@ self.addEventListener('fetch', (event) => {
   // Default: network-first with cache fallback
   event.respondWith(networkFirst(request));
 });
+
+function isViteDevAsset(url) {
+  return (
+    url.pathname.startsWith('/src/') ||
+    url.pathname.startsWith('/@vite/') ||
+    url.pathname.startsWith('/@react-refresh') ||
+    url.pathname.startsWith('/node_modules/.vite/') ||
+    url.search.includes('v=')
+  );
+}
 
 function isStaticAsset(url) {
   return (
@@ -138,7 +157,10 @@ async function cacheFirst(request) {
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
-    if (response.ok) {
+    // Don't cache Vite dev internals — stale cache causes blank pages on reload
+    const p = new URL(request.url).pathname;
+    const isViteInternal = p.startsWith('/node_modules/') || p.includes('@vite') || p.includes('@react-refresh');
+    if (response.ok && !isViteInternal) {
       const cache = await caches.open(RUNTIME_CACHE);
       cache.put(request, response.clone());
     }

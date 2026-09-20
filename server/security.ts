@@ -23,13 +23,23 @@ import { Request, Response, NextFunction } from 'express';
 //   as a fallback if injected styles appear in React; revisit if console shows
 //   violations.
 export function securityHeaders(req: Request, res: Response, next: NextFunction) {
+  // Production keeps a strict CSP. In development Vite injects an inline
+  // react-refresh preamble script and opens an HMR websocket — `script-src
+  // 'self'` would block both and render a blank page, so dev relaxes only
+  // those two sources. Localhost-only, never shipped.
+  const isProd = process.env.NODE_ENV === 'production';
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self'",
-    "style-src 'self' 'unsafe-inline'",
+    isProd ? "script-src 'self'" : "script-src 'self' 'unsafe-inline'",
+    // Google Fonts CSS is loaded from fonts.googleapis.com (index.html link) —
+    // must be allowed in style-src or the stylesheet is blocked and fonts
+    // silently fall back to system typefaces.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com",
     "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
     "img-src 'self' data: blob:",
-    "connect-src 'self' https://api.whatsapp.com blob:",
+    isProd
+      ? "connect-src 'self' https://api.whatsapp.com blob:"
+      : "connect-src 'self' https://api.whatsapp.com blob: ws: http://localhost:*",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

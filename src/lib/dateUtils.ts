@@ -137,6 +137,39 @@ export function getJalaaliMonthLength(jy: number, jm: number): number {
   return 29;
 }
 
+// Gregorian (English) presentation without corrupting the canonical timestamp.
+export function formatGregorianDate(dateInput?: string | Date | null, includeTime = false): string {
+  if (!dateInput) return '-';
+  try {
+    const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(d.getTime())) return String(dateInput);
+    const y = d.getFullYear();
+    const m = d.toLocaleDateString('en-US', { month: 'short' });
+    const day = d.getDate();
+    const dateStr = `${day} ${m} ${y}`;
+    if (!includeTime) return dateStr;
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${dateStr} - ${hours}:${minutes}`;
+  } catch {
+    return String(dateInput);
+  }
+}
+
+export function formatGregorianShortDate(dateInput?: string | Date | null): string {
+  if (!dateInput) return '-';
+  try {
+    const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+    if (isNaN(d.getTime())) return String(dateInput);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}/${m}/${day}`;
+  } catch {
+    return String(dateInput);
+  }
+}
+
 export function formatPersianDate(dateInput?: string | Date | null, includeTime = false): string {
   if (!dateInput) return '-';
   try {
@@ -215,6 +248,39 @@ export function formatPersianTime(dateInput?: string | Date | null): string {
     return `${toPersianDigits(hours)}:${toPersianDigits(minutes)}`;
   } catch {
     return '';
+  }
+}
+
+// Locale-aware relative time for EN.
+export function getRelativeTimeEn(dateInput: string | Date | undefined | null): string {
+  if (!dateInput) return '-';
+  const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+  if (isNaN(d.getTime())) return '';
+
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSec < 45 && diffSec >= -45) return 'just now';
+
+  if (diffMs > 0) {
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'yesterday';
+    if (diffDays < 30) return `${diffDays}d ago`;
+    return formatGregorianShortDate(d);
+  } else {
+    const absMin = Math.abs(diffMin);
+    const absHours = Math.abs(diffHours);
+    const absDays = Math.abs(diffDays);
+    if (absMin < 60) return `in ${absMin}m`;
+    if (absHours < 24) return `in ${absHours}h`;
+    if (absDays === 1) return 'tomorrow';
+    if (absDays < 30) return `in ${absDays}d`;
+    return formatGregorianShortDate(d);
   }
 }
 
