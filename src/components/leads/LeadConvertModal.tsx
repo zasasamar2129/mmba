@@ -6,6 +6,7 @@ import { Select } from '../ui/Select';
 import { Textarea } from '../ui/Textarea';
 import { Button } from '../ui/Button';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import { storage } from '../../services/storage';
 import { UserCheck, Sparkles, Building2, Phone, User, Check, ArrowRight } from 'lucide-react';
 
@@ -23,12 +24,13 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
   onConverted,
 }) => {
   const { success, error } = useToast();
+  const { isRtl } = useTranslation();
   const [name, setName] = useState(lead?.name || '');
   const [companyName, setCompanyName] = useState(lead?.company || '');
   const [mobile, setMobile] = useState(lead?.mobile || '');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [city, setCity] = useState('تهران');
+  const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [type, setType] = useState<CustomerType>(CustomerType.INDIVIDUAL);
   const [notes, setNotes] = useState(lead?.notes || '');
@@ -48,11 +50,11 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
   const handleConvert = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      error('لطفاً نام مشتری را وارد کنید');
+      error(isRtl ? 'لطفاً نام مشتری را وارد کنید' : 'Please enter the customer name');
       return;
     }
     if (!mobile.trim()) {
-      error('شماره موبایل الزامی است');
+      error(isRtl ? 'شماره موبایل الزامی است' : 'Mobile number is required');
       return;
     }
 
@@ -69,7 +71,7 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
         type,
         status: CustomerStatus.ACTIVE,
         notes: notes.trim(),
-        source: lead.source || 'تبدیل سرنخ ورودی',
+        source: lead.source || (isRtl ? 'تبدیل سرنخ ورودی' : 'Incoming Lead Conversion'),
       };
 
       const result = await storage.convertLeadToCustomer(lead.id, customerData);
@@ -78,7 +80,7 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error(err);
-      error(err.message || 'خطا در تبدیل سرنخ به مشتری');
+      error(err.message || (isRtl ? 'خطا در تبدیل سرنخ به مشتری' : 'Error converting lead to customer'));
     } finally {
       setIsSubmitting(false);
     }
@@ -95,7 +97,7 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
             <UserCheck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-base">تبدیل سرنخ به پرونده مشتری دائمی</h3>
+            <h3 className="font-bold text-base">{isRtl ? 'تبدیل سرنخ به پرونده مشتری دائمی' : 'Convert Lead to Permanent Customer'}</h3>
             <p className="text-xs text-slate-500 font-normal">
               کد سرنخ: {lead.leadCode} ({lead.mobile})
             </p>
@@ -117,23 +119,23 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <Input
-            label="نام و نام خانوادگی مشتری *"
+            label={isRtl ? 'نام و نام خانوادگی مشتری *' : 'Customer Full Name *'}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="مثال: مهندس علی رضایی"
+            placeholder={isRtl ? 'مثال: مهندس علی رضایی' : 'e.g. Eng. Ali Rezaei'}
             isRequired
             autoFocus
           />
 
           <Input
-            label="نام شرکت / سازمان (اختیاری)"
+            label={isRtl ? 'نام شرکت / سازمان (اختیاری)' : 'Company / Organization (optional)'}
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
-            placeholder="مثال: شرکت بازرگانی پارس"
+            placeholder={isRtl ? 'مثال: شرکت بازرگانی پارس' : 'e.g. Pars Trading Company'}
           />
 
           <Input
-            label="شماره موبایل اصلی *"
+            label={isRtl ? 'شماره موبایل اصلی *' : 'Primary Mobile *'}
             value={mobile}
             onChange={(e) => setMobile(e.target.value)}
             placeholder="0912xxxxxxx"
@@ -142,7 +144,7 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
           />
 
           <Input
-            label="تلفن ثابت (اختیاری)"
+            label={isRtl ? 'تلفن ثابت (اختیاری)' : 'Landline (optional)'}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="021xxxxxxxx"
@@ -150,29 +152,29 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
           />
 
           <Select
-            label="نوع مشتری"
+            label={isRtl ? 'نوع مشتری' : 'Customer Type'}
             value={type}
             onChange={(e) => setType(e.target.value as CustomerType)}
             options={[
-              { value: CustomerType.INDIVIDUAL, label: 'حقیقی (شخصی)' },
-              { value: CustomerType.CORPORATE, label: 'حقوقی (شرکتی/سازمانی)' },
+              { value: CustomerType.INDIVIDUAL, label: isRtl ? 'حقیقی (شخصی)' : 'Individual' },
+              { value: CustomerType.CORPORATE, label: isRtl ? 'حقوقی (شرکتی/سازمانی)' : 'Corporate' },
             ]}
           />
 
           <Input
-            label="شهر"
+            label={isRtl ? 'شهر' : 'City'}
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder="تهران"
+            placeholder={isRtl ? 'تهران' : 'Tehran'}
           />
         </div>
 
         <Textarea
-          label="یادداشت‌ها و توافقات اولیه"
+          label={isRtl ? 'یادداشت‌ها و توافقات اولیه' : 'Notes & Initial Agreements'}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          placeholder="سوابق نیازها، شرایط تخفیف یا یادداشت‌های کارشناسی..."
+          placeholder={isRtl ? 'سوابق نیازها، شرایط تخفیف یا یادداشت‌های کارشناسی...' : 'Needs history, discount terms, or expert notes...'}
         />
 
         {/* Action buttons */}
