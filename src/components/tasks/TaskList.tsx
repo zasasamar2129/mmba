@@ -312,7 +312,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                 }`}
               >
-                {pr === 'ALL' ? 'همه' : pr === 'URGENT' ? 'فوری' : pr === 'HIGH' ? 'بالا' : pr === 'MEDIUM' ? 'متوسط' : 'پایین'}
+                {pr === 'ALL' ? (isRtl ? 'همه' : 'All') : pr === 'URGENT' ? (isRtl ? 'فوری' : 'Urgent') : pr === 'HIGH' ? (isRtl ? 'بالا' : 'High') : pr === 'MEDIUM' ? (isRtl ? 'متوسط' : 'Medium') : (isRtl ? 'پایین' : 'Low')}
               </button>
             ))}
           </div>
@@ -336,10 +336,10 @@ export const TaskList: React.FC<TaskListProps> = ({
       {filteredTasks.length === 0 ? (
         <div className="p-12 text-center text-slate-500 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3 shadow-xs">
           <CheckSquare className="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600" />
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-300">هیچ وظیفه‌ای در این دسته‌بندی وجود ندارد</h3>
-          <p className="text-xs text-slate-500">وظایف فقط برای مسئول مربوطه، ایجادکننده و افراد دارای اشتراک نمایش داده می‌شوند.</p>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-300">{isRtl ? 'هیچ وظیفه‌ای در این دسته‌بندی وجود ندارد' : 'No tasks in this category'}</h3>
+          <p className="text-xs text-slate-500">{isRtl ? 'وظایف فقط برای مسئول مربوطه، ایجادکننده و افراد دارای اشتراک نمایش داده می‌شوند.' : 'Tasks are only visible to the assignee, creator, and shared users.'}</p>
           <Button variant="primary" size="sm" onClick={onAddNewTask}>
-            ایجاد اولین وظیفه
+            {isRtl ? 'ایجاد اولین وظیفه' : 'Create First Task'}
           </Button>
         </div>
       ) : viewMode === 'list' ? (
@@ -348,13 +348,13 @@ export const TaskList: React.FC<TaskListProps> = ({
           <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-3 w-10 text-center">وضعیت</th>
-                <th className="p-3">عنوان و شرح وظیفه</th>
-                <th className="p-3 w-28">اولویت</th>
-                <th className="p-3 w-36">مسئول انجام</th>
-                <th className="p-3 w-32">مشتری مرتبط</th>
-                <th className="p-3 w-36">مهلت انجام (سررسید)</th>
-                <th className="p-3 text-start w-36">عملیات</th>
+                <th className="p-3 w-10 text-center">{isRtl ? 'وضعیت' : 'Status'}</th>
+                <th className="p-3">{isRtl ? 'عنوان و شرح وظیفه' : 'Title & Description'}</th>
+                <th className="p-3 w-28">{isRtl ? 'اولویت' : 'Priority'}</th>
+                <th className="p-3 w-36">{isRtl ? 'مسئول انجام' : 'Assignee'}</th>
+                <th className="p-3 w-32">{isRtl ? 'مشتری مرتبط' : 'Related Customer'}</th>
+                <th className="p-3 w-36">{isRtl ? 'مهلت انجام (سررسید)' : 'Due Date'}</th>
+                <th className="p-3 text-start w-36">{isRtl ? 'عملیات' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -392,7 +392,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                           {t.title}
                         </span>
                         {t.voiceNoteAudioUrl && (
-                          <span className="p-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400" title="دارای ویس صوتی">
+                          <span className="p-0.5 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400" title={isRtl ? 'دارای ویس صوتی' : 'Has voice attachment'}>
                             <Mic className="w-3 h-3" />
                           </span>
                         )}
@@ -413,7 +413,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                     <td className="p-3 whitespace-nowrap text-slate-800 dark:text-slate-200">
                       <div className="flex items-center gap-1 font-medium">
                         <UserIcon className="w-3 h-3 text-slate-400" />
-                        <span>{t.assignedUserName || 'نامشخص'}</span>
+                        <span>{t.assignedUserName || (isRtl ? 'نامشخص' : 'Unassigned')}</span>
                       </div>
                     </td>
 
@@ -450,7 +450,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                             type="button"
                             onClick={(e) => handleOpenShare(t, e)}
                             className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                            title="اشتراک‌گذاری و واگذاری"
+                            title={isRtl ? 'اشتراک‌گذاری و واگذاری' : 'Share & Delegate'}
                           >
                             <Share2 className="w-3.5 h-3.5" />
                           </button>
@@ -464,7 +464,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                               onEditTask(t);
                             }}
                             className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                            title="ویرایش"
+                            title={isRtl ? 'ویرایش' : 'Edit'}
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
@@ -475,7 +475,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                             type="button"
                             onClick={(e) => handleDelete(t, e)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                            title="حذف"
+                            title={isRtl ? 'حذف' : 'Delete'}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -520,7 +520,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                         handleToggleStatus(t);
                       }}
                       className="mt-0.5"
-                      title={canExecuteTask(currentUser, t) ? 'تغییر وضعیت انجام' : 'عدم دسترسی تغییر وضعیت'}
+                      title={canExecuteTask(currentUser, t) ? (isRtl ? 'تغییر وضعیت انجام' : 'Toggle completion') : (isRtl ? 'عدم دسترسی تغییر وضعیت' : 'No permission to change status')}
                     >
                       <Checkbox
                         checked={isCompleted}
@@ -579,7 +579,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                         type="button"
                         onClick={(e) => handleOpenShare(t, e)}
                         className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        title="واگذاری یا اشتراک‌گذاری وظیفه با دیگران"
+                        title={isRtl ? 'واگذاری یا اشتراک‌گذاری وظیفه با دیگران' : 'Delegate or share task with others'}
                       >
                         <Share2 className="w-4 h-4" />
                       </button>
@@ -593,7 +593,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                           onEditTask(t);
                         }}
                         className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        title="ویرایش وظیفه"
+                        title={isRtl ? 'ویرایش وظیفه' : 'Edit task'}
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
@@ -604,7 +604,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                         type="button"
                         onClick={(e) => handleDelete(t, e)}
                         className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                        title="حذف وظیفه"
+                        title={isRtl ? 'حذف وظیفه' : 'Delete task'}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -622,7 +622,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                   <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1">
                       <UserIcon className="w-3.5 h-3.5 text-slate-400" />
-                      <span>مسئول: {t.assignedUserName || 'تعیین‌نشده'}</span>
+                      <span>{isRtl ? 'مسئول:' : 'Assignee:'} {t.assignedUserName || (isRtl ? 'تعیین‌نشده' : 'Not assigned')}</span>
                     </span>
 
                     {t.customerId && t.customerName && (
