@@ -468,7 +468,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           }`}
         >
           <Mic className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
-          <span>یادداشت‌های صوتی ({customerVoiceNotes.length})</span>
+          <span>{isRtl ? 'یادداشت‌های صوتی' : 'Voice Notes'} ({customerVoiceNotes.length})</span>
         </button>
 
         <button
@@ -528,7 +528,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900'
           }`}
         >
-          قراردادها ({customerContracts.length})
+          {isRtl ? 'قرارداد' : 'Contracts'}ها ({customerContracts.length})
         </button>
 
         <button
@@ -565,7 +565,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           }`}
         >
           <Paperclip className="w-3.5 h-3.5" />
-          <span>پیوست‌ها و مدارک ({customerAttachments.length})</span>
+          <span>{isRtl ? 'پیوست‌ها و مدارک' : 'Attachments'} ({customerAttachments.length})</span>
         </button>
       </div>
 
@@ -608,7 +608,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                   <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{evt.description}</p>
 
                   <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-                    <span>ثبت: {evt.userName}</span>
+                    <span>{isRtl ? 'ثبت:' : 'By:'} {evt.userName}</span>
                     <span>{formatPersianDate(evt.timestamp, true)}</span>
                   </div>
                 </div>
@@ -623,7 +623,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <Mic className="w-4 h-4 text-rose-600 dark:text-rose-400" />
-              <span>یادداشت‌های صوتی اختصاصی پرونده ({customerVoiceNotes.length})</span>
+              <span>{isRtl ? 'یادداشت‌های صوتی اختصاصی پرونده' : 'Customer Voice Notes'} ({customerVoiceNotes.length})</span>
             </h3>
             {onOpenNewVoiceNote && (
               <Button
@@ -641,7 +641,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           {customerVoiceNotes.length === 0 ? (
             <div className="p-8 text-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 space-y-3 shadow-xs">
               <Volume2 className="w-8 h-8 mx-auto text-slate-400 dark:text-slate-600" />
-              <p className="text-xs">هیچ یادداشت صوتی برای این پرونده ضبط نشده است.</p>
+              <p className="text-xs">{isRtl ? 'هیچ یادداشت صوتی برای این پرونده ضبط نشده است.' : 'No voice notes recorded for this record.'}</p>
               {onOpenNewVoiceNote && (
                 <Button
                   variant="outline"
@@ -671,7 +671,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                       type="button"
                       onClick={() => handleDeleteVoiceNote(vn.id)}
                       className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors"
-                      title="حذف صوت"
+                      title={isRtl ? 'حذف صوت' : 'Delete audio'}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -684,7 +684,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                       <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500 dark:text-slate-400">
                         <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-300">
                           <Sparkles className="w-3 h-3" />
-                          <span>متن پیاده‌سازی شده:</span>
+                          <span>{isRtl ? 'متن پیاده‌سازی شده:' : 'Transcribed text:'}</span>
                         </span>
                         <button
                           type="button"
@@ -694,12 +694,12 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                           {copiedVoiceId === vn.id ? (
                             <>
                               <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400">کپی شد</span>
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400">{isRtl ? 'کپی شد' : 'Copied'}</span>
                             </>
                           ) : (
                             <>
                               <Copy className="w-3 h-3" />
-                              <span className="text-[10px]">کپی</span>
+                              <span className="text-[10px]">{isRtl ? 'کپی' : 'Copy'}</span>
                             </>
                           )}
                         </button>
@@ -739,7 +739,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{c.notes}</p>
               {c.transcript && (
                 <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
-                  <span className="font-bold text-indigo-600 dark:text-indigo-400 block mb-0.5">متن پیاده‌سازی شده صوت:</span>
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400 block mb-0.5">{isRtl ? 'متن پیاده‌سازی شده صوت:' : 'Transcribed audio text:'}</span>
                   {c.transcript}
                 </div>
               )}
@@ -765,7 +765,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       {activeTab === 'FINANCES' && (
         <div className="space-y-3">
           {customerPayments.length === 0 ? (
-            <p className="text-xs text-slate-500 text-center py-6">هیچ واریزی برای این مشتری ثبت نشده است.</p>
+            <p className="text-xs text-slate-500 text-center py-6">{isRtl ? 'هیچ واریزی برای این مشتری ثبت نشده است.' : 'No payments recorded for this customer.'}</p>
           ) : (
             customerPayments.map((p) => {
               const paymentAtts = storage.getAttachmentsByEntity('PAYMENT', p.id);
@@ -775,11 +775,11 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                     <div>
                       <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatToman(p.amount)}</span>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        روش: {p.paymentType || p.method || 'واریزی'} • تاریخ: {formatPersianDate(p.paymentDate || p.date, false)}
+                        {isRtl ? 'روش:' : 'Method:'} {p.paymentType || p.method || (isRtl ? 'واریزی' : 'Deposit')} • {isRtl ? 'تاریخ:' : 'Date:'} {formatPersianDate(p.paymentDate || p.date, false)}
                       </p>
                     </div>
                     <Badge variant="emerald" size="sm">
-                      {p.referenceNumber ? `پیگیری: ${p.referenceNumber}` : 'ثبت شده'}
+                      {p.referenceNumber ? (isRtl ? `پیگیری: ${p.referenceNumber}` : `Ref: ${p.referenceNumber}`) : (isRtl ? 'ثبت شده' : 'Recorded')}
                     </Badge>
                   </div>
                   {p.description && (
@@ -791,7 +791,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                     <div className="pt-1.5 space-y-1.5">
                       <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1">
                         <Paperclip className="w-3 h-3 text-indigo-500" />
-                        <span>فیش‌های واریزی و ضمائم ({paymentAtts.length}):</span>
+                        <span>{isRtl ? 'فیش‌های واریزی و ضمائم' : 'Receipts & attachments'} ({paymentAtts.length}):</span>
                       </span>
                       <AttachmentPreview.List attachments={paymentAtts} viewMode="chips" />
                     </div>
@@ -809,7 +809,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <div key={chk.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end flex items-center justify-between shadow-xs">
               <div>
                 <span className="text-sm font-bold text-amber-600 dark:text-amber-300">{formatToman(chk.amount)}</span>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">بانک {chk.bankName} • سررسید: {formatPersianDate(chk.dueDate)}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{isRtl ? 'بانک' : 'Bank'} {chk.bankName} • {isRtl ? 'سررسید:' : 'Due:'} {formatPersianDate(chk.dueDate)}</p>
               </div>
               <Badge variant="purple" size="sm">{chk.status}</Badge>
             </div>
@@ -825,7 +825,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 <span className="text-sm font-bold text-slate-900 dark:text-slate-100">{cnt.title}</span>
                 <Badge variant="indigo" size="sm">{cnt.status}</Badge>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">شماره: {cnt.contractNumber} • مبلغ کل: {formatToman(cnt.totalAmount)}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'شماره:' : 'No:'} {cnt.contractNumber} • {isRtl ? 'مبلغ کل:' : 'Total:'} {formatToman(cnt.totalAmount)}</p>
             </div>
           ))}
         </div>
@@ -837,7 +837,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
             <div key={sim.id} className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-end flex items-center justify-between shadow-xs">
               <div>
                 <span className="text-sm font-bold font-mono text-cyan-600 dark:text-cyan-400">{sim.phoneNumber}</span>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">اپراتور: {sim.operator} • وضعیت: {sim.status}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{isRtl ? 'اپراتور:' : 'Operator:'} {sim.operator} • {isRtl ? 'وضعیت:' : 'Status:'} {sim.status}</p>
               </div>
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{formatToman(sim.salePrice)}</span>
             </div>
@@ -864,7 +864,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <AttachmentPreview.List
             attachments={customerAttachments}
             viewMode="grid"
-            emptyMessage="هیچ مدرک یا سندی برای این مشتری بارگذاری نشده است."
+            emptyMessage={isRtl ? 'هیچ مدرک یا سندی برای این مشتری بارگذاری نشده است.' : 'No documents uploaded for this customer.'}
             onDelete={(id) => {
               storage.deleteAttachment(id);
               onRefreshCustomer();
@@ -881,16 +881,16 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
         title={
           <div className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
-            <span>تأیید حذف پرونده مخاطب</span>
+            <span>{isRtl ? 'تأیید حذف پرونده مخاطب' : 'Confirm Delete Customer'}</span>
           </div>
         }
-        subtitle="این عملیات غیرقابل بازگشت است و تمام سوابق مخاطب حذف خواهند شد."
+        subtitle={isRtl ? 'این عملیات غیرقابل بازگشت است و تمام سوابق مخاطب حذف خواهند شد.' : 'This action is irreversible and will delete all customer records.'}
       >
         <div className="space-y-4 text-end">
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            آیا از حذف پرونده مخاطب «<strong className="text-white font-bold">{customer.name}</strong>» با شماره{' '}
-            <span className="font-mono text-rose-300 font-bold" dir="ltr">{customer.mobile}</span> و کد سیستم{' '}
-            <span className="font-mono text-slate-200">{customer.code}</span> اطمینان دارید؟
+            {isRtl ? 'آیا از حذف پرونده مخاطب «' : 'Are you sure you want to delete customer "'}<strong className="text-white font-bold">{customer.name}</strong>{isRtl ? '» با شماره' : '" with number'}{' '}
+            <span className="font-mono text-rose-300 font-bold" dir="ltr">{customer.mobile}</span> {isRtl ? 'و کد سیستم' : 'and system code'}{' '}
+            <span className="font-mono text-slate-200">{customer.code}</span> {isRtl ? 'اطمینان دارید؟' : '?'}
           </p>
 
           <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-800">
@@ -900,7 +900,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               type="button"
               onClick={() => setIsDeleteModalOpen(false)}
             >
-              انصراف
+              {isRtl ? 'انصراف' : 'Cancel'}
             </Button>
             <Button
               variant="primary"
@@ -908,7 +908,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               type="button"
               onClick={() => {
                 storage.deleteCustomer(customer.id);
-                success(`پرونده مخاطب «${customer.name}» با موفقیت حذف شد`);
+                success(isRtl ? `پرونده مخاطب «${customer.name}» با موفقیت حذف شد` : `Customer "${customer.name}" deleted successfully`);
                 setIsDeleteModalOpen(false);
                 if (onDeleteCustomer) onDeleteCustomer(customer.id);
                 onBack();
@@ -916,7 +916,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
               leftIcon={<Trash2 className="w-4 h-4" />}
               className="bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30"
             >
-              تأیید و حذف نهایی مخاطب
+              {isRtl ? 'تأیید و حذف نهایی مخاطب' : 'Confirm & Delete Customer'}
             </Button>
           </div>
         </div>
@@ -926,34 +926,34 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
       <GlobalPrintModal
         isOpen={isPrintModalOpen}
         onClose={() => setIsPrintModalOpen(false)}
-        title={`پرونده جامع مخاطب: ${customer.name}`}
-        subtitle="خلاصه سوابق ارتباطی، مالی و حقوقی در سامانه MMBA"
+        title={`${isRtl ? 'پرونده جامع مخاطب:' : 'Customer Dossier:'} ${customer.name}`}
+        subtitle={isRtl ? 'خلاصه سوابق ارتباطی، مالی و حقوقی در سامانه MMBA' : 'Summary of communication, financial and legal history'}
         documentNumber={customer.code || customer.id}
         documentDate={new Date().toISOString()}
       >
         <div className="space-y-4 text-xs">
           {/* Identity Block */}
           <div className="border border-slate-300 dark:border-slate-700 rounded-lg p-3 bg-slate-50 dark:bg-slate-900/60">
-            <h3 className="font-bold text-slate-900 mb-2 border-b border-slate-200 pb-1">مشخصات هویتی و ثبتی</h3>
+            <h3 className="font-bold text-slate-900 mb-2 border-b border-slate-200 pb-1">{isRtl ? 'مشخصات هویتی و ثبتی' : 'Identity & Registration Details'}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              <div><span className="text-slate-500">نام و عنوان:</span> <strong className="text-slate-900">{customer.name}</strong></div>
-              <div><span className="text-slate-500">شماره موبایل:</span> <strong className="text-slate-900 dir-ltr font-mono">{customer.mobile || customer.phone}</strong></div>
-              <div><span className="text-slate-500">کد پرونده:</span> <strong className="text-slate-900 font-mono">{customer.code}</strong></div>
-              <div><span className="text-slate-500">کد / شناسه ملی:</span> <strong className="text-slate-900 font-mono">{customer.nationalCode || customer.nationalId || '—'}</strong></div>
-              <div><span className="text-slate-500">شرکت / سازمان:</span> <strong className="text-slate-900">{customer.companyName || customer.company || '—'}</strong></div>
-              <div><span className="text-slate-500">سمت شغلی:</span> <strong className="text-slate-900">{customer.jobTitle || '—'}</strong></div>
-              <div><span className="text-slate-500">علت ثبت شماره:</span> <strong className="text-slate-900">{customer.registrationReason || 'مشتری'} {customer.registrationReasonOther ? `(${customer.registrationReasonOther})` : ''}</strong></div>
-              <div><span className="text-slate-500">تاریخ ثبت در سامانه:</span> <strong className="text-slate-900">{formatPersianDate(customer.createdAt)}</strong></div>
-              <div><span className="text-slate-500">سقف اعتبار مالی:</span> <strong className="text-slate-900 font-mono">{formatToman(customer.creditLimit || 0)}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'نام و عنوان:' : 'Name:'}</span> <strong className="text-slate-900">{customer.name}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'شماره موبایل:' : 'Mobile:'}</span> <strong className="text-slate-900 dir-ltr font-mono">{customer.mobile || customer.phone}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'کد پرونده:' : 'Record Code:'}</span> <strong className="text-slate-900 font-mono">{customer.code}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'کد / شناسه ملی:' : 'National ID:'}</span> <strong className="text-slate-900 font-mono">{customer.nationalCode || customer.nationalId || '—'}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'شرکت / سازمان:' : 'Company:'}</span> <strong className="text-slate-900">{customer.companyName || customer.company || '—'}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'سمت شغلی:' : 'Job Title:'}</span> <strong className="text-slate-900">{customer.jobTitle || '—'}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'علت ثبت شماره:' : 'Registration Reason:'}</span> <strong className="text-slate-900">{customer.registrationReason || (isRtl ? 'مشتری' : 'Customer')} {customer.registrationReasonOther ? `(${customer.registrationReasonOther})` : ''}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'تاریخ ثبت در سامانه:' : 'Registered On:'}</span> <strong className="text-slate-900">{formatPersianDate(customer.createdAt)}</strong></div>
+              <div><span className="text-slate-500">{isRtl ? 'سقف اعتبار مالی:' : 'Credit Limit:'}</span> <strong className="text-slate-900 font-mono">{formatToman(customer.creditLimit || 0)}</strong></div>
             </div>
             {customer.address && (
               <div className="mt-2 pt-2 border-t border-slate-200">
-                <span className="text-slate-500">نشانی دقیق:</span> <span className="text-slate-800">{customer.address}</span>
+                <span className="text-slate-500">{isRtl ? 'نشانی دقیق:' : 'Full Address:'}</span> <span className="text-slate-800">{customer.address}</span>
               </div>
             )}
             {customer.notes && (
               <div className="mt-1.5">
-                <span className="text-slate-500">یادداشت پرونده:</span> <span className="text-slate-800">{customer.notes}</span>
+                <span className="text-slate-500">{isRtl ? 'یادداشت پرونده:' : 'Record Notes:'}</span> <span className="text-slate-800">{customer.notes}</span>
               </div>
             )}
           </div>
@@ -962,25 +962,25 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
           <div className="grid grid-cols-4 gap-2 text-center">
             <div className="border border-slate-300 dark:border-slate-700 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60">
               <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{customerCalls.length}</div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">تماس و تعامل</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">{isRtl ? 'تماس و تعامل' : 'Calls'}</div>
             </div>
             <div className="border border-slate-300 dark:border-slate-700 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60">
               <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{customerContracts.length}</div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">قرارداد</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">{isRtl ? 'قرارداد' : 'Contracts'}</div>
             </div>
             <div className="border border-slate-300 dark:border-slate-700 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60">
               <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{customerPayments.length}</div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">پرداخت و تسویه</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">{isRtl ? 'پرداخت و تسویه' : 'Payments'}</div>
             </div>
             <div className="border border-slate-300 dark:border-slate-700 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/60">
               <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{customerChecks.length}</div>
-              <div className="text-[10px] text-slate-500 dark:text-slate-400">برگه چک</div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">{isRtl ? 'برگه چک' : 'Checks'}</div>
             </div>
           </div>
 
           {/* Recent Timeline Records */}
           <div className="border border-slate-300 rounded-lg p-3">
-            <h4 className="font-bold text-slate-900 mb-2 border-b border-slate-200 pb-1">آخرین وقایع و تعاملات ثبت‌شده</h4>
+            <h4 className="font-bold text-slate-900 mb-2 border-b border-slate-200 pb-1">{isRtl ? 'آخرین وقایع و تعاملات ثبت‌شده' : 'Recent Activity'}</h4>
             <div className="space-y-1.5">
               {timelineEvents.slice(0, 5).map((ev) => (
                 <div key={ev.id} className="flex items-center justify-between text-[11px] py-1 border-b border-slate-100 last:border-none">
@@ -992,7 +992,7 @@ export const CustomerDetailView: React.FC<CustomerDetailViewProps> = ({
                 </div>
               ))}
               {timelineEvents.length === 0 && (
-                <p className="text-slate-400 text-center py-2">سابقه تعاملی برای این مخاطب ثبت نشده است.</p>
+                <p className="text-slate-400 text-center py-2">{isRtl ? 'سابقه تعاملی برای این مخاطب ثبت نشده است.' : 'No activity history for this contact.'}</p>
               )}
             </div>
           </div>
