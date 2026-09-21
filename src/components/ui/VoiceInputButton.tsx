@@ -1,6 +1,7 @@
 import React from 'react';
 import { Mic, MicOff, Loader2, ShieldAlert } from 'lucide-react';
 import { useSpeechRecognition } from '../../lib/speechRecognition';
+import { useTranslation } from '../../lib/i18n';
 import { cn } from './Button';
 
 export interface VoiceInputButtonProps {
@@ -16,6 +17,7 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
   className,
   size = 'sm',
 }) => {
+  const { isRtl } = useTranslation();
   const { isSupported, isRecording, isRequestingPermission, state, startListening, stopListening, errorMessage } =
     useSpeechRecognition({
       language,
@@ -27,7 +29,7 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
 
   if (!isSupported) {
     return (
-      <span className="text-[11px] text-slate-500 inline-flex items-center gap-1" title="مرورگر از گفتار به متن پشتیبانی نمی‌کند">
+      <span className="text-[11px] text-slate-500 inline-flex items-center gap-1" title={isRtl ? 'مرورگر از گفتار به متن پشتیبانی نمی‌کند' : 'Speech-to-text is not supported in this browser'}>
         <MicOff className="w-3.5 h-3.5" />
       </span>
     );
@@ -51,10 +53,10 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
         disabled={isRequestingPermission}
         title={
           isRequestingPermission
-            ? 'در انتظار تایید دسترسی به میکروفون در مرورگر (لطفاً روی Allow کلیک کنید)'
+            ? (isRtl ? 'در انتظار تایید دسترسی به میکروفون در مرورگر (لطفاً روی Allow کلیک کنید)' : 'Waiting for microphone permission in the browser (click Allow to proceed)')
             : isRecording
-            ? 'توقف ضبط صدا'
-            : 'تبدیل صوت به متن با میکروفون'
+            ? (isRtl ? 'توقف ضبط صدا' : 'Stop voice recording')
+            : (isRtl ? 'تبدیل صوت به متن با میکروفون' : 'Dictate text with your microphone')
         }
         className={cn(
           'relative inline-flex items-center justify-center rounded-lg transition-all duration-200 border select-none',
@@ -72,19 +74,19 @@ export const VoiceInputButton: React.FC<VoiceInputButtonProps> = ({
         {isRequestingPermission ? (
           <>
             <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
-            <span className="text-[11px] font-medium text-amber-300">درخواست مجوز...</span>
+            <span className="text-[11px] font-medium text-amber-300">{isRtl ? 'درخواست مجوز...' : 'Requesting permission...'}</span>
           </>
         ) : state === 'processing' ? (
           <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
         ) : isRecording ? (
           <>
             <Mic className="w-3.5 h-3.5 text-rose-400" />
-            <span className="text-[11px] font-medium text-rose-300">در حال شنیدن...</span>
+            <span className="text-[11px] font-medium text-rose-300">{isRtl ? 'در حال شنیدن...' : 'Listening...'}</span>
           </>
         ) : (
           <>
             <Mic className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-medium">تایپ صوتی</span>
+            <span className="text-[11px] font-medium">{isRtl ? 'تایپ صوتی' : 'Voice typing'}</span>
           </>
         )}
       </button>

@@ -142,7 +142,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
             <button
               type="button"
               onClick={() => onRename(attachment)}
-              title="تغییر نام نمایشی سند"
+              title={isRtl ? 'تغییر نام نمایشی سند' : 'Rename document display name'}
               className="p-1.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
             >
               <PenLine className="w-4 h-4" />
@@ -152,7 +152,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
             <button
               type="button"
               onClick={() => onShowAudit(attachment)}
-              title="تاریخچه عملیات سند (Audit Log)"
+              title={isRtl ? 'تاریخچه عملیات سند (Audit Log)' : 'Document activity history (Audit Log)'}
               className="p-1.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 transition-colors"
             >
               <History className="w-4 h-4" />
@@ -166,7 +166,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border border-transparent hover:border-indigo-200 dark:hover:border-indigo-800/60 text-xs font-bold transition-all"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">پیش‌نمایش</span>
+            <span className="hidden md:inline">{isRtl ? 'پیش‌نمایش' : 'Preview'}</span>
           </button>
 
           {onShare && (
@@ -174,7 +174,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
               type="button"
               id={`btn-share-${attachment.id}`}
               onClick={() => onShare(attachment)}
-              title="اشتراک‌گذاری سند با پرسنل و همکاران"
+              title={isRtl ? 'اشتراک‌گذاری سند با پرسنل و همکاران' : 'Share document with staff and colleagues'}
               className="p-1.5 rounded-xl text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
             >
               <Share2 className="w-4 h-4" />
@@ -200,7 +200,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
                   onDelete(attachment.id);
                 }
               }}
-              title="حذف پیوست"
+              title={isRtl ? 'حذف پیوست' : 'Delete attachment'}
               className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
@@ -250,7 +250,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
         <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
           <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 text-xs font-bold shadow-lg">
             <Eye className="w-3.5 h-3.5 text-indigo-500" />
-            <span>پیش‌نمایش سریع</span>
+            <span>{isRtl ? 'پیش‌نمایش سریع' : 'Quick preview'}</span>
           </span>
         </div>
 
@@ -323,14 +323,14 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
             className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 text-xs font-bold transition-colors"
           >
             <Eye className="w-3.5 h-3.5" />
-            <span>پیش‌نمایش</span>
+            <span>{isRtl ? 'پیش‌نمایش' : 'Preview'}</span>
           </button>
 
           {onRename && (
             <button
               type="button"
               onClick={() => onRename(attachment)}
-              title="تغییر نام نمایشی سند"
+              title={isRtl ? 'تغییر نام نمایشی سند' : 'Rename document display name'}
               className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 transition-colors"
             >
               <PenLine className="w-4 h-4" />
@@ -341,7 +341,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
             <button
               type="button"
               onClick={() => onShowAudit(attachment)}
-              title="تاریخچه عملیات سند (Audit Log)"
+              title={isRtl ? 'تاریخچه عملیات سند (Audit Log)' : 'Document activity history (Audit Log)'}
               className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 hover:text-amber-600 transition-colors"
             >
               <History className="w-4 h-4" />
@@ -353,7 +353,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
               type="button"
               id={`btn-card-share-${attachment.id}`}
               onClick={() => onShare(attachment)}
-              title="اشتراک‌گذاری سند با پرسنل و همکاران"
+              title={isRtl ? 'اشتراک‌گذاری سند با پرسنل و همکاران' : 'Share document with staff and colleagues'}
               className="p-2 rounded-xl text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
             >
               <Share2 className="w-4 h-4" />
@@ -377,7 +377,7 @@ export const AttachmentItem: React.FC<AttachmentItemProps> = ({
                   onDelete(attachment.id);
                 }
               }}
-              title="حذف پیوست"
+              title={isRtl ? 'حذف پیوست' : 'Delete attachment'}
               className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
             >
               <Trash2 className="w-4 h-4" />

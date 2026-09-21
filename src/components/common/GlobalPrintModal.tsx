@@ -3,6 +3,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Printer, Download, FileText, Check, Copy, X, Sliders, Sparkles } from 'lucide-react';
 import { formatPersianDate } from '../../lib/dateUtils';
+import { useTranslation } from '../../lib/i18n';
 import { useToast } from '../ui/Toast';
 
 export type PrintPageSize = 'A4' | 'A5';
@@ -32,6 +33,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
   defaultOrientation = 'portrait',
 }) => {
   const { success } = useToast();
+  const { isRtl } = useTranslation();
   const [pageSize, setPageSize] = useState<PrintPageSize>(defaultPageSize);
   const [orientation, setOrientation] = useState<PrintOrientation>(defaultOrientation);
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
@@ -99,7 +101,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="سیستم چاپ استاندارد MMBA (A4 / A5)"
+      title={isRtl ? 'سیستم چاپ استاندارد MMBA (A4 / A5)' : 'MMBA Standard Print (A4 / A5)'}
       maxWidth="max-w-5xl"
     >
       <div className="space-y-4">
@@ -108,7 +110,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
           <div className="flex items-center gap-3 flex-wrap">
             {/* Page Size Toggle */}
             <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-              <span className="text-slate-500 dark:text-slate-400 px-2 font-medium">اندازه برگه:</span>
+              <span className="text-slate-500 dark:text-slate-400 px-2 font-medium">{isRtl ? 'اندازه برگه:' : 'Paper size:'}</span>
               <button
                 type="button"
                 onClick={() => setPageSize('A4')}
@@ -118,7 +120,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                A4 (استاندارد)
+                A4 ({isRtl ? 'استاندارد' : 'Standard'})
               </button>
               <button
                 type="button"
@@ -129,13 +131,13 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                A5 (فشرده / اداری)
+                A5 ({isRtl ? 'فشرده / اداری' : 'Compact / Office'})
               </button>
             </div>
 
             {/* Orientation Toggle */}
             <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-              <span className="text-slate-500 dark:text-slate-400 px-2 font-medium">جهت:</span>
+              <span className="text-slate-500 dark:text-slate-400 px-2 font-medium">{isRtl ? 'جهت:' : 'Orientation:'}</span>
               <button
                 type="button"
                 onClick={() => setOrientation('portrait')}
@@ -145,7 +147,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                عمودی
+                {isRtl ? 'عمودی' : 'Portrait'}
               </button>
               <button
                 type="button"
@@ -156,13 +158,13 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                افقی
+                {isRtl ? 'افقی' : 'Landscape'}
               </button>
             </div>
 
             {/* Font Size Toggle */}
             <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
-              <span className="text-slate-500 dark:text-slate-400 px-2 font-medium">قلم:</span>
+              <span className="text-slate-500 dark:text-slate-400 px-2 font-medium">{isRtl ? 'قلم:' : 'Font:'}</span>
               <button
                 type="button"
                 onClick={() => setFontSize('sm')}
@@ -170,7 +172,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
                   fontSize === 'sm' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-300'
                 }`}
               >
-                ریز
+                {isRtl ? 'ریز' : 'Small'}
               </button>
               <button
                 type="button"
@@ -179,7 +181,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
                   fontSize === 'base' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-300'
                 }`}
               >
-                متوسط
+                {isRtl ? 'متوسط' : 'Medium'}
               </button>
               <button
                 type="button"
@@ -188,7 +190,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
                   fontSize === 'lg' ? 'bg-indigo-600 text-white' : 'text-slate-600 dark:text-slate-300'
                 }`}
               >
-                درشت
+                {isRtl ? 'درشت' : 'Large'}
               </button>
             </div>
           </div>
@@ -200,7 +202,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
               onClick={handleTriggerPrint}
               leftIcon={<Printer className="w-4 h-4" />}
             >
-              چاپ مستقیم / ذخیره PDF
+              {isRtl ? 'چاپ مستقیم / ذخیره PDF' : 'Print / Save as PDF'}
             </Button>
           </div>
         </div>
@@ -233,17 +235,17 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
               <div className="text-start text-xs space-y-1 text-slate-700 font-mono">
                 {documentNumber && (
                   <div>
-                    <span className="text-slate-500 font-sans">شماره سند: </span>
+                    <span className="text-slate-500 font-sans">{isRtl ? 'شماره سند: ' : 'Document No: '}</span>
                     <span className="font-bold text-slate-900">{documentNumber}</span>
                   </div>
                 )}
                 <div>
-                  <span className="text-slate-500 font-sans">تاریخ چاپ: </span>
+                  <span className="text-slate-500 font-sans">{isRtl ? 'تاریخ چاپ: ' : 'Print date: '}</span>
                   <span className="font-bold text-slate-900">{formatPersianDate(documentDate)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 font-sans">اندازه سند: </span>
-                  <span className="font-bold text-slate-900">{pageSize} - {orientation === 'portrait' ? 'عمودی' : 'افقی'}</span>
+                  <span className="text-slate-500 font-sans">{isRtl ? 'اندازه سند: ' : 'Document size: '}</span>
+                  <span className="font-bold text-slate-900">{pageSize} - {orientation === 'portrait' ? (isRtl ? 'عمودی' : 'Portrait') : (isRtl ? 'افقی' : 'Landscape')}</span>
                 </div>
               </div>
             </div>
@@ -255,9 +257,9 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
 
             {/* Official MMBA Footer */}
             <div className="mt-8 pt-4 border-t border-slate-300 flex items-center justify-between text-[11px] text-slate-500">
-              <span>سامانه جامع مدیریت ارتباطات و مشتریان MMBA</span>
-              <span>صفحه ۱ از ۱ — سند محرمانه داخلی</span>
-              <span>تولید شده توسط سیستم</span>
+              <span>{isRtl ? 'سامانه جامع مدیریت ارتباطات و مشتریان MMBA' : 'MMBA Integrated Customer Relationship Management System'}</span>
+              <span>{isRtl ? 'صفحه ۱ از ۱ — سند محرمانه داخلی' : 'Page 1 of 1 — Internal Confidential Document'}</span>
+              <span>{isRtl ? 'تولید شده توسط سیستم' : 'Generated by system'}</span>
             </div>
           </div>
         </div>
@@ -265,7 +267,7 @@ export const GlobalPrintModal: React.FC<GlobalPrintModalProps> = ({
         {/* Informative Tip */}
         <div className="text-[11px] text-slate-500 dark:text-slate-400 text-end flex items-center gap-1.5 justify-end">
           <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-          <span>جهت ذخیره فایل PDF، در پنجره بازشده چاپ مرورگر، مقصد (Destination) را روی «Save as PDF» قرار دهید.</span>
+          <span>{isRtl ? 'جهت ذخیره فایل PDF، در پنجره بازشده چاپ مرورگر، مقصد (Destination) را روی «Save as PDF» قرار دهید.' : 'To save as PDF, in the browser print dialog set the Destination to "Save as PDF".'}</span>
         </div>
       </div>
     </Modal>

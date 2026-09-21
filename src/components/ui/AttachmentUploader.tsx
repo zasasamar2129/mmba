@@ -9,6 +9,7 @@ import { Badge } from './Badge';
 import { useToast } from './Toast';
 import { FilePreviewModal } from './FilePreviewModal';
 import { formatPersianDate } from '../../lib/dateUtils';
+import { useTranslation } from '../../lib/i18n';
 
 export interface AttachmentUploaderProps {
   attachments: Attachment[];
@@ -39,16 +40,22 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   maxSizeMB = 10,
   disabled = false,
   readOnly = false,
-  category = 'فیش واریزی / سند مالی',
+  category,
   customerId,
   customerName,
   relatedEntityType = 'PAYMENT',
   relatedEntityId,
-  uploaderName = 'کاربر سیستم',
+  uploaderName,
   uploaderId = 'usr-current',
-  title = 'ضمیمه و پیوست اسناد / فیش واریزی',
-  subtitle = 'پشتیبانی از عکس فیش (JPG, PNG, WebP, HEIC/HEIF) و اسناد متنی/PDF تا سقف ۱۰ مگابایت',
+  title,
+  subtitle,
 }) => {
+  const { isRtl } = useTranslation();
+  const resolvedCategory = category || (isRtl ? 'فیش واریزی / سند مالی' : 'Deposit Receipt / Financial Document');
+  const resolvedUploaderName = uploaderName || (isRtl ? 'کاربر سیستم' : 'System User');
+  const resolvedTitle = title ?? (isRtl ? 'ضمیمه و پیوست اسناد / فیش واریزی' : 'Document Attachments / Deposit Receipts');
+  const resolvedSubtitle = subtitle ?? (isRtl ? 'پشتیبانی از عکس فیش (JPG, PNG, WebP, HEIC/HEIF) و اسناد متنی/PDF تا سقف ۱۰ مگابایت' : 'Supports receipt photos (JPG, PNG, WebP, HEIC/HEIF) and text/PDF docs up to 10MB');
+
   const { success, error, warning } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -56,7 +63,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
 
   const formatFileSize = (bytes?: number) => {
-    if (!bytes) return 'نامشخص';
+    if (!bytes) return isRtl ? 'نامشخص' : 'Unknown';
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -67,7 +74,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
       // 1. Extension check
       const ext = file.name.split('.').pop()?.toLowerCase() || '';
       if (!ALLOWED_EXTENSIONS.includes(ext)) {
-        error(`پسوند .${ext} پشتیبانی نمی‌شود. فقط فرمت‌های تصویر (JPG, PNG, WebP, HEIC/HEIF) و اسناد (PDF, Word, Excel, Text) مجاز هستند.`);
+        error(isRtl ? `پسوند .${ext} پشتیبانی نمی‌شود. فقط فرمت‌های تصویر (JPG, PNG, WebP, HEIC/HEIF) و اسناد (PDF, Word, Excel, Text) مجاز هستند.` : `Extension .${ext} is not supported. Only image formats (JPG, PNG, WebP, HEIC/HEIF) and documents (PDF, Word, Excel, Text) are allowed.`);
         resolve(null);
         return;
       }
@@ -75,7 +82,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
       // 2. Size check
       const maxBytes = maxSizeMB * 1024 * 1024;
       if (file.size > maxBytes) {
-        error(`حجم فایل "${file.name}" (${formatFileSize(file.size)}) بیش از سقف مجاز ${maxSizeMB} مگابایت است.`);
+        error(isRtl ? `حجم فایل "${file.name}" (${formatFileSize(file.size)}) بیش از سقف مجاز ${maxSizeMB} مگابایت است.` : `File size "${file.name}" (${formatFileSize(file.size)}) exceeds maximum limit of ${maxSizeMB}MB.`);
         resolve(null);
         return;
       }
@@ -128,13 +135,15 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
           fileSize: file.size,
           sizeBytes: file.size,
           dataUrl: fixedDataUrl,
-          category: fileType.startsWith('image/') ? 'تصویر فیش واریزی' : 'سند و مدرک مالی',
+          category: fileType.startsWith('image/')
+            ? (isRtl ? 'تصویر فیش واریزی' : 'Receipt Image')
+            : (isRtl ? 'سند و مدرک مالی' : 'Financial Document'),
           customerId: customerId || '',
           customerName: customerName || '',
           relatedEntityType,
           relatedEntityId: relatedEntityId || '',
           uploadedByUserId: uploaderId,
-          uploadedByUserName: uploaderName,
+          uploadedByUserName: resolvedUploaderName,
           uploadedAt: new Date().toISOString(),
           createdAt: new Date().toISOString(),
         };
@@ -142,7 +151,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
       };
 
       reader.onerror = () => {
-        error(`خطا در پردازش فایل "${file.name}"`);
+        error(isRtl ? `خطا در پردازش فایل "${file.name}"` : `Error processing file "${file.name}"`);
         resolve(null);
       };
 
@@ -153,7 +162,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     if (attachments.length + files.length > maxFiles) {
-      warning(`حداکثر می‌توانید تا ${maxFiles} فایل ضمیمه نمایید.`);
+      warning(isRtl ? `حداکثر می‌توانید تا ${maxFiles} فایل ضمیمه نمایید.` : `You can attach up to ${maxFiles} files.`);
       return;
     }
 
@@ -170,7 +179,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
 
     if (addedList.length > 0) {
       onChange([...attachments, ...addedList]);
-      success(`${addedList.length} فایل با موفقیت ضمیمه شد`);
+      success(isRtl ? `${addedList.length} فایل با موفقیت ضمیمه شد` : `${addedList.length} file(s) attached successfully`);
     }
 
     setIsProcessing(false);
@@ -201,13 +210,13 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
         <div>
           <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
             <Paperclip className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-            <span>{title}</span>
+            <span>{resolvedTitle}</span>
           </h4>
-          {subtitle && <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
+          {resolvedSubtitle && <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{resolvedSubtitle}</p>}
         </div>
         {attachments.length > 0 && (
           <Badge variant="indigo" size="sm">
-            {attachments.length} پیوست
+            {attachments.length} {isRtl ? 'پیوست' : 'attachments'}
           </Badge>
         )}
       </div>
@@ -255,11 +264,11 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
           <div className="space-y-0.5">
             <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
               {isProcessing
-                ? 'در حال پردازش و ضمیمه فایل...'
-                : 'برای انتخاب یا بارگذاری فایل اینجا کلیک کنید یا فایل را بکشید و رها کنید'}
+                ? (isRtl ? 'در حال پردازش و ضمیمه فایل...' : 'Processing and attaching file...')
+                : (isRtl ? 'برای انتخاب یا بارگذاری فایل اینجا کلیک کنید یا فایل را بکشید و رها کنید' : 'Click here to select or drag and drop files')}
             </p>
             <p className="text-[10px] text-slate-500 dark:text-slate-400">
-              فرمت‌های مجاز: عکس فیش (JPG, PNG, WebP, HEIC/HEIF)، تصویر کارتخوان، اسکن قرارداد، PDF و فایل‌های متنی (حداکثر {maxSizeMB}MB)
+              {isRtl ? `فرمت‌های مجاز: عکس فیش (JPG, PNG, WebP, HEIC/HEIF)، تصویر کارتخوان، اسکن قرارداد، PDF و فایل‌های متنی (حداکثر ${maxSizeMB}MB)` : `Allowed formats: Receipt photo (JPG, PNG, WebP, HEIC/HEIF), POS slip, contract scan, PDF and text files (max ${maxSizeMB}MB)`}
             </p>
           </div>
         </div>
@@ -269,7 +278,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
       {attachments.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {attachments.map((att) => {
-            const fileName = att.fileName || att.filename || 'سند';
+            const fileName = att.fileName || att.filename || (isRtl ? 'سند' : 'Document');
             const fileType = att.fileType || att.mimeType || '';
             const isImg = fileType.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(fileName);
             const isPdf = fileType.includes('pdf') || fileName.toLowerCase().endsWith('.pdf');
@@ -305,7 +314,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
                       {fileName}
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                      {formatFileSize(att.fileSize || att.sizeBytes)} • {isImg ? 'عکس فیش' : isPdf ? 'سند PDF' : 'فایل متنی'}
+                      {formatFileSize(att.fileSize || att.sizeBytes)} • {isImg ? (isRtl ? 'عکس فیش' : 'Receipt Photo') : isPdf ? (isRtl ? 'سند PDF' : 'PDF Document') : (isRtl ? 'فایل متنی' : 'Text File')}
                     </p>
                   </div>
                 </div>
@@ -319,7 +328,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
                       setPreviewAttachment(att);
                     }}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors"
-                    title="پیش‌نمایش سند"
+                    title={isRtl ? 'پیش‌نمایش سند' : 'Preview document'}
                   >
                     <Eye className="w-4 h-4" />
                   </button>
@@ -328,7 +337,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
                     type="button"
                     onClick={(e) => handleDownload(att, e)}
                     className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-300 hover:bg-emerald-500/10 transition-colors"
-                    title="دانلود فایل"
+                    title={isRtl ? 'دانلود فایل' : 'Download file'}
                   >
                     <Download className="w-4 h-4" />
                   </button>
@@ -338,7 +347,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
                       type="button"
                       onClick={(e) => handleRemove(att.id, e)}
                       className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                      title="حذف پیوست"
+                      title={isRtl ? 'حذف پیوست' : 'Delete attachment'}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -350,7 +359,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
         </div>
       ) : readOnly ? (
         <p className="text-xs text-slate-500 italic text-end py-2">
-          هیچ فیش یا سندی به این تراکنش پیوست نشده است.
+          {isRtl ? 'هیچ فیش یا سندی به این تراکنش پیوست نشده است.' : 'No receipt or document is attached to this transaction.'}
         </p>
       ) : null}
 

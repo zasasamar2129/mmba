@@ -538,7 +538,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
                 <div className="absolute inset-0 flex items-center justify-center z-10">
                   <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-slate-900/80 border border-slate-800">
                     <RefreshCw className="w-6 h-6 text-indigo-400 animate-spin" />
-                    <span className="text-xs text-slate-300">در حال بارگذاری تصویر...</span>
+                    <span className="text-xs text-slate-300">{isRtl ? 'در حال بارگذاری تصویر...' : 'Loading image...'}</span>
                   </div>
                 </div>
               )}
@@ -621,7 +621,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
                   {t('preview.unableToPreview')}
                 </h3>
                 <p className="text-xs text-slate-400">
-                  فایل ممکن است به دلیل فرمت یا ساختار رمزگذاری شده در مرورگر قابل نمایش مستقیم نباشد.
+                  {isRtl ? 'فایل ممکن است به دلیل فرمت یا ساختار رمزگذاری شده در مرورگر قابل نمایش مستقیم نباشد.' : 'The file may not be directly viewable in the browser due to its format or encoded structure.'}
                 </p>
               </div>
               <div className="flex items-center justify-center gap-2 pt-2">
@@ -672,7 +672,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
               <div className="space-y-2">
                 <h3 className="text-base font-bold text-slate-100 break-all">{originalFileName}</h3>
                 <p className="text-xs text-slate-400">
-                  این نوع فایل ({fileInfo.mimeType || fileInfo.displayType}) نیاز به دانلود و بازگشایی در نرم‌افزار تخصصی دارد.
+                  {isRtl ? `این نوع فایل (${fileInfo.mimeType || fileInfo.displayType}) نیاز به دانلود و بازگشایی در نرم‌افزار تخصصی دارد.` : `This file type (${fileInfo.mimeType || fileInfo.displayType}) requires download and opening in a dedicated application.`}
                 </p>
               </div>
 
@@ -681,14 +681,14 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
                 <div className="space-y-1">
                   <span className="text-[11px] text-slate-500 flex items-center gap-1">
                     <HardDrive className="w-3 h-3" />
-                    حجم فایل:
+                    {isRtl ? 'حجم فایل:' : 'File size:'}
                   </span>
                   <span className="font-mono font-bold text-slate-300">{formattedSize}</span>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[11px] text-slate-500 flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    تاریخ بارگذاری:
+                    {isRtl ? 'تاریخ بارگذاری:' : 'Upload date:'}
                   </span>
                   <span className="font-mono font-bold text-slate-300">
                     {currentAtt.createdAt ? formatPersianDate(currentAtt.createdAt, false) : '—'}
@@ -705,7 +705,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-xl shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-98"
                 >
                   <Download className="w-4 h-4" />
-                  <span>دریافت و دانلود فایل ({originalFileName})</span>
+                  <span>{isRtl ? `دریافت و دانلود فایل (${originalFileName})` : `Download file (${originalFileName})`}</span>
                 </button>
               </div>
             </div>
@@ -723,11 +723,11 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
               <span>•</span>
               <span>{t('preview.dragToPan')}</span>
               <span>•</span>
-              <span>اسکرول ماوس برای زوم</span>
+              <span>{isRtl ? 'اسکرول ماوس برای زوم' : 'Mouse scroll to zoom'}</span>
             </div>
 
             <div className="flex items-center gap-3 font-mono">
-              <span>کلیدهای میانبر: [+] [-] [0] [F] [Esc]</span>
+              <span>{isRtl ? 'کلیدهای میانبر: [+] [-] [0] [F] [Esc]' : 'Keyboard shortcuts: [+] [-] [0] [F] [Esc]'}</span>
             </div>
           </div>
         )}

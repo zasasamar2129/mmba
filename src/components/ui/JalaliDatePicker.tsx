@@ -16,6 +16,7 @@ import {
   PERSIAN_MONTH_NAMES,
   PERSIAN_WEEK_DAYS_SHORT,
 } from '../../lib/dateUtils';
+import { useTranslation } from '../../lib/i18n';
 
 export interface JalaliDatePickerProps {
   label?: string;
@@ -50,6 +51,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
   id,
   align = 'auto',
 }) => {
+  const { isRtl } = useTranslation();
   const hasTime = Boolean(includeTime || showTime);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerButtonRef = useRef<HTMLButtonElement>(null);
@@ -295,7 +297,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
               {hasTime ? <Clock className="w-4 h-4" /> : <CalendarIcon className="w-4 h-4" />}
             </div>
             <span className={`truncate font-medium ${value ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>
-              {displayFormatted || placeholder || (hasTime ? 'انتخاب تاریخ و ساعت شمسی...' : 'انتخاب تاریخ شمسی...')}
+              {displayFormatted || placeholder || (hasTime ? (isRtl ? 'انتخاب تاریخ و ساعت شمسی...' : 'Select Jalali date and time...') : (isRtl ? 'انتخاب تاریخ شمسی...' : 'Select Jalali date...'))}
             </span>
           </div>
 
@@ -307,7 +309,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
                   handleClear();
                 }}
                 className="p-1 rounded-md text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
-                title="پاک کردن تاریخ"
+                title={isRtl ? 'پاک کردن تاریخ' : 'Clear date'}
               >
                 <X className="w-3.5 h-3.5" />
               </span>
@@ -348,7 +350,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
                 type="button"
                 onClick={handlePrevMonth}
                 className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-700/60"
-                title="ماه قبل"
+                title={isRtl ? 'ماه قبل' : 'Previous month'}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -385,7 +387,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
                 type="button"
                 onClick={handleNextMonth}
                 className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200 dark:border-slate-700/60"
-                title="ماه بعد"
+                title={isRtl ? 'ماه بعد' : 'Next month'}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -398,28 +400,28 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
                 onClick={() => handleQuickSelect('today')}
                 className="px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/25 hover:bg-indigo-100 dark:hover:bg-indigo-500/40 text-indigo-700 dark:text-indigo-200 font-semibold border border-indigo-200 dark:border-indigo-500/30 whitespace-nowrap transition-colors"
               >
-                امروز
+                {isRtl ? 'امروز' : 'Today'}
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickSelect('tomorrow')}
                 className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium border border-slate-200 dark:border-slate-700/60 whitespace-nowrap transition-colors"
               >
-                فردا
+                {isRtl ? 'فردا' : 'Tomorrow'}
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickSelect('nextWeek')}
                 className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium border border-slate-200 dark:border-slate-700/60 whitespace-nowrap transition-colors"
               >
-                هفته بعد
+                {isRtl ? 'هفته بعد' : 'Next week'}
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickSelect('nextMonth')}
                 className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium border border-slate-200 dark:border-slate-700/60 whitespace-nowrap transition-colors"
               >
-                ماه بعد
+                {isRtl ? 'ماه بعد' : 'Next month'}
               </button>
             </div>
 
@@ -474,7 +476,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
                 <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-200 font-semibold">
                   <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                    <span>انتخاب زمان (ساعت و دقیقه)</span>
+                    <span>{isRtl ? 'انتخاب زمان (ساعت و دقیقه)' : 'Select time (hours and minutes)'}</span>
                   </span>
                   <span className="font-mono text-indigo-700 dark:text-indigo-300 font-bold px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-500/40 text-[11px]">
                     {toPersianDigits(String(selectedHour).padStart(2, '0'))}:{toPersianDigits(String(selectedMinute).padStart(2, '0'))}
@@ -483,7 +485,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 font-medium">ساعت (۰ تا ۲۳)</label>
+                    <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 font-medium">{isRtl ? 'ساعت (۰ تا ۲۳)' : 'Hour (0-23)'}</label>
                     <select
                       value={selectedHour}
                       onChange={(e) => handleTimeChange(Number(e.target.value), selectedMinute)}
@@ -498,7 +500,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
                   </div>
 
                   <div>
-                    <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 font-medium">دقیقه</label>
+                    <label className="block text-[10px] text-slate-500 dark:text-slate-400 mb-1 font-medium">{isRtl ? 'دقیقه' : 'Minute'}</label>
                     <select
                       value={selectedMinute}
                       onChange={(e) => handleTimeChange(selectedHour, Number(e.target.value))}
@@ -540,7 +542,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
                   onClick={handleClear}
                   className="text-[11px] text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 font-medium px-2.5 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                 >
-                  پاک کردن
+                  {isRtl ? 'پاک کردن' : 'Clear'}
                 </button>
               )}
               <button
@@ -548,7 +550,7 @@ export const JalaliDatePicker: React.FC<JalaliDatePickerProps> = ({
                 onClick={() => setIsOpen(false)}
                 className="me-auto text-xs px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-md shadow-indigo-600/30"
               >
-                تایید و ثبت
+                {isRtl ? 'تایید و ثبت' : 'Confirm & Save'}
               </button>
             </div>
           </div>

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Camera, Upload, Trash2, Check, Sparkles, X, RefreshCw, User as UserIcon, Image as ImageIcon } from 'lucide-react';
 import { Button } from './Button';
 import { useToast } from './Toast';
+import { useTranslation } from '../../lib/i18n';
 
 export interface AvatarUploaderProps {
   currentAvatar?: string;
@@ -26,7 +27,7 @@ export const PRESET_AVATARS = [
 /**
  * Resizes and compresses an image to a base64 DataURL (max 400x400)
  */
-export const processImageFile = (file: File, maxDim = 400): Promise<string> => {
+export const processImageFile = (file: File, maxDim = 400, isRtl = true): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -55,10 +56,10 @@ export const processImageFile = (file: File, maxDim = 400): Promise<string> => {
         const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
         resolve(dataUrl);
       };
-      img.onerror = () => reject(new Error('خطا در بارگذاری تصویر'));
+      img.onerror = () => reject(new Error(isRtl ? 'خطا در بارگذاری تصویر' : 'Error loading image'));
       img.src = event.target?.result as string;
     };
-    reader.onerror = () => reject(new Error('خطا در خواندن فایل'));
+    reader.onerror = () => reject(new Error(isRtl ? 'خطا در خواندن فایل' : 'Error reading file'));
     reader.readAsDataURL(file);
   });
 };
@@ -71,6 +72,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   showPresets = true,
 }) => {
   const { success, error: toastError } = useToast();
+  const { isRtl } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -97,23 +99,23 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
 
   const handleImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toastError('لطفاً یک فایل تصویری معتبر (JPG, PNG, WEBP) انتخاب فرمایید.');
+      toastError(isRtl ? 'لطفاً یک فایل تصویری معتبر (JPG, PNG, WEBP) انتخاب فرمایید.' : 'Please select a valid image file (JPG, PNG, WEBP).');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      toastError('حجم تصویر نباید بیشتر از ۱۰ مگابایت باشد.');
+      toastError(isRtl ? 'حجم تصویر نباید بیشتر از ۱۰ مگابایت باشد.' : 'Image size must not exceed 10 MB.');
       return;
     }
 
     try {
       setIsProcessing(true);
-      const dataUrl = await processImageFile(file);
+      const dataUrl = await processImageFile(file, 400, isRtl);
       setPreviewAvatar(dataUrl);
       onAvatarChange(dataUrl);
-      success('تصویر پروفایل با موفقیت بارگذاری و تنظیم شد');
+      success(isRtl ? 'تصویر پروفایل با موفقیت بارگذاری و تنظیم شد' : 'Profile picture uploaded and set successfully');
     } catch (err: any) {
-      toastError(err.message || 'خطا در بارگذاری تصویر');
+      toastError(err.message || (isRtl ? 'خطا در بارگذاری تصویر' : 'Error uploading image'));
     } finally {
       setIsProcessing(false);
     }
@@ -141,7 +143,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
     e.stopPropagation();
     setPreviewAvatar(undefined);
     onAvatarChange(undefined);
-    success('تصویر پروفایل حذف شد');
+    success(isRtl ? 'تصویر پروفایل حذف شد' : 'Profile picture removed');
   };
 
   // Webcam camera functions
@@ -156,7 +158,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
-      toastError('دسترسی به دوربین برقرار نشد. لطفاً مجوز دسترسی مرورگر را بررسی فرمایید.');
+      toastError(isRtl ? 'دسترسی به دوربین برقرار نشد. لطفاً مجوز دسترسی مرورگر را بررسی فرمایید.' : 'Unable to access the camera. Please check your browser permission settings.');
     }
   };
 
@@ -188,7 +190,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
       const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
       setPreviewAvatar(dataUrl);
       onAvatarChange(dataUrl);
-      success('عکس از دوربین با موفقیت ثبت و ذخیره شد');
+      success(isRtl ? 'عکس از دوربین با موفقیت ثبت و ذخیره شد' : 'Camera capture saved successfully');
     }
     stopCamera();
   };
@@ -245,7 +247,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
             ) : (
               <>
                 <Camera className="w-5 h-5 text-indigo-300" />
-                <span className="text-[10px] font-bold text-white">تغییر تصویر</span>
+                <span className="text-[10px] font-bold text-white">{isRtl ? 'تغییر تصویر' : 'Change picture'}</span>
               </>
             )}
           </div>
@@ -262,7 +264,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
               leftIcon={<Upload className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
               isLoading={isProcessing}
             >
-              آپلود تصویر جدید
+              {isRtl ? 'آپلود تصویر جدید' : 'Upload new image'}
             </Button>
 
             <Button
@@ -272,7 +274,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
               onClick={startCamera}
               leftIcon={<Camera className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />}
             >
-              ثبت با دوربین
+              {isRtl ? 'ثبت با دوربین' : 'Camera capture'}
             </Button>
 
             {previewAvatar && (
@@ -283,13 +285,13 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
                 onClick={handleRemove}
                 leftIcon={<Trash2 className="w-3.5 h-3.5" />}
               >
-                حذف تصویر
+                {isRtl ? 'حذف تصویر' : 'Remove picture'}
               </Button>
             )}
           </div>
 
           <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-            فرمت‌های مجاز: JPG, PNG, WEBP • فایل را به کادر بکشید یا دکمه آپلود را بزنید. (بهینه‌سازی خودکار تصویر)
+            {isRtl ? 'فرمت‌های مجاز: JPG, PNG, WEBP • فایل را به کادر بکشید یا دکمه آپلود را بزنید. (بهینه‌سازی خودکار تصویر)' : 'Allowed formats: JPG, PNG, WEBP • Drag the file into the box or click the upload button. (Automatic image optimization)'}
           </p>
         </div>
       </div>
@@ -300,7 +302,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
               <Camera className="w-4 h-4 text-sky-600 dark:text-sky-400 animate-pulse" />
-              <span>ثبت مستقیم تصویر از وب‌کم</span>
+              <span>{isRtl ? 'ثبت مستقیم تصویر از وب‌کم' : 'Capture directly from webcam'}</span>
             </span>
             <button
               type="button"
@@ -324,7 +326,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
 
           <div className="flex items-center justify-center gap-3">
             <Button variant="outline" size="sm" type="button" onClick={stopCamera}>
-              انصراف
+              {isRtl ? 'انصراف' : 'Cancel'}
             </Button>
             <Button
               variant="primary"
@@ -333,7 +335,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
               onClick={capturePhoto}
               leftIcon={<Camera className="w-4 h-4" />}
             >
-              عکس بگیر و تنظیم کن
+              {isRtl ? 'عکس بگیر و تنظیم کن' : 'Capture & set picture'}
             </Button>
           </div>
         </div>
@@ -345,7 +347,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>یا یکی از آواتارهای پیشنهادی را انتخاب کنید:</span>
+              <span>{isRtl ? 'یا یکی از آواتارهای پیشنهادی را انتخاب کنید:' : 'Or choose one of the suggested avatars:'}</span>
             </span>
           </div>
 
@@ -359,7 +361,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
                   onClick={() => {
                     setPreviewAvatar(presetUrl);
                     onAvatarChange(presetUrl);
-                    success('آواتار انتخابی تنظیم شد');
+                    success(isRtl ? 'آواتار انتخابی تنظیم شد' : 'Selected avatar applied');
                   }}
                   className={`group relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 ${
                     isSelected

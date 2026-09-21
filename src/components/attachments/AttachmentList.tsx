@@ -134,7 +134,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
       // Duplicate detection by hash
       const existing = (attachments || []).find((a) => a.sha256 && a.sha256 === sha256);
       if (existing) {
-        patchUpload(key, { phase: 'ERROR', error: 'فایل تکراری' });
+        patchUpload(key, { phase: 'ERROR', error: isRtl ? 'فایل تکراری' : 'Duplicate file' });
         return;
       }
 
@@ -198,7 +198,9 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
         'UPLOAD',
         storage.getCurrentUser().id,
         storage.getCurrentUser().name,
-        `بارگذاری سند «${file.name}»${selectedCust ? ` برای ${selectedCust.name}` : ' در بایگانی عمومی'}`
+        isRtl
+          ? `بارگذاری سند «${file.name}»${selectedCust ? ` برای ${selectedCust.name}` : ' در بایگانی عمومی'}`
+          : `Uploaded document "${file.name}"${selectedCust ? ` for ${selectedCust.name}` : ' to the general archive'}`
       );
 
       patchUpload(key, { phase: 'UPLOADING' });
@@ -215,7 +217,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
 
     reader.onerror = () => {
       error(isRtl ? 'خطا در خواندن و بارگذاری فایل' : 'Error reading and uploading file');
-      patchUpload(key, { phase: 'ERROR', error: 'خطا در خواندن فایل' });
+      patchUpload(key, { phase: 'ERROR', error: isRtl ? 'خطا در خواندن فایل' : 'Error reading file' });
     };
 
     reader.readAsDataURL(file);
@@ -275,7 +277,9 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
         'DELETE',
         storage.getCurrentUser().id,
         storage.getCurrentUser().name,
-        `حذف سند «${att.displayName || att.fileName || att.originalName || ''}»`
+        isRtl
+          ? `حذف سند «${att.displayName || att.fileName || att.originalName || ''}»`
+          : `Deleted document "${att.displayName || att.fileName || att.originalName || ''}"`
       );
     }
     storage.deleteAttachment(id);
@@ -299,7 +303,9 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
       'SHARE',
       storage.getCurrentUser().id,
       storage.getCurrentUser().name,
-      `اشتراک‌گذاری سند «${att.displayName || att.fileName}» برای همکاران`
+      isRtl
+        ? `اشتراک‌گذاری سند «${att.displayName || att.fileName}» برای همکاران`
+        : `Shared document "${att.displayName || att.fileName}" with colleagues`
     );
     onRefresh();
   };
@@ -332,10 +338,10 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
                 ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
             }`}
-            title="نمای شبکه‌ای (کارت)"
+            title={isRtl ? 'نمای شبکه‌ای (کارت)' : 'Grid view (cards)'}
           >
             <LayoutGrid className="w-4 h-4" />
-            <span className="hidden sm:inline">کارت‌ها</span>
+            <span className="hidden sm:inline">{isRtl ? 'کارت‌ها' : 'Cards'}</span>
           </button>
           <button
             type="button"
@@ -345,10 +351,10 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
                 ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
             }`}
-            title="نمای سطری (لیست)"
+            title={isRtl ? 'نمای سطری (لیست)' : 'Row view (list)'}
           >
             <ListIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">سطری</span>
+            <span className="hidden sm:inline">{isRtl ? 'سطری' : 'Rows'}</span>
           </button>
         </div>
       </div>
@@ -477,7 +483,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            همه ({counts.all})
+            {isRtl ? 'همه' : 'All'} ({counts.all})
           </button>
           <button
             type="button"
@@ -489,7 +495,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
             }`}
           >
             <ImageIcon className="w-3.5 h-3.5" />
-            <span>تصاویر ({counts.images})</span>
+            <span>{isRtl ? 'تصاویر' : 'Images'} ({counts.images})</span>
           </button>
           <button
             type="button"
@@ -501,7 +507,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
             }`}
           >
             <FileText className="w-3.5 h-3.5 text-rose-400" />
-            <span>فایل‌های PDF ({counts.pdfs})</span>
+            <span>{isRtl ? 'فایل‌های PDF' : 'PDF files'} ({counts.pdfs})</span>
           </button>
           <button
             type="button"
@@ -513,7 +519,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
             }`}
           >
             <File className="w-3.5 h-3.5" />
-            <span>سایر اسناد ({counts.docs})</span>
+            <span>{isRtl ? 'سایر اسناد' : 'Other documents'} ({counts.docs})</span>
           </button>
         </div>
 

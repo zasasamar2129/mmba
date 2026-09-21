@@ -8,6 +8,7 @@ import { Badge } from '../ui/Badge';
 import { Attachment, Customer, User } from '../../types';
 import { storage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import { Share2, Users, FileText, Send, Check, Sparkles } from 'lucide-react';
 
 export interface InternalDocumentShareModalProps {
@@ -24,6 +25,7 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
   onShared,
 }) => {
   const { success, error, warning } = useToast();
+  const { isRtl } = useTranslation();
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [message, setMessage] = useState('');
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(document?.customerId || '');
@@ -52,7 +54,7 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedUserIds.length === 0) {
-      warning('لطفاً حداقل یک کاربر گیرنده را انتخاب کنید.');
+      warning(isRtl ? 'لطفاً حداقل یک کاربر گیرنده را انتخاب کنید.' : 'Please select at least one recipient user.');
       return;
     }
 
@@ -61,7 +63,7 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
       const selectedCustomer = selectedCustomerId ? allCustomers.find((c) => c.id === selectedCustomerId) : undefined;
       const recipientUsers = selectedUserIds.map((id) => {
         const u = allUsers.find((user) => user.id === id);
-        return { id, name: u?.name || 'کاربر' };
+        return { id, name: u?.name || (isRtl ? 'کاربر' : 'User') };
       });
 
       await storage.shareDocument({
@@ -75,13 +77,13 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
         customerName: selectedCustomer?.name,
       });
 
-      success(`سند «${document.fileName}» برای ${selectedUserIds.length} کاربر با موفقیت ارسال شد.`);
+      success(isRtl ? `سند «${document.fileName}» برای ${selectedUserIds.length} کاربر با موفقیت ارسال شد.` : `Document "${document.fileName}" sent to ${selectedUserIds.length} user(s) successfully.`);
       setSelectedUserIds([]);
       setMessage('');
       if (onShared) onShared();
       onClose();
     } catch (err: any) {
-      error(err.message || 'خطا در اشتراک‌گذاری سند');
+      error(err.message || (isRtl ? 'خطا در اشتراک‌گذاری سند' : 'Error sharing document'));
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +93,7 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="اشتراک‌گذاری سند با همکاران داخلی"
+      title={isRtl ? 'اشتراک‌گذاری سند با همکاران داخلی' : 'Share document with internal colleagues'}
       maxWidth="max-w-lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4 text-end">
@@ -105,11 +107,11 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
               {document.fileName}
             </div>
             <div className="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
-              <span>{document.fileType || 'سند'}</span>
+              <span>{document.fileType || (isRtl ? 'سند' : 'Document')}</span>
               {document.customerName && (
                 <>
                   <span>•</span>
-                  <span className="text-indigo-600 dark:text-indigo-400">مشتری: {document.customerName}</span>
+                  <span className="text-indigo-600 dark:text-indigo-400">{isRtl ? 'مشتری:' : 'Customer:'} {document.customerName}</span>
                 </>
               )}
             </div>
@@ -119,13 +121,13 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
         {/* Customer Link (Optional) */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            اتصال به مشتری (اختیاری):
+            {isRtl ? 'اتصال به مشتری (اختیاری):' : 'Link to customer (optional):'}
           </label>
           <Select
             value={selectedCustomerId}
             onChange={(e) => setSelectedCustomerId(e.target.value)}
           >
-            <option value="">بدون اتصال به مشتری (سند درون‌سازمانی مستقل)</option>
+            <option value="">{isRtl ? 'بدون اتصال به مشتری (سند درون‌سازمانی مستقل)' : 'No customer link (standalone internal document)'}</option>
             {allCustomers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name} ({c.mobile})
@@ -133,7 +135,7 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
             ))}
           </Select>
           <p className="text-[11px] text-slate-500 mt-1">
-            اسناد می‌توانند بدون اتصال به مشتری یا متصل به یک پرونده مشخص به اشتراک گذاشته شوند.
+            {isRtl ? 'اسناد می‌توانند بدون اتصال به مشتری یا متصل به یک پرونده مشخص به اشتراک گذاشته شوند.' : 'Documents can be shared without a customer link or attached to a specific customer record.'}
           </p>
         </div>
 
@@ -141,14 +143,16 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              انتخاب همکاران گیرنده ({selectedUserIds.length} نفر):
+              {isRtl ? `انتخاب همکاران گیرنده (${selectedUserIds.length} نفر):` : `Select recipient colleagues (${selectedUserIds.length} people):`}
             </label>
             <button
               type="button"
               onClick={handleSelectAll}
               className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
             >
-              {selectedUserIds.length === allUsers.length ? 'لغو انتخاب همه' : 'انتخاب همه همکاران'}
+              {selectedUserIds.length === allUsers.length
+                ? (isRtl ? 'لغو انتخاب همه' : 'Deselect all')
+                : (isRtl ? 'انتخاب همه همکاران' : 'Select all colleagues')}
             </button>
           </div>
 
@@ -189,10 +193,10 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
         {/* Note / Message */}
         <div>
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-            پیام یا یادداشت برای گیرندگان (اختیاری):
+            {isRtl ? 'پیام یا یادداشت برای گیرندگان (اختیاری):' : 'Message or note for recipients (optional):'}
           </label>
           <Input
-            placeholder="مثال: رسید واریز مشتری برای بررسی و تأیید پرونده..."
+            placeholder={isRtl ? 'مثال: رسید واریز مشتری برای بررسی و تأیید پرونده...' : 'e.g. Customer payment receipt for review and file approval...'}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
@@ -201,7 +205,7 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
         {/* Footer Actions */}
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
           <Button type="button" variant="outline" size="sm" onClick={onClose}>
-            انصراف
+            {isRtl ? 'انصراف' : 'Cancel'}
           </Button>
           <Button
             type="submit"
@@ -211,7 +215,7 @@ export const InternalDocumentShareModal: React.FC<InternalDocumentShareModalProp
             disabled={selectedUserIds.length === 0}
             leftIcon={<Send className="w-4 h-4" />}
           >
-            ارسال و اشتراک‌گذاری سند
+            {isRtl ? 'ارسال و اشتراک‌گذاری سند' : 'Send & Share Document'}
           </Button>
         </div>
       </form>
