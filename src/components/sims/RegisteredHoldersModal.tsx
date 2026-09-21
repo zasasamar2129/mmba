@@ -367,7 +367,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
     }
 
     const shareTitle = isRtl ? `کارت ملی ${holder.fullName}` : `National ID: ${holder.fullName}`;
-    const shareText = isRtl ? `مدرک شناسایی / کارت ملی ${holder.fullName} (کد ملی: ${holder.nationalId} - موبایل: ${holder.mobile}) ثبت شده در سامانه MMBA` : `National ID / Identity document for ${holder.fullName} (National ID: ${holder.nationalId} - Mobile: ${holder.mobile}) registered in MMBA system`;
+    const shareText = isRtl ? `مدرک شناسایی / کارت ملی ${holder.fullName} ({isRtl ? 'کد ملی:' : 'National ID:'} ${holder.nationalId} - {isRtl ? 'موبایل:' : 'Mobile:'} ${holder.mobile}) ثبت شده در سامانه MMBA` : `National ID / Identity document for ${holder.fullName} (National ID: ${holder.nationalId} - Mobile: ${holder.mobile}) registered in MMBA system`;
 
     // Try Web Share API with file if supported
     if (navigator.share) {
@@ -411,7 +411,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
 
   // Copy ID card link or info to clipboard
   const handleCopyIdCardInfo = (holder: RegisteredHolder) => {
-    const text = isRtl ? `کارت ملی: ${holder.fullName}\nکد ملی: ${holder.nationalId}\nشماره همراه: ${holder.mobile}\nثبت‌شده در سامانه MMBA` : `National ID: ${holder.fullName}\nNational ID number: ${holder.nationalId}\nMobile: ${holder.mobile}\nRegistered in MMBA system`;
+    const text = isRtl ? `کارت ملی: ${holder.fullName}\n{isRtl ? 'کد ملی:' : 'National ID:'} ${holder.nationalId}\nشماره همراه: ${holder.mobile}\nثبت‌شده در سامانه MMBA` : `National ID: ${holder.fullName}\nNational ID number: ${holder.nationalId}\nMobile: ${holder.mobile}\nRegistered in MMBA system`;
     navigator.clipboard.writeText(text).then(() => {
       setCopySuccess(true);
       success(isRtl ? 'اطلاعات مدرک در کلیپ‌بورد کپی گردید.' : 'Document information copied to clipboard.');
@@ -454,7 +454,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="مدیریت افراد ثبت‌کننده سیم‌کارت (سندزن / مالکین ثبتی)"
+      title={isRtl ? 'مدیریت افراد ثبت‌کننده سیم‌کارت (سندزن / مالکین ثبتی)' : 'SIM Registered Contacts Management'}
       size="2xl"
     >
       <div className="space-y-5">
@@ -478,7 +478,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
         <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-3 text-xs text-indigo-800 dark:text-indigo-300">
           <ShieldAlert className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <p className="font-bold">قانون رگولاتوری و سقف مجاز مالکیت سیم‌کارت:</p>
+            <p className="font-bold">{isRtl ? 'قانون رگولاتوری و سقف مجاز مالکیت سیم‌کارت:' : 'Regulatory rule & max SIM ownership limit:'}</p>
             <p className="leading-relaxed text-slate-600 dark:text-slate-300">
               طبق مصوبه سازمان تنظیم مقررات، به نام هر شخص حقیقی حداکثر ۱۰ سیم‌کارت فعال در شبکه مخابراتی کشور قابل ثبت است. سامانه وضعیت ظرفیت (سقف ۱۰ خط) و اسناد شناسایی هر فرد را به صورت خودکار نگهداری می‌کند.
             </p>
@@ -489,7 +489,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
         {isCompressingImage && (
           <div className="flex items-center gap-2 p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs shadow-xs animate-pulse">
             <Loader2 className="w-4 h-4 animate-spin text-indigo-600 shrink-0" />
-            <span className="font-semibold">در حال فشرده‌سازی و بهینه‌سازی خودکار تصویر کارت ملی جهت جلوگیری از پر شدن حافظه مرورگر...</span>
+            <span className="font-semibold">{isRtl ? 'در حال فشرده‌سازی و بهینه‌سازی خودکار تصویر کارت ملی جهت جلوگیری از پر شدن حافظه مرورگر...' : 'Auto-compressing the national ID image to avoid filling browser memory...'}</span>
           </div>
         )}
 
@@ -499,7 +499,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="جستجو با نام، کد ملی، شماره موبایل..."
+              placeholder={isRtl ? 'جستجو با نام، کد ملی، شماره موبایل...' : 'Search by name, national ID, mobile...'}
               rightIcon={<Search className="w-4 h-4 text-slate-400" />}
             />
           </div>
@@ -521,7 +521,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2.5">
               <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Users className="w-4 h-4 text-indigo-500" />
-                <span>{editingHolder ? 'ویرایش اطلاعات شخص ثبت‌کننده' : 'ثبت شخص ثبت‌کننده جدید'}</span>
+                <span>{editingHolder ? (isRtl ? 'ویرایش اطلاعات شخص ثبت‌کننده' : 'Edit Registered Contact') : (isRtl ? 'ثبت شخص ثبت‌کننده جدید' : 'New Registered Contact')}</span>
               </h3>
               <button
                 type="button"
@@ -529,7 +529,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                 className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center gap-1"
               >
                 <X className="w-3.5 h-3.5" />
-                <span>انصراف</span>
+                <span>{isRtl ? 'انصراف' : 'Cancel'}</span>
               </button>
             </div>
 
@@ -537,8 +537,8 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Input
-                  label="نام و نام خانوادگی"
-                  placeholder="مثال: سید علیرضا حسینی"
+                  label={isRtl ? 'نام و نام خانوادگی' : 'Full Name'}
+                  placeholder={isRtl ? 'مثال: سید علیرضا حسینی' : 'e.g. Ali Hosseini'}
                   value={fullName}
                   onChange={(e) => {
                     setFullName(e.target.value);
@@ -550,7 +550,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
               </div>
               <div>
                 <Input
-                  label="کد ملی (۱۰ رقم)"
+                  label={isRtl ? 'کد ملی (۱۰ رقم)' : 'National ID (10 digits)'}
                   placeholder="0012345678"
                   value={nationalId}
                   onChange={(e) => {
@@ -565,7 +565,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
               </div>
               <div>
                 <Input
-                  label="شماره همراه"
+                  label={isRtl ? 'شماره همراه' : 'Mobile Number'}
                   placeholder="09121234567"
                   value={mobile}
                   onChange={(e) => {
@@ -582,14 +582,14 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
-                label="شماره شبا یا حساب (اختیاری جهت تسویه)"
+                label={isRtl ? 'شماره شبا یا حساب (اختیاری جهت تسویه)' : 'IBAN / Account (optional for settlement)'}
                 placeholder="IR..."
                 value={shebaNumber}
                 onChange={(e) => setShebaNumber(e.target.value)}
               />
               <Input
-                label="توضیحات و یادداشت"
-                placeholder="توضیحات تکمیلی، آدرس یا ملاحظات..."
+                label={isRtl ? 'توضیحات و یادداشت' : 'Notes & Description'}
+                placeholder={isRtl ? 'توضیحات تکمیلی، آدرس یا ملاحظات...' : 'Additional details, address or notes...'}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
@@ -600,7 +600,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <CreditCard className="w-3.5 h-3.5 text-indigo-500" />
-                  <span>تصویر یا مدرک کارت ملی (اختیاری)</span>
+                  <span>{isRtl ? 'تصویر یا مدرک کارت ملی (اختیاری)' : 'National ID Image (optional)'}</span>
                 </span>
                 <span className="text-[11px] text-slate-400 font-normal">
                   فرمت‌های مجاز: JPG, PNG, WEBP, PDF (حداکثر ۱۵ مگابایت)
@@ -640,13 +640,13 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                       {idCardFile.type.startsWith('image/') ? (
                         <img
                           src={idCardFile.url}
-                          alt="کارت ملی"
+                          alt={isRtl ? 'کارت ملی' : 'National ID'}
                           className="w-full h-full object-cover cursor-pointer hover:scale-110 transition-transform"
                           onClick={() => {
                             // Quick preview
                             setViewingHolder({
                               id: 'preview',
-                              fullName: fullName || 'پیش‌نمایش مدرک',
+                              fullName: fullName || (isRtl ? 'پیش‌نمایش مدرک' : 'Document preview'),
                               nationalId: nationalId || '---',
                               mobile: mobile || '---',
                               isActive: true,
@@ -686,7 +686,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                       onClick={() => {
                         setViewingHolder({
                           id: 'preview',
-                          fullName: fullName || 'پیش‌نمایش مدرک',
+                          fullName: fullName || (isRtl ? 'پیش‌نمایش مدرک' : 'Document preview'),
                           nationalId: nationalId || '---',
                           mobile: mobile || '---',
                           isActive: true,
@@ -743,7 +743,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                 leftIcon={<CheckCircle2 className="w-4 h-4" />}
                 className="font-bold px-4"
               >
-                {editingHolder ? 'بروزرسانی شخص' : 'ذخیره شخص ثبت‌کننده'}
+                {editingHolder ? (isRtl ? 'بروزرسانی شخص' : 'Update Contact') : (isRtl ? 'ذخیره شخص ثبت‌کننده' : 'Save Contact')}
               </Button>
             </div>
           </form>
@@ -754,8 +754,8 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
           {filteredHolders.length === 0 ? (
             <div className="p-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-dashed border-slate-200 dark:border-slate-800 text-slate-400">
               <Users className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-              <p className="text-sm font-semibold">هیچ شخص ثبت‌کننده‌ای یافت نشد.</p>
-              <p className="text-xs text-slate-400 mt-1">با فشردن دکمه «ثبت شخص جدید»، اولین فرد سندزن را تعریف فرمایید.</p>
+              <p className="text-sm font-semibold">{isRtl ? 'هیچ شخص ثبت‌کننده‌ای یافت نشد.' : 'No registered contacts found.'}</p>
+              <p className="text-xs text-slate-400 mt-1">{isRtl ? 'با فشردن دکمه «ثبت شخص جدید»، اولین فرد سندزن را تعریف فرمایید.' : 'Press "New Registered Contact" to define the first one.'}مایید.</p>
             </div>
           ) : (
             filteredHolders.map((holder) => {
@@ -784,7 +784,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                           {holder.fullName}
                         </span>
                         {isFull ? (
-                          <Badge variant="danger" size="sm">تکمیل ظرفیت (۱۰/۱۰)</Badge>
+                          <Badge variant="danger" size="sm">{isRtl ? 'تکمیل ظرفیت (۱۰/۱۰)' : 'Capacity Full (10/10)'}</Badge>
                         ) : (
                           <Badge variant={activeCount >= 8 ? 'warning' : 'emerald'} size="sm">
                             {activeCount} از ۱۰ خط فعال
@@ -804,12 +804,12 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400 pt-0.5">
                         <span className="flex items-center gap-1">
                           <CreditCard className="w-3.5 h-3.5 text-slate-400" />
-                          <span>کد ملی:</span>
+                          <span>{isRtl ? 'کد ملی:' : 'National ID:'}</span>
                           <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{holder.nationalId}</span>
                         </span>
                         <span className="flex items-center gap-1">
                           <Phone className="w-3.5 h-3.5 text-slate-400" />
-                          <span>موبایل:</span>
+                          <span>{isRtl ? 'موبایل:' : 'Mobile:'}</span>
                           <span className="font-mono font-semibold text-slate-700 dark:text-slate-300">{holder.mobile}</span>
                         </span>
                         {holder.shebaNumber && (
@@ -833,28 +833,28 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                               type="button"
                               onClick={() => handleViewIdCard(holder)}
                               className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 font-semibold flex items-center gap-1 transition-all shadow-2xs"
-                              title="مشاهده تصویر کارت ملی"
+                              title={isRtl ? 'مشاهده تصویر کارت ملی' : 'View national ID image'}
                             >
                               <Eye className="w-3.5 h-3.5" />
-                              <span>مشاهده کارت ملی</span>
+                              <span>{isRtl ? 'مشاهده کارت ملی' : 'View ID'}</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => handleDownloadIdCard(holder)}
                               className="px-2 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1 transition-all"
-                              title="دانلود تصویر کارت ملی"
+                              title={isRtl ? 'دانلود تصویر کارت ملی' : 'Download national ID image'}
                             >
                               <Download className="w-3.5 h-3.5 text-emerald-500" />
-                              <span>دانلود</span>
+                              <span>{isRtl ? 'دانلود' : 'Download'}</span>
                             </button>
                             <button
                               type="button"
                               onClick={() => handleShareIdCard(holder)}
                               className="px-2 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1 transition-all"
-                              title="اشتراک‌گذاری کارت ملی"
+                              title={isRtl ? 'اشتراک‌گذاری کارت ملی' : 'Share national ID'}
                             >
                               <Share2 className="w-3.5 h-3.5 text-sky-500" />
-                              <span>اشتراک</span>
+                              <span>{isRtl ? 'اشتراک' : 'Share'}</span>
                             </button>
                             <button
                               type="button"
@@ -867,10 +867,10 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                                 }
                               }}
                               className="px-2 py-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center gap-1 transition-all"
-                              title="تغییر یا بارگذاری تصویر جدید"
+                              title={isRtl ? 'تغییر یا بارگذاری تصویر جدید' : 'Change or upload new image'}
                             >
                               <RefreshCw className="w-3.5 h-3.5 text-indigo-500" />
-                              <span>تغییر مدرک</span>
+                              <span>{isRtl ? 'تغییر مدرک' : 'Change Document'}</span>
                             </button>
                           </div>
                         ) : (
@@ -887,7 +887,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                             className="text-xs px-2.5 py-1.5 rounded-lg border border-dashed border-indigo-400 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors flex items-center gap-1.5 font-bold shadow-2xs"
                           >
                             <Upload className="w-3.5 h-3.5" />
-                            <span>بارگذاری کارت ملی</span>
+                            <span>{isRtl ? 'بارگذاری کارت ملی' : 'Upload ID'}</span>
                           </button>
                         )}
                       </div>
@@ -898,7 +898,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                       {/* Capacity Visual Progress */}
                       <div className="w-36 space-y-1 text-start">
                         <div className="flex justify-between text-[10px] text-slate-400">
-                          <span>ظرفیت:</span>
+                          <span>{isRtl ? 'ظرفیت:' : 'Capacity:'}</span>
                           <span className="font-bold">{activeCount} / {maxCap}</span>
                         </div>
                         <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
@@ -922,7 +922,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                               onClose();
                             }}
                             className="text-xs text-indigo-600 dark:text-indigo-400 h-8 px-2"
-                            title="مشاهده سیم‌کارت‌های این فرد"
+                            title={isRtl ? 'مشاهده سیم‌کارت‌های این فرد' : 'View SIMs of this person'}
                           >
                             <Smartphone className="w-3.5 h-3.5 ms-1" />
                             سیم‌کارت‌ها
@@ -933,7 +933,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                           size="sm"
                           onClick={() => handleOpenEdit(holder)}
                           className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 h-8 w-8 p-0"
-                          title="ویرایش"
+                          title={isRtl ? 'ویرایش' : 'Edit'}
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </Button>
@@ -942,7 +942,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                           size="sm"
                           onClick={() => {
                             if (!isManager) {
-                              error('تنها مدیران سیستم مجاز به حذف افراد ثبت‌کننده هستند.');
+                              error(isRtl ? 'تنها مدیران سیستم مجاز به حذف افراد ثبت‌کننده هستند.' : 'Only system admins can delete registered contacts.');
                               return;
                             }
                             if (activeCount > 0) {
@@ -953,7 +953,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                             setDeleteReason('');
                           }}
                           className="text-rose-500 hover:text-rose-700 h-8 w-8 p-0"
-                          title="حذف (فقط مدیر)"
+                          title={isRtl ? 'حذف (فقط مدیر)' : 'Delete (admin only)'}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </Button>
@@ -973,7 +973,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
           isOpen={true}
           onClose={() => setViewingHolder(null)}
           title={`کارت ملی: ${viewingHolder.fullName}`}
-          subtitle={`کد ملی: ${viewingHolder.nationalId} | شماره همراه: ${viewingHolder.mobile}`}
+          subtitle={`{isRtl ? 'کد ملی:' : 'National ID:'} ${viewingHolder.nationalId} | شماره همراه: ${viewingHolder.mobile}`}
           size="lg"
         >
           <div className="space-y-4">
@@ -982,7 +982,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
               {viewingHolder.nationalIdImageType === 'application/pdf' ? (
                 <iframe
                   src={viewingHolder.nationalIdImageUrl}
-                  title="PDF مدرک شناسایی"
+                  title={isRtl ? 'PDF مدرک شناسایی' : 'ID Document PDF'}
                   className="w-full h-96 rounded-xl border border-slate-200 dark:border-slate-800"
                 />
               ) : (
@@ -997,10 +997,10 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
             {/* Document Details */}
             <div className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-xs text-slate-600 dark:text-slate-300">
               <span className="font-mono">
-                {viewingHolder.nationalIdImageName || 'کارت_ملی.jpg'}
+                {viewingHolder.nationalIdImageName || (isRtl ? 'کارت_ملی.jpg' : 'national_id.jpg')}
               </span>
               {viewingHolder.nationalIdImageSize && (
-                <span>حجم فایل: {formatFileSize(viewingHolder.nationalIdImageSize)}</span>
+                <span>{isRtl ? 'حجم فایل:' : 'File Size:'} {formatFileSize(viewingHolder.nationalIdImageSize)}</span>
               )}
             </div>
 
@@ -1024,7 +1024,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                   leftIcon={copySuccess ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
                   className="flex-1 sm:flex-initial"
                 >
-                  {copySuccess ? 'کپی شد' : 'کپی اطلاعات مدرک'}
+                  {copySuccess ? (isRtl ? 'کپی شد' : 'Copied') : (isRtl ? 'کپی اطلاعات مدرک' : 'Copy ID Info')}
                 </Button>
 
                 <Button
@@ -1043,7 +1043,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-200">
                   <span className="flex items-center gap-1.5">
                     <Share2 className="w-3.5 h-3.5 text-indigo-500" />
-                    <span>اشتراک‌گذاری در پیام‌رسان‌ها و شبکه‌ها:</span>
+                    <span>{isRtl ? 'اشتراک‌گذاری در پیام‌رسان‌ها و شبکه‌ها:' : 'Share on messengers & social networks:'}</span>
                   </span>
                 </div>
 
@@ -1051,7 +1051,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                   {/* WhatsApp */}
                   <a
                     href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                      `کارت ملی ${viewingHolder.fullName} (کد ملی: ${viewingHolder.nationalId} - همراه: ${viewingHolder.mobile})\nسامانه MMBA`
+                      `کارت ملی ${viewingHolder.fullName} ({isRtl ? 'کد ملی:' : 'National ID:'} ${viewingHolder.nationalId} - همراه: ${viewingHolder.mobile})\nسامانه MMBA`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1064,7 +1064,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                   {/* Telegram */}
                   <a
                     href={`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(
-                      `کارت ملی: ${viewingHolder.fullName}\nکد ملی: ${viewingHolder.nationalId}\nهمراه: ${viewingHolder.mobile}`
+                      `کارت ملی: ${viewingHolder.fullName}\n{isRtl ? 'کد ملی:' : 'National ID:'} ${viewingHolder.nationalId}\nهمراه: ${viewingHolder.mobile}`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1077,7 +1077,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                   {/* Eitaa */}
                   <a
                     href={`https://eitaa.com/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(
-                      `کارت ملی: ${viewingHolder.fullName} - کد ملی: ${viewingHolder.nationalId}`
+                      `کارت ملی: ${viewingHolder.fullName} - {isRtl ? 'کد ملی:' : 'National ID:'} ${viewingHolder.nationalId}`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1090,7 +1090,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                   {/* Bale */}
                   <a
                     href={`https://ble.ir/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(
-                      `کارت ملی: ${viewingHolder.fullName} - کد ملی: ${viewingHolder.nationalId}`
+                      `کارت ملی: ${viewingHolder.fullName} - {isRtl ? 'کد ملی:' : 'National ID:'} ${viewingHolder.nationalId}`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1121,21 +1121,21 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
         <Modal
           isOpen={true}
           onClose={() => setDeletingHolder(null)}
-          title="تایید حذف شخص ثبت‌کننده (مخصوص مدیریت)"
+          title={isRtl ? 'تایید حذف شخص ثبت‌کننده (مخصوص مدیریت)' : 'Confirm Deletion (Admin Only)'}
           size="md"
         >
           <div className="space-y-4">
             <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-xs leading-relaxed space-y-1">
               <p className="font-bold flex items-center gap-1.5">
                 <AlertTriangle className="w-4 h-4 text-rose-500" />
-                <span>حذف شخص ثبتی: {deletingHolder.fullName}</span>
+                <span>{isRtl ? 'حذف شخص ثبتی:' : 'Delete Contact:'} {deletingHolder.fullName}</span>
               </p>
-              <p>این اقدام در لاگ نظارتی مدیریت ثبت خواهد شد. جهت تایید نهایی، علت حذف را بنویسید:</p>
+              <p>{isRtl ? 'این اقدام در لاگ نظارتی مدیریت ثبت خواهد شد. جهت تایید نهایی، علت حذف را بنویسید:' : 'This action will be logged in the admin audit trail. Enter a reason to confirm:'}</p>
             </div>
 
             <Textarea
-              label="علت حذف (الزامی)"
-              placeholder="مثال: عدم همکاری، تسویه نهایی، ثبت اشتباه..."
+              label={isRtl ? 'علت حذف (الزامی)' : 'Deletion Reason (required)'}
+              placeholder={isRtl ? 'مثال: عدم همکاری، تسویه نهایی، ثبت اشتباه...' : 'e.g. No cooperation, final settlement, wrong entry...'}
               value={deleteReason}
               onChange={(e) => setDeleteReason(e.target.value)}
               rows={3}
