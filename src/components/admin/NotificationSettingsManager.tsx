@@ -134,7 +134,7 @@ export const NotificationSettingsManager: React.FC = () => {
         error(isRtl ? 'خطا در ذخیره‌سازی تنظیمات' : 'Failed to save settings');
       }
     } catch (e: any) {
-      error(e.message || 'خطا در ارتباط با سرور');
+      error(e.message || (isRtl ? 'خطا در ارتباط با سرور' : 'Server connection error'));
     }
   };
 
@@ -150,7 +150,7 @@ export const NotificationSettingsManager: React.FC = () => {
         error(res.error || (isRtl ? 'خطا در ثبت دستگاه' : 'Failed to register device'));
       }
     } catch (e: any) {
-      error(e.message || 'خطا در ثبت');
+      error(e.message || (isRtl ? 'خطا در ثبت' : 'Save error'));
     } finally {
       setLoading(false);
     }
@@ -166,7 +166,7 @@ export const NotificationSettingsManager: React.FC = () => {
         setDevices((prev) => prev.filter((d) => d.id !== deviceId));
       }
     } catch (e: any) {
-      error(e.message || 'خطا در حذف دستگاه');
+      error(e.message || (isRtl ? 'خطا در حذف دستگاه' : 'Error removing device'));
     }
   };
 
@@ -207,7 +207,7 @@ export const NotificationSettingsManager: React.FC = () => {
         error(res.error || (isRtl ? 'خطا در لغو اشتراک' : 'Failed to unsubscribe'));
       }
     } catch (e: any) {
-      error(e.message || 'خطا در لغو اشتراک');
+      error(e.message || (isRtl ? 'خطا در لغو اشتراک' : 'Error unsubscribing'));
     } finally {
       setLoading(false);
     }
@@ -217,7 +217,7 @@ export const NotificationSettingsManager: React.FC = () => {
     const ua = (dev.userAgent || '').toLowerCase();
     const name = dev.deviceName || '';
     // Friendly labels — do not expose raw user-agent strings as primary UX (§96)
-    if (name && name !== 'مرورگر وب') return name;
+    if (name && name !== (isRtl ? 'مرورگر وب' : 'Web Browser')) return name;
     if (ua.includes('iphone')) return 'iPhone';
     if (ua.includes('ipad')) return 'iPad';
     if (ua.includes('android')) {
@@ -225,7 +225,7 @@ export const NotificationSettingsManager: React.FC = () => {
     }
     if (ua.includes('windows')) return 'Chrome on Windows';
     if (ua.includes('macintosh')) return 'Safari on Mac';
-    return name || 'دستگاه مرورگر وب';
+    return name || (isRtl ? 'دستگاه مرورگر وب' : 'Web Browser Device');
   };
 
   return (
@@ -368,12 +368,12 @@ export const NotificationSettingsManager: React.FC = () => {
                 onChange={(e) => setSettings({ ...settings, snoozeDefaultMinutes: parseInt(e.target.value) })}
                 className="w-full text-xs px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none"
               >
-                <option value={5}>۵ دقیقه</option>
-                <option value={10}>۱۰ دقیقه</option>
-                <option value={15}>۱۵ دقیقه (پیش‌فرض سیستم)</option>
-                <option value={30}>۳۰ دقیقه</option>
-                <option value={60}>۱ ساعت</option>
-                <option value={1440}>۲۴ ساعت (یک روز)</option>
+                <option value={5}>{isRtl ? '۵ دقیقه' : '5 minutes'}</option>
+                <option value={10}>{isRtl ? '۱۰ دقیقه' : '10 minutes'}</option>
+                <option value={15}>{isRtl ? '۱۵ دقیقه (پیش‌فرض سیستم)' : '15 minutes (system default)'}</option>
+                <option value={30}>{isRtl ? '۳۰ دقیقه' : '30 minutes'}</option>
+                <option value={60}>{isRtl ? '۱ ساعت' : '1 hour'}</option>
+                <option value={1440}>{isRtl ? '۲۴ ساعت (یک روز)' : '24 hours (1 day)'}</option>
               </select>
             </div>
 
@@ -532,7 +532,7 @@ export const NotificationSettingsManager: React.FC = () => {
             <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300">
               {isRtl ? 'آخرین گزارش‌های ارسال اعلان پوش به دستگاه‌ها' : 'Recent Push Deliveries'}
             </h4>
-            <span className="text-[11px] text-slate-400">{deliveries.length} مورد</span>
+            <span className="text-[11px] text-slate-400">{deliveries.length} {isRtl ? 'مورد' : 'items'}</span>
           </div>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {deliveries.slice(0, 10).map((d) => (
@@ -549,7 +549,7 @@ export const NotificationSettingsManager: React.FC = () => {
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{d.title}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <span>{d.sentAt ? formatPersianDate(d.sentAt, true) : 'در صف ارسال'}</span>
+                  <span>{d.sentAt ? formatPersianDate(d.sentAt, true) : (isRtl ? 'در صف ارسال' : 'In send queue')}</span>
                   <Badge variant={d.status === 'SENT' ? 'success' : d.status === 'FAILED' ? 'danger' : 'warning'} size="sm">
                     {d.status}
                   </Badge>
