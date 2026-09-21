@@ -416,7 +416,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-sm text-amber-950 dark:text-amber-200">
-                  {resolvedLead.name || 'سرنخ بدون نام'}
+                  {resolvedLead.name || (isRtl ? 'سرنخ بدون نام' : 'Unnamed lead')}
                 </span>
                 <span className="text-[11px] font-mono bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-800/80 text-amber-700 dark:text-amber-300">
                   {resolvedLead.leadCode}
@@ -457,11 +457,11 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               >
                 {showOptionalLeadFields ? (
                   <>
-                    بستن فیلدهای تکمیلی <ChevronUp className="w-3 h-3" />
+                    {isRtl ? 'بستن فیلدهای تکمیلی' : 'Collapse optional fields'} <ChevronUp className="w-3 h-3" />
                   </>
                 ) : (
                   <>
-                    تکمیل نام و مشخصات اختیاری <ChevronDown className="w-3 h-3" />
+                    {isRtl ? 'تکمیل نام و مشخصات اختیاری' : 'Complete optional details'} <ChevronDown className="w-3 h-3" />
                   </>
                 )}
               </button>
@@ -470,24 +470,24 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
             {showOptionalLeadFields && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2 border-t border-indigo-100 dark:border-indigo-900/60 animate-fadeIn">
                 <Input
-                  label="نام یا عنوان مخاطب"
+                  label={isRtl ? 'نام یا عنوان مخاطب' : 'Contact Name / Title'}
                   value={leadName}
                   onChange={(e) => setLeadName(e.target.value)}
-                  placeholder="مثال: آقای حسینی"
+                  placeholder={isRtl ? 'مثال: آقای حسینی' : 'e.g. Mr. Hosseini'}
                   size="sm"
                 />
                 <Input
-                  label="نام شرکت / مجموعه"
+                  label={isRtl ? 'نام شرکت / مجموعه' : 'Company Name'}
                   value={leadCompany}
                   onChange={(e) => setLeadCompany(e.target.value)}
-                  placeholder="مثال: بازرگانی پارس"
+                  placeholder={isRtl ? 'مثال: بازرگانی پارس' : 'e.g. Pars Trading'}
                   size="sm"
                 />
                 <Input
-                  label="منبع ارجاع"
+                  label={isRtl ? 'منبع ارجاع' : 'Referral Source'}
                   value={leadSource}
                   onChange={(e) => setLeadSource(e.target.value)}
-                  placeholder="تماس ورودی، وبسایت..."
+                  placeholder={isRtl ? 'تماس ورودی، وبسایت...' : 'Incoming call, website...'}
                   size="sm"
                 />
               </div>
@@ -498,44 +498,44 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
         {/* Interaction Type, Result, Duration */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <Select
-            label="نوع تعامل"
+            label={isRtl ? 'نوع تعامل' : 'Interaction Type'}
             value={callType}
             onChange={(e) => setCallType(e.target.value)}
             options={[
-              { value: InteractionType.INCOMING_CALL, label: 'تماس ورودی (Incoming)' },
-              { value: InteractionType.OUTGOING_CALL, label: 'تماس خروجی (Outgoing)' },
-              { value: InteractionType.VISIT, label: 'مراجعه / جلسه حضوری (Visit)' },
-              { value: InteractionType.MESSAGE, label: 'پیام‌رسان / پیامک (Message)' },
-              { value: InteractionType.OTHER, label: 'سایر موارد (Other)' },
+              { value: InteractionType.INCOMING_CALL, label: isRtl ? 'تماس ورودی (Incoming)' : 'Incoming Call' },
+              { value: InteractionType.OUTGOING_CALL, label: isRtl ? 'تماس خروجی (Outgoing)' : 'Outgoing Call' },
+              { value: InteractionType.VISIT, label: isRtl ? 'مراجعه / جلسه حضوری (Visit)' : 'In-Person Visit' },
+              { value: InteractionType.MESSAGE, label: isRtl ? 'پیام‌رسان / پیامک (Message)' : 'Messenger / SMS' },
+              { value: InteractionType.OTHER, label: isRtl ? 'سایر موارد (Other)' : 'Other' },
             ]}
           />
 
           <Select
-            label="نتیجه مکالمه"
+            label={isRtl ? 'نتیجه مکالمه' : 'Call Outcome'}
             value={result}
             onChange={(e) => setResult(e.target.value as CallResult)}
             options={[
-              { value: CallResult.ANSWERED, label: 'پاسخ داده شد / مذاکره کامل' },
-              { value: CallResult.MEETING_SCHEDULED, label: 'جلسه تنظیم شد' },
-              { value: CallResult.ORDER_PLACED, label: 'سفارش / قرارداد ثبت شد' },
-              { value: CallResult.BUSY, label: 'اشغال بود' },
-              { value: CallResult.NO_ANSWER, label: 'پاسخ نداد' },
-              { value: CallResult.LEFT_VOICEMAIL, label: 'پیام ارسال شد' },
+              { value: CallResult.ANSWERED, label: isRtl ? 'پاسخ داده شد / مذاکره کامل' : 'Answered / Full Negotiation' },
+              { value: CallResult.MEETING_SCHEDULED, label: isRtl ? 'جلسه تنظیم شد' : 'Meeting Scheduled' },
+              { value: CallResult.ORDER_PLACED, label: isRtl ? 'سفارش / قرارداد ثبت شد' : 'Order / Contract Placed' },
+              { value: CallResult.BUSY, label: isRtl ? 'اشغال بود' : 'Busy' },
+              { value: CallResult.NO_ANSWER, label: isRtl ? 'پاسخ نداد' : 'No Answer' },
+              { value: CallResult.LEFT_VOICEMAIL, label: isRtl ? 'پیام ارسال شد' : 'Message Left' },
             ]}
           />
 
           <div>
             <Input
-              label="مدت مکالمه (ثانیه)"
+              label={isRtl ? 'مدت مکالمه (ثانیه)' : 'Call Duration (seconds)'}
               type="number"
               value={durationSeconds}
               onChange={(e) => setDurationSeconds(e.target.value)}
             />
             <div className="flex items-center gap-1 mt-1 justify-end">
               {[
-                { label: '۱ دقیقه', val: '60' },
-                { label: '۳ دقیقه', val: '180' },
-                { label: '۵ دقیقه', val: '300' },
+                { label: isRtl ? '۱ دقیقه' : '1 min', val: '60' },
+                { label: isRtl ? '۳ دقیقه' : '3 min', val: '180' },
+                { label: isRtl ? '۵ دقیقه' : '5 min', val: '300' },
               ].map((chip) => (
                 <button
                   key={chip.val}
@@ -553,14 +553,14 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
         {/* Subject with Quick Presets */}
         <div className="space-y-1.5">
           <Input
-            label="موضوع اصلی مکالمه *"
+            label={isRtl ? 'موضوع اصلی مکالمه *' : 'Main Call Topic *'}
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            placeholder="مثال: استعلام قیمت سیم‌کارت و شرایط پرداخت اقساطی"
+            placeholder={isRtl ? 'مثال: استعلام قیمت سیم‌کارت و شرایط پرداخت اقساطی' : 'e.g. SIM price inquiry and installment terms'}
             isRequired
           />
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] text-slate-400">عناوین متداول:</span>
+            <span className="text-[10px] text-slate-400">{isRtl ? 'عناوین متداول:' : 'Common topics:'}</span>
             {subjectPresets.map((preset) => (
               <button
                 key={preset}
@@ -593,7 +593,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               onChange={(e) => setCustomerRequest(e.target.value)}
               rows={3}
               className="w-full text-xs p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none leading-relaxed resize-none"
-              placeholder="تماس‌گیرنده چه درخواستی داشت؟ (استعلام قیمت، فعال‌سازی بسته، تغییر نام، ...)"
+              placeholder={isRtl ? 'تماس‌گیرنده چه درخواستی داشت؟ (استعلام قیمت، فعال‌سازی بسته، تغییر نام، ...)' : 'What did the caller request? (price inquiry, plan activation, name change, ...)'}
             />
           </div>
 
@@ -614,7 +614,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               onChange={(e) => setOutcome(e.target.value)}
               rows={3}
               className="w-full text-xs p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none leading-relaxed resize-none"
-              placeholder="نتیجه گفتگو چه شد؟ (توضیحات داده شد، پیش‌فاکتور ارسال شد، مهلت بررسی خواسته شد...)"
+              placeholder={isRtl ? 'نتیجه گفتگو چه شد؟ (توضیحات داده شد، پیش‌فاکتور ارسال شد، مهلت بررسی خواسته شد...)' : 'What was the outcome? (info given, proforma sent, review time requested...)'}"
             />
           </div>
         </div>
@@ -637,7 +637,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             className="w-full text-xs p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none leading-relaxed resize-none"
-            placeholder="هرگونه یادداشت تکمیلی، ترجیحات تماس‌گیرنده، سقف بودجه و..."
+            placeholder={isRtl ? 'هرگونه یادداشت تکمیلی، ترجیحات تماس‌گیرنده، سقف بودجه و...' : 'Additional notes, caller preferences, budget range...'}
           />
         </div>
 
@@ -659,7 +659,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
             onChange={(e) => setVoiceTranscript(e.target.value)}
             rows={2}
             className="w-full text-xs p-2 rounded-lg bg-white dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 text-slate-800 dark:text-slate-300 focus:border-purple-500 focus:outline-none font-mono resize-none"
-            placeholder="متن تبدیل شده از صوت به نوشتار به صورت زنده در این قسمت قرار می‌گیرد..."
+            placeholder={isRtl ? 'متن تبدیل شده از صوت به نوشتار به صورت زنده در این قسمت قرار می‌گیرد...' : 'Live speech-to-text transcription appears here...'}
           />
         </div>
 
@@ -668,7 +668,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
           <Checkbox
             checked={followUpRequired}
             onChange={(e) => setFollowUpRequired(e.target.checked)}
-            label="این تعامل نیازمند پیگیری بعدی (Follow-up) است"
+            label={isRtl ? 'این تعامل نیازمند پیگیری بعدی (Follow-up) است' : 'This interaction requires follow-up'}
             colorScheme="indigo"
             size="md"
           />
@@ -676,7 +676,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
           {followUpRequired && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2.5 border-t border-slate-200 dark:border-slate-800 animate-fadeIn">
               <JalaliDatePicker
-                label="تاریخ و ساعت دقیق پیگیری بعدی *"
+                label={isRtl ? 'تاریخ و ساعت دقیق پیگیری بعدی *' : 'Exact Follow-up Date & Time *'}
                 value={followUpDate}
                 onChange={(val) => setFollowUpDate(val)}
                 showTime
@@ -684,13 +684,13 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               />
 
               <Select
-                label="کارشناس مسئول پیگیری *"
+                label={isRtl ? 'کارشناس مسئول پیگیری *' : 'Responsible Agent *'}
                 value={followUpUserId}
                 onChange={(e) => setFollowUpUserId(e.target.value)}
                 isRequired
                 options={(availableUsers || []).map((u) => ({
                   value: u.id,
-                  label: `${u.name} (${u.role || 'کارشناس'})`,
+                  label: `${u.name} (${u.role || (isRtl ? 'کارشناس' : 'Agent')})`,
                 }))}
               />
 
@@ -698,7 +698,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
                 <Checkbox
                   checked={createTaskForFollowUp}
                   onChange={(e) => setCreateTaskForFollowUp(e.target.checked)}
-                  label="ایجاد خودکار وظیفه (Task) دارای مهلت در کارتابل پیگیری‌های کارشناس"
+                  label={isRtl ? 'ایجاد خودکار وظیفه (Task) دارای مهلت در کارتابل پیگیری‌های کارشناس' : 'Auto-create a dated follow-up task in the agent inbox'}
                   icon={<CheckSquare className="w-3.5 h-3.5 text-indigo-500" />}
                   colorScheme="indigo"
                   size="sm"
