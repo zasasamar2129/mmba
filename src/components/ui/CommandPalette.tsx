@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { storage } from '../../services/storage';
 import { canViewTask } from '../../lib/permissions';
+import { useTranslation } from '../../lib/i18n';
 import { Badge } from './Badge';
 
 export interface CommandPaletteProps {
@@ -15,6 +16,7 @@ export interface CommandPaletteProps {
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavigate }) => {
+  const { isRtl } = useTranslation();
   const [query, setQuery] = useState('');
 
   useEffect(() => {
@@ -75,7 +77,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           module: 'CUSTOMERS',
           itemId: c.id,
           icon: <Users className="w-4 h-4 text-indigo-400" />,
-          badgeText: 'مشتری',
+          badgeText: isRtl ? 'مشتری' : 'Customer',
           badgeVariant: 'purple',
         });
       }
@@ -95,7 +97,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           module: 'TASKS',
           itemId: t.id,
           icon: <CheckSquare className="w-4 h-4 text-emerald-400" />,
-          badgeText: 'وظیفه',
+          badgeText: isRtl ? 'وظیفه' : 'Task',
           badgeVariant: 'success',
         });
       }
@@ -115,7 +117,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           module: 'CALLS',
           itemId: cl.id,
           icon: <PhoneCall className="w-4 h-4 text-sky-400" />,
-          badgeText: 'تماس',
+          badgeText: isRtl ? 'تماس' : 'Call',
           badgeVariant: 'info',
         });
       }
@@ -137,7 +139,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           module: 'REPAIRS',
           itemId: r.id,
           icon: <Wrench className="w-4 h-4 text-amber-400" />,
-          badgeText: 'تعمیرات',
+          badgeText: isRtl ? 'تعمیرات' : 'Repair',
           badgeVariant: 'amber',
         });
       }
@@ -157,7 +159,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           module: 'SIM_INVENTORY',
           itemId: s.id,
           icon: <Smartphone className="w-4 h-4 text-cyan-400" />,
-          badgeText: 'سیم‌کارت',
+          badgeText: isRtl ? 'سیم‌کارت' : 'SIM',
           badgeVariant: 'info',
         });
       }
@@ -177,7 +179,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           module: 'PAYMENTS',
           itemId: p.id,
           icon: <CreditCard className="w-4 h-4 text-emerald-400" />,
-          badgeText: 'پرداخت',
+          badgeText: isRtl ? 'پرداخت' : 'Payment',
           badgeVariant: 'success',
         });
       }
@@ -197,7 +199,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           module: 'CHECKS',
           itemId: chk.id,
           icon: <FileText className="w-4 h-4 text-purple-400" />,
-          badgeText: 'چک صیادی',
+          badgeText: isRtl ? 'چک صیادی' : 'Check',
           badgeVariant: 'purple',
         });
       }
@@ -217,7 +219,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           module: 'CONTRACTS',
           itemId: cnt.id,
           icon: <FileText className="w-4 h-4 text-indigo-400" />,
-          badgeText: 'قرارداد',
+          badgeText: isRtl ? 'قرارداد' : 'Contract',
           badgeVariant: 'purple',
         });
       }
@@ -254,7 +256,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="جستجو در مشتریان، شماره تماس، وظایف، چک‌ها، تعمیرات، سیم‌کارت و..."
+              placeholder={isRtl ? 'جستجو در مشتریان، شماره تماس، وظایف، چک‌ها، تعمیرات، سیم‌کارت و...' : 'Search customers, phone numbers, tasks, checks, repairs, SIMs...'}
               className="w-full bg-transparent border-none text-slate-900 dark:text-slate-100 text-sm focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-end"
               autoFocus
             />
@@ -273,16 +275,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
           <div className="overflow-y-auto p-2 divide-y divide-slate-100 dark:divide-slate-800/40 max-h-[60vh]">
             {!query ? (
               <div className="p-8 text-center text-slate-400 dark:text-slate-500 space-y-2">
-                <p className="text-sm">برای شروع، عبارت مورد نظر خود را بنویسید</p>
+                <p className="text-sm">{isRtl ? 'برای شروع، عبارت مورد نظر خود را بنویسید' : 'Start typing to search'}</p>
                 <p className="text-xs text-slate-500 dark:text-slate-600">
-                  جستجوی هوشمند در تمامی بخش‌های سامانه عملیات MMBA
+                  {isRtl ? 'جستجوی هوشمند در تمامی بخش‌های سامانه عملیات MMBA' : 'Smart search across all MMBA modules'}
                 </p>
               </div>
             ) : searchResults.length === 0 ? (
               <div className="p-8 text-center text-slate-400 space-y-2">
-                <p className="text-sm font-semibold">نتیجه‌ای برای «{query}» یافت نشد</p>
+                <p className="text-sm font-semibold">{isRtl ? `نتیجه‌ای برای «${query}» یافت نشد` : `No results for "${query}"`}</p>
                 <p className="text-xs text-slate-500">
-                  شماره تماس، نام شخص، شماره پیگیری یا موضوع را بررسی کنید
+                  {isRtl ? 'شماره تماس، نام شخص، شماره پیگیری یا موضوع را بررسی کنید' : 'Check the phone number, name, reference or topic'}
                 </p>
               </div>
             ) : (
@@ -319,8 +321,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose,
 
           {/* Footer Shortcuts */}
           <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 flex items-center justify-between">
-            <span>برای خروج کلید ESC را فشار دهید</span>
-            <span>میانبر سریع: Cmd + K / Ctrl + K</span>
+            <span>{isRtl ? 'برای خروج کلید ESC را فشار دهید' : 'Press ESC to close'}</span>
+            <span>{isRtl ? 'میانبر سریع:' : 'Shortcut:'} Cmd + K / Ctrl + K</span>
           </div>
         </motion.div>
       </div>
