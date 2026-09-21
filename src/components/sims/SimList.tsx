@@ -215,7 +215,7 @@ export const SimList: React.FC<SimListProps> = ({
       {selectedHolderFilter && (
         <div className="p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-indigo-800 dark:text-indigo-300 flex items-center justify-between text-xs">
           <span>
-            فیلتر فعال: سیم‌کارت‌های به نام <strong>{selectedHolderFilter.name}</strong>
+            {isRtl ? 'فیلتر فعال: سیم‌کارت‌های به نام' : 'Active filter: SIMs registered under'} <strong>{selectedHolderFilter.name}</strong>
           </span>
           <button
             type="button"
@@ -248,9 +248,9 @@ export const SimList: React.FC<SimListProps> = ({
               onChange={(e) => setSortBy(e.target.value as any)}
               className="h-9 px-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
             >
-              <option value="price_desc">مرتب‌سازی: گران‌ترین به ارزان‌ترین</option>
-              <option value="price_asc">مرتب‌سازی: ارزان‌ترین به گران‌ترین</option>
-              <option value="phone">مرتب‌سازی: شماره سیم‌کارت</option>
+              <option value="price_desc">{isRtl ? 'مرتب‌سازی: گران‌ترین به ارزان‌ترین' : 'Sort: Highest to lowest price'}</option>
+              <option value="price_asc">{isRtl ? 'مرتب‌سازی: ارزان‌ترین به گران‌ترین' : 'Sort: Lowest to highest price'}</option>
+              <option value="phone">{isRtl ? 'مرتب‌سازی: شماره سیم‌کارت' : 'Sort: SIM number'}</option>
             </select>
 
             <Checkbox
@@ -342,14 +342,14 @@ export const SimList: React.FC<SimListProps> = ({
           <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-3 w-40">شماره سیم‌کارت</th>
-                <th className="p-3 w-28">اپراتور</th>
-                <th className="p-3 w-24">نوع</th>
-                <th className="p-3 w-32">قیمت فروش</th>
-                <th className="p-3 w-28">وضعیت</th>
-                <th className="p-3 w-36">سندزن (دارنده)</th>
-                <th className="p-3">رزرو / خریدار / رهن</th>
-                <th className="p-3 text-start w-52">اقدامات</th>
+                <th className="p-3 w-40">{isRtl ? 'شماره سیم‌کارت' : 'SIM Number'}</th>
+                <th className="p-3 w-28">{isRtl ? 'اپراتور' : 'Operator'}</th>
+                <th className="p-3 w-24">{isRtl ? 'نوع' : 'Type'}</th>
+                <th className="p-3 w-32">{isRtl ? 'قیمت فروش' : 'Sale Price'}</th>
+                <th className="p-3 w-28">{isRtl ? 'وضعیت' : 'Status'}</th>
+                <th className="p-3 w-36">{isRtl ? 'سندزن (دارنده)' : 'Registered Holder'}</th>
+                <th className="p-3">{isRtl ? 'رزرو / خریدار / رهن' : 'Reserve / Buyer / Mortgage'}</th>
+                <th className="p-3 text-start w-52">{isRtl ? 'اقدامات' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -364,7 +364,7 @@ export const SimList: React.FC<SimListProps> = ({
                     <div className="flex items-center gap-1.5">
                       <span>{s.phoneNumber}</span>
                       {s.isRound && (
-                        <span className="p-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400" title={s.roundCategory || 'رند'}>
+                        <span className="p-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400" title={s.roundCategory || (isRtl ? 'رند' : 'Round')}>
                           <Sparkles className="w-3 h-3" />
                         </span>
                       )}
@@ -383,7 +383,7 @@ export const SimList: React.FC<SimListProps> = ({
 
                   {/* Sale Price */}
                   <td className="p-3 font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">
-                    {s.salePrice ? formatToman(s.salePrice) : 'توافقی'}
+                    {s.salePrice ? formatToman(s.salePrice) : (isRtl ? 'توافقی' : 'Negotiable')}
                   </td>
 
                   {/* Status */}
@@ -476,7 +476,7 @@ export const SimList: React.FC<SimListProps> = ({
                           onEditSim(s);
                         }}
                         className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                        title="ویرایش"
+                        title={isRtl ? 'ویرایش' : 'Edit'}
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
@@ -485,7 +485,7 @@ export const SimList: React.FC<SimListProps> = ({
                         type="button"
                         onClick={(e) => handleDelete(s.id, e)}
                         className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                        title="حذف"
+                        title={isRtl ? 'حذف' : 'Delete'}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -540,7 +540,7 @@ export const SimList: React.FC<SimListProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 dark:text-slate-400">{t('sims.salePrice')}:</span>
                     <span className="font-bold text-slate-900 dark:text-slate-100">
-                      {s.salePrice ? formatToman(s.salePrice) : 'توافقی'}
+                      {s.salePrice ? formatToman(s.salePrice) : (isRtl ? 'توافقی' : 'Negotiable')}
                     </span>
                   </div>
 
@@ -548,7 +548,7 @@ export const SimList: React.FC<SimListProps> = ({
                     <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-slate-800 text-[11px]">
                       <span className="text-slate-500 flex items-center gap-1">
                         <Users className="w-3 h-3" />
-                        <span>سندزن:</span>
+                        <span>{isRtl ? 'سندزن:' : 'Holder:'}</span>
                       </span>
                       <span className="font-semibold text-slate-700 dark:text-slate-300">{s.registeredHolderName}</span>
                     </div>
@@ -558,7 +558,7 @@ export const SimList: React.FC<SimListProps> = ({
                     <div className="flex items-center justify-between pt-1 border-t border-amber-500/20 text-[11px] text-amber-600 dark:text-amber-400">
                       <span className="flex items-center gap-1">
                         <Bookmark className="w-3 h-3" />
-                        <span>رزرو برای:</span>
+                        <span>{isRtl ? 'رزرو برای:' : 'Reserved for:'}</span>
                       </span>
                       <span className="font-bold">{s.reservationCustomerName}</span>
                     </div>
