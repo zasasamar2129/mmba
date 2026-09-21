@@ -99,7 +99,7 @@ export const TaskList: React.FC<TaskListProps> = ({
 
   const handleToggleStatus = (task: Task) => {
     if (!canExecuteTask(currentUser, task)) {
-      error('شما دسترسی لازم برای تغییر وضعیت این وظیفه را ندارید. این کار مختص مسئول یا ادمین است.');
+      error(isRtl ? 'شما دسترسی لازم برای تغییر وضعیت این وظیفه را ندارید. این کار مختص مسئول یا ادمین است.' : 'You do not have permission to change this task status. Only the assignee or admin can.');
       return;
     }
 
@@ -110,20 +110,20 @@ export const TaskList: React.FC<TaskListProps> = ({
       completedAt: isNowCompleted ? new Date().toISOString() : undefined,
     };
     storage.saveTask(updated);
-    success(isNowCompleted ? 'وظیفه به عنوان تکمیل شده علامت خورد' : 'وظیفه مجدداً فعال شد');
+    success(isNowCompleted ? (isRtl ? 'وظیفه به عنوان تکمیل شده علامت خورد' : 'Task marked as completed') : (isRtl ? 'وظیفه مجدداً فعال شد' : 'Task reactivated'));
     onRefreshTasks();
   };
 
   const handleDelete = (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isCurrentUserAdmin && task.creatorUserId !== currentUser.id) {
-      error('فقط ایجادکننده یا ادمین سیستم می‌تواند وظیفه را حذف کند');
+      error(isRtl ? 'فقط ایجادکننده یا ادمین سیستم می‌تواند وظیفه را حذف کند' : 'Only the creator or system admin can delete this task');
       return;
     }
 
-    if (window.confirm('آیا از حذف این وظیفه اطمینان دارید؟')) {
+    if (window.confirm(isRtl ? 'آیا از حذف این وظیفه اطمینان دارید؟' : 'Are you sure you want to delete this task?')) {
       storage.deleteTask(task.id);
-      success('وظیفه حذف شد');
+      success(isRtl ? 'وظیفه حذف شد' : 'Task deleted');
       onRefreshTasks();
     }
   };
@@ -131,7 +131,7 @@ export const TaskList: React.FC<TaskListProps> = ({
   const handleOpenShare = (task: Task, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!canShareTask(currentUser, task)) {
-      error('فقط مسئول انجام، ایجادکننده یا ادمین مجاز به اشتراک‌گذاری یا واگذاری این وظیفه هستند');
+      error(isRtl ? 'فقط مسئول انجام، ایجادکننده یا ادمین مجاز به اشتراک‌گذاری یا واگذاری این وظیفه هستند' : 'Only the assignee, creator, or admin can share or delegate this task');
       return;
     }
     setSharingTask(task);
@@ -204,7 +204,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            {isCurrentUserAdmin ? 'همه وظایف مجاز (دید مدیریتی)' : 'کل کارتابل من'} ({visibleTasks.length})
+            {isCurrentUserAdmin ? (isRtl ? 'همه وظایف مجاز (دید مدیریتی)' : 'All Permitted Tasks (Admin View)') : (isRtl ? 'کل کارتابل من' : 'My Taskboard')} ({visibleTasks.length})
           </button>
 
           <button
@@ -262,7 +262,7 @@ export const TaskList: React.FC<TaskListProps> = ({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="جستجو در عنوان وظیفه، مشتری، توضیحات، پیام‌های صوتی یا مسئول..."
+              placeholder={isRtl ? 'جستجو در عنوان وظیفه، مشتری، توضیحات، پیام‌های صوتی یا مسئول...' : 'Search title, customer, description, voice notes, or assignee...'}
               rightIcon={<Search className="w-4 h-4 text-slate-400" />}
             />
           </div>
@@ -271,12 +271,12 @@ export const TaskList: React.FC<TaskListProps> = ({
         {/* Status and Priority */}
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-200 dark:border-slate-800/60">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">وضعیت:</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">{isRtl ? 'وضعیت:' : 'Status:'}</span>
             {[
-              { key: 'ACTIVE', label: 'کارهای جاری و باز' },
-              { key: 'ALL', label: 'همه کارها' },
-              { key: 'COMPLETED', label: 'انجام شده‌ها' },
-              { key: 'HAS_VOICE', label: 'دارای وویس صوتی' },
+              { key: 'ACTIVE', label: isRtl ? 'کارهای جاری و باز' : 'Active & Open' },
+              { key: 'ALL', label: isRtl ? 'همه کارها' : 'All Tasks' },
+              { key: 'COMPLETED', label: isRtl ? 'انجام شده‌ها' : 'Completed' },
+              { key: 'HAS_VOICE', label: isRtl ? 'دارای وویس صوتی' : 'With Voice' },
             ].map((st) => (
               <button
                 key={st.key}
@@ -297,7 +297,7 @@ export const TaskList: React.FC<TaskListProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">اولویت:</span>
+            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">{isRtl ? 'اولویت:' : 'Priority:'}</span>
             {['ALL', 'URGENT', 'HIGH', 'MEDIUM', 'LOW'].map((pr) => (
               <button
                 key={pr}

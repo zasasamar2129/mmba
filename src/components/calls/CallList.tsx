@@ -125,12 +125,12 @@ export const CallList: React.FC<CallListProps> = ({
   }, [calls, searchQuery, callTypeFilter, followUpFilter]);
 
   const formatDuration = (seconds: number) => {
-    if (!seconds) return '۰ ثانیه';
+    if (!seconds) return isRtl ? '۰ ثانیه' : '0 sec';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    if (mins === 0) return `${secs} ثانیه`;
-    if (secs === 0) return `${mins} دقیقه`;
-    return `${mins} دقیقه و ${secs} ثانیه`;
+    if (mins === 0) return isRtl ? `${secs} ثانیه` : `${secs} sec`;
+    if (secs === 0) return isRtl ? `${mins} دقیقه` : `${mins} min`;
+    return isRtl ? `${mins} دقیقه و ${secs} ثانیه` : `${mins} min ${secs} sec`;
   };
 
   const getTypeBadgeInfo = (callType: string = '') => {
@@ -168,7 +168,7 @@ export const CallList: React.FC<CallListProps> = ({
       };
     }
     return {
-      label: 'سایر تعاملات',
+      label: isRtl ? 'سایر تعاملات' : 'Other Interactions',
       icon: <PhoneCall className="w-4 h-4 text-slate-400" />,
       badgeVariant: 'default' as const,
       bgClass: 'bg-slate-800/80 border-slate-700 text-slate-300',
@@ -190,25 +190,25 @@ export const CallList: React.FC<CallListProps> = ({
         });
       }
 
-      success('پیگیری تعامل با موفقیت به عنوان انجام‌شده ثبت گردید');
+      success(isRtl ? 'پیگیری تعامل با موفقیت به عنوان انجام‌شده ثبت گردید' : 'Interaction marked as followed up');
       if (onRefreshCalls) onRefreshCalls();
     } catch (err: any) {
       console.error(err);
-      error(err.message || 'خطا در ثبت وضعیت پیگیری');
+      error(err.message || (isRtl ? 'خطا در ثبت وضعیت پیگیری' : 'Error updating follow-up status'));
     } finally {
       setCompletingId(null);
     }
   };
 
   const handleDeleteCall = async (callId: string) => {
-    if (!window.confirm('آیا از حذف این رکورد مکالمه اطمینان دارید؟')) return;
+    if (!window.confirm(isRtl ? 'آیا از حذف این رکورد مکالمه اطمینان دارید؟' : 'Are you sure you want to delete this call record?')) return;
     try {
       storage.deleteCall(callId);
       await api.deleteInteraction(callId).catch(() => {});
-      success('مکالمه با موفقیت حذف گردید');
+      success(isRtl ? 'مکالمه با موفقیت حذف گردید' : 'Call deleted successfully');
       if (onRefreshCalls) onRefreshCalls();
     } catch (err: any) {
-      error('خطا در حذف مکالمه');
+      error(isRtl ? 'خطا در حذف مکالمه' : 'Error deleting call');
     }
   };
 
@@ -250,22 +250,22 @@ export const CallList: React.FC<CallListProps> = ({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-end">
           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{t('calls.totalCalls')}</span>
-          <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{stats.total} رکورد</div>
+          <div className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">{stats.total} {isRtl ? 'رکورد' : 'records'}</div>
         </div>
 
         <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-end">
           <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">{t('calls.pendingFollowups')}</span>
-          <div className="text-lg sm:text-xl font-bold text-amber-600 dark:text-amber-300 mt-1">{stats.followUpPending} مورد</div>
+          <div className="text-lg sm:text-xl font-bold text-amber-600 dark:text-amber-300 mt-1">{stats.followUpPending} {isRtl ? 'مورد' : 'items'}</div>
         </div>
 
         <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-end">
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">{t('calls.completedFollowups')}</span>
-          <div className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-300 mt-1">{stats.followUpDone} مورد</div>
+          <div className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-300 mt-1">{stats.followUpDone} {isRtl ? 'مورد' : 'items'}</div>
         </div>
 
         <div className="p-3.5 rounded-2xl liquid-glass-card border border-slate-200 dark:border-slate-800 text-end">
           <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">{t('calls.totalDuration')}</span>
-          <div className="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-300 mt-1">{stats.totalDurationMin} دقیقه</div>
+          <div className="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-300 mt-1">{stats.totalDurationMin} {isRtl ? 'دقیقه' : 'min'}</div>
         </div>
       </div>
 
@@ -289,10 +289,10 @@ export const CallList: React.FC<CallListProps> = ({
             <span className="text-slate-600 dark:text-slate-400 font-medium ms-1">{t('calls.filterType')}:</span>
             {[
               { id: 'ALL', label: t('common.all') },
-              { id: InteractionType.OUTGOING_CALL, label: 'تماس خروجی' },
-              { id: InteractionType.INCOMING_CALL, label: 'تماس ورودی' },
+              { id: InteractionType.OUTGOING_CALL, label: isRtl ? 'تماس خروجی' : 'Outgoing Call' },
+              { id: InteractionType.INCOMING_CALL, label: isRtl ? 'تماس ورودی' : 'Incoming Call' },
               { id: InteractionType.VISIT, label: t('calls.typeVisit') },
-              { id: InteractionType.MESSAGE, label: 'پیام‌رسان / پیامک' },
+              { id: InteractionType.MESSAGE, label: isRtl ? 'پیام‌رسان / پیامک' : 'Messenger / SMS' },
             ].map((f) => (
               <button
                 key={f.id}
@@ -313,10 +313,10 @@ export const CallList: React.FC<CallListProps> = ({
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-slate-600 dark:text-slate-400 font-medium ms-1">{t('calls.filterFollowUp')}:</span>
             {[
-              { id: 'ALL', label: 'همه' },
-              { id: 'REQUIRED', label: 'دارای پیگیری' },
-              { id: 'PENDING', label: 'معوق / منتظر' },
-              { id: 'DONE', label: 'انجام‌شده' },
+              { id: 'ALL', label: isRtl ? 'همه' : 'All' },
+              { id: 'REQUIRED', label: isRtl ? 'دارای پیگیری' : 'Has Follow-up' },
+              { id: 'PENDING', label: isRtl ? 'معوق / منتظر' : 'Pending' },
+              { id: 'DONE', label: isRtl ? 'انجام‌شده' : 'Done' },
             ].map((f) => (
               <button
                 key={f.id}
@@ -339,8 +339,8 @@ export const CallList: React.FC<CallListProps> = ({
       {filteredCalls.length === 0 ? (
         <div className="p-12 text-center text-slate-500 rounded-3xl liquid-glass-card border border-slate-200 dark:border-slate-800 space-y-3">
           <PhoneCall className="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600" />
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-300">هیچ مکالمه یا تعاملی با این مشخصات یافت نشد</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">می‌توانید فیلترها را تغییر داده یا تعامل جدیدی را ثبت کنید</p>
+          <h3 className="text-base font-bold text-slate-800 dark:text-slate-300">{isRtl ? 'هیچ مکالمه یا تعاملی با این مشخصات یافت نشد' : 'No calls or interactions match your filter'}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'می‌توانید فیلترها را تغییر داده یا تعامل جدیدی را ثبت کنید' : 'Try changing filters or log a new interaction'}</p>
           <Button variant="primary" size="sm" onClick={onAddNewCall} leftIcon={<Plus className="w-4 h-4" />}>
             {t('calls.newCallBtn')}
           </Button>
@@ -371,7 +371,7 @@ export const CallList: React.FC<CallListProps> = ({
                           onClick={() => onSelectCustomer(cl.customerId)}
                           className="text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-indigo-200 transition-colors hover:underline"
                         >
-                          {cl.customerName || 'مشتری بدون نام'}
+                          {cl.customerName || (isRtl ? 'مشتری بدون نام' : 'Unnamed customer')}
                         </button>
                         {cl.customerMobile && (
                           <span className="text-xs font-mono text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
@@ -413,7 +413,7 @@ export const CallList: React.FC<CallListProps> = ({
                       <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 space-y-1">
                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
                           <HelpCircle className="w-3.5 h-3.5" />
-                          <span>درخواست و نیاز مشتری:</span>
+                          <span>{isRtl ? 'درخواست و نیاز مشتری:' : 'Customer Request:'}</span>
                         </div>
                         <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed">
                           {cl.customerRequest}
@@ -425,7 +425,7 @@ export const CallList: React.FC<CallListProps> = ({
                       <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 space-y-1">
                         <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                           <Check className="w-3.5 h-3.5" />
-                          <span>نتیجه و توافق حاصل‌شده:</span>
+                          <span>{isRtl ? 'نتیجه و توافق حاصل‌شده:' : 'Outcome & Agreement:'}</span>
                         </div>
                         <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed">
                           {cl.outcome}
@@ -440,7 +440,7 @@ export const CallList: React.FC<CallListProps> = ({
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                       <FileText className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                      <span>خلاصه مذاکرات:</span>
+                      <span>{isRtl ? 'خلاصه مذاکرات:' : 'Negotiation Summary:'}</span>
                     </div>
                     <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800/60">
                       {cl.notes}
@@ -453,7 +453,7 @@ export const CallList: React.FC<CallListProps> = ({
                   <div className="p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/30 space-y-1">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-600 dark:text-purple-400">
                       <Mic className="w-3.5 h-3.5" />
-                      <span>متن پیاده‌سازی صوتی (Voice Transcript):</span>
+                      <span>{isRtl ? 'متن پیاده‌سازی صوتی:' : 'Voice Transcript:'}</span>
                     </div>
                     <p className="text-xs text-purple-900 dark:text-purple-200 font-mono leading-relaxed">
                       {cl.voiceTranscript || cl.transcript}
@@ -478,10 +478,10 @@ export const CallList: React.FC<CallListProps> = ({
                       )}
                       <div>
                         <span className="font-bold">
-                          {isFollowUpDone ? 'پیگیری تکمیل گردید' : 'نیازمند پیگیری:'}
+                          {isFollowUpDone ? (isRtl ? 'پیگیری تکمیل گردید' : 'Follow-up Completed') : (isRtl ? 'نیازمند پیگیری:' : 'Needs Follow-up:')}
                         </span>{' '}
                         <span>
-                          {cl.followUpDate ? formatPersianDate(cl.followUpDate, true) : 'بدون تاریخ مشخص'}
+                          {cl.followUpDate ? formatPersianDate(cl.followUpDate, true) : (isRtl ? 'بدون تاریخ مشخص' : 'No date set')}
                         </span>
                         {cl.followUpUserName && (
                           <span className="text-slate-500 dark:text-slate-400 me-2">
@@ -508,7 +508,7 @@ export const CallList: React.FC<CallListProps> = ({
                 {/* Footer: Recorded By, Customer Link, Delete Action */}
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-200 dark:border-slate-800/50">
                   <div className="flex items-center gap-2">
-                    <span>ثبت‌کننده: {cl.userName || 'کارشناس'}</span>
+                    <span>{isRtl ? 'ثبت‌کننده:' : 'Logged by:'} {cl.userName || (isRtl ? 'کارشناس' : 'Agent')}</span>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -523,7 +523,7 @@ export const CallList: React.FC<CallListProps> = ({
                       type="button"
                       onClick={() => handleDeleteCall(cl.id)}
                       className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1"
-                      title="حذف این رکورد"
+                      title={isRtl ? 'حذف این رکورد' : 'Delete this record'}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
