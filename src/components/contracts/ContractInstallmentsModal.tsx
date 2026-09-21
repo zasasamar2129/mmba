@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Contract, ContractInstallment, Payment, User } from '../../types';
 import { storage, subscribeToStorage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -30,6 +31,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
   currentUser,
 }) => {
   const { success, error } = useToast();
+  const { isRtl } = useTranslation();
   const [installments, setInstallments] = useState<ContractInstallment[]>([]);
   const [selectedInstallment, setSelectedInstallment] = useState<ContractInstallment | null>(null);
 
@@ -87,7 +89,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
 
     const amount = Number(payAmount.replace(/,/g, '')) || 0;
     if (amount <= 0) {
-      error('مبلغ پرداختی معتبر وارد نمایید.');
+      error(isRtl ? 'مبلغ پرداختی معتبر وارد نمایید.' : 'Enter a valid payment amount.');
       return;
     }
 
@@ -108,7 +110,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
       setSelectedInstallment(null);
       loadData();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت پرداخت قسط');
+      error(err.message || (isRtl ? 'خطا در ثبت پرداخت قسط' : 'Error recording installment payment'));
     } finally {
       setIsSubmittingPay(false);
     }
@@ -117,14 +119,14 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
   const getStatusBadge = (st: string) => {
     switch (st) {
       case 'PAID':
-        return <Badge variant="emerald" size="sm">تسویه کامل</Badge>;
+        return <Badge variant="emerald" size="sm">{isRtl ? 'تسویه کامل' : 'Paid in Full'}</Badge>;
       case 'PARTIALLY_PAID':
-        return <Badge variant="warning" size="sm">پرداخت ناقص</Badge>;
+        return <Badge variant="warning" size="sm">{isRtl ? 'پرداخت ناقص' : 'Partial'}</Badge>;
       case 'OVERDUE':
-        return <Badge variant="danger" size="sm">دارای تاخیر / معوق</Badge>;
+        return <Badge variant="danger" size="sm">{isRtl ? 'دارای تاخیر / معوق' : 'Overdue'}</Badge>;
       case 'PENDING':
       default:
-        return <Badge variant="default" size="sm">در انتظار سررسید</Badge>;
+        return <Badge variant="default" size="sm">{isRtl ? 'در انتظار سررسید' : 'Pending Due'}</Badge>;
     }
   };
 
@@ -140,23 +142,23 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
         <div className="p-4 rounded-2xl bg-slate-900 text-white shadow-md space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <span className="text-xs text-slate-400">عنوان قرارداد / مشتری:</span>
+              <span className="text-xs text-slate-400">{isRtl ? 'عنوان قرارداد / مشتری:' : 'Contract / Customer:'}</span>
               <p className="font-extrabold text-base text-slate-100">{contract.title || contract.contractNumber}</p>
               <p className="text-xs text-indigo-300 font-mono mt-0.5">{contract.customerName}</p>
             </div>
             <div className="text-start">
-              <span className="text-xs text-slate-400">وصول شده:</span>
+              <span className="text-xs text-slate-400">{isRtl ? 'وصول شده:' : 'Collected:'}</span>
               <p className="text-lg font-mono font-extrabold text-emerald-400">
                 <RTLNumber value={summary.paidAmount} type="price" />
               </p>
-              <span className="text-[11px] text-slate-400">از کل <RTLNumber value={summary.totalAmount} type="price" /></span>
+              <span className="text-[11px] text-slate-400">{isRtl ? 'از کل' : 'of'} <RTLNumber value={summary.totalAmount} type="price" /></span>
             </div>
           </div>
 
           {/* Progress Bar */}
           <div className="space-y-1 pt-1">
             <div className="flex justify-between text-xs text-slate-300 font-semibold">
-              <span>پیشرفت تسویه اقساط ({summary.paidCount} از {summary.totalCount} قسط)</span>
+              <span>{isRtl ? 'پیشرفت تسویه اقساط' : 'Installment Progress'} ({summary.paidCount} {isRtl ? 'از' : 'of'} {summary.totalCount} {isRtl ? 'قسط' : 'installments'})</span>
               <span>{summary.percent}%</span>
             </div>
             <div className="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
@@ -173,8 +175,8 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
           {installments.length === 0 ? (
             <div className="p-8 text-center rounded-2xl bg-slate-50 dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 text-slate-400">
               <Calendar className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
-              <p className="text-sm font-semibold">هیچ قسطی برای این قرارداد ثبت نشده است.</p>
-              <p className="text-xs text-slate-400 mt-1">جدول اقساط در زمان ثبت قراردادهای اقساطی یا رهن به صورت خودکار ایجاد می‌گردد.</p>
+              <p className="text-sm font-semibold">{isRtl ? 'هیچ قسطی برای این قرارداد ثبت نشده است.' : 'No installments recorded for this contract.'}</p>
+              <p className="text-xs text-slate-400 mt-1">{isRtl ? 'جدول اقساط در زمان ثبت قراردادهای اقساطی یا رهن به صورت خودکار ایجاد می‌گردد.' : 'The installment table is auto-created for installment or mortgage contracts.'}</p>
             </div>
           ) : (
             installments.map((inst) => {
@@ -214,15 +216,15 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
                     <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                        <span>سررسید:</span>
+                        <span>{isRtl ? 'سررسید:' : 'Due:'}</span>
                         <span className="font-semibold text-slate-700 dark:text-slate-300">{inst.dueDate}</span>
                       </span>
                       <span>
-                        مبلغ قسط: <span className="font-bold text-slate-800 dark:text-slate-200"><RTLNumber value={inst.totalAmount} type="price" /></span>
+                        {isRtl ? 'مبلغ قسط:' : 'Installment:'} <span className="font-bold text-slate-800 dark:text-slate-200"><RTLNumber value={inst.totalAmount} type="price" /></span>
                       </span>
                       {inst.paidAmount > 0 && (
                         <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                          پرداخت شده: <RTLNumber value={inst.paidAmount} type="price" />
+                          {isRtl ? 'پرداخت شده:' : 'Paid:'} <RTLNumber value={inst.paidAmount} type="price" />
                         </span>
                       )}
                     </div>
@@ -232,7 +234,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
                     {isPaid ? (
                       <div className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-bold">
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>تسویه کامل</span>
+                        <span>{isRtl ? 'تسویه کامل' : 'Paid in Full'}</span>
                       </div>
                     ) : (
                       <Button
@@ -242,7 +244,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
                         leftIcon={<DollarSign className="w-3.5 h-3.5" />}
                         className="font-bold text-xs shadow-sm"
                       >
-                        ثبت واریز قسط
+                        {isRtl ? 'ثبت واریز قسط' : 'Pay Installment'}
                       </Button>
                     )}
                   </div>
@@ -258,17 +260,17 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
         <Modal
           isOpen={true}
           onClose={() => setSelectedInstallment(null)}
-          title={`ثبت واریز قسط شماره ${selectedInstallment.installmentNumber}`}
+          title={`{isRtl ? 'ثبت واریز قسط' : 'Pay Installment'} شماره ${selectedInstallment.installmentNumber}`}
           size="md"
         >
           <form onSubmit={handleRecordPayment} className="space-y-4">
             <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300 flex items-center justify-between">
-              <span>مبلغ کل این قسط:</span>
+              <span>{isRtl ? 'مبلغ کل این قسط:' : 'Installment Total:'}</span>
               <span className="font-bold font-mono text-sm"><RTLNumber value={selectedInstallment.totalAmount} type="price" /></span>
             </div>
 
             <Input
-              label="مبلغ واریزی به تومان (پشتیبانی از تسویه کامل یا پرداخت علی‌الحساب)"
+              label={isRtl ? 'مبلغ واریزی به تومان (پشتیبانی از تسویه کامل یا پرداخت علی‌الحساب)' : 'Payment Amount (Toman) - full or partial'}
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
               isRequired
@@ -276,28 +278,28 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
-                label="شیوه واریز / درگاه"
+                label={isRtl ? 'شیوه واریز / درگاه' : 'Payment Method'}
                 value={payMethod}
                 onChange={(e) => setPayMethod(e.target.value)}
               >
-                <option value="CARD_TO_CARD">کارت به کارت</option>
-                <option value="PAYA_SATNA">حواله پایا / ساتنا</option>
-                <option value="POS_MACHINE">دستگاه کارتخوان (POS)</option>
-                <option value="CHEQUE">چک صیادی</option>
-                <option value="CASH">نقدی</option>
+                <option value="CARD_TO_CARD">{isRtl ? 'کارت به کارت' : 'Card to Card'}</option>
+                <option value="PAYA_SATNA">{isRtl ? 'حواله پایا / ساتنا' : 'PAYA / SATNA Transfer'}</option>
+                <option value="POS_MACHINE">{isRtl ? 'دستگاه کارتخوان (POS)' : 'POS Card Reader'}</option>
+                <option value="CHEQUE">{isRtl ? 'چک صیادی' : 'Sayad Check'}</option>
+                <option value="CASH">{isRtl ? 'نقدی' : 'Cash'}</option>
               </Select>
 
               <Input
-                label="شماره پیگیری / مرجع بانکی"
-                placeholder="مثال: 849204820"
+                label={isRtl ? 'شماره پیگیری / مرجع بانکی' : 'Tracking / Bank Reference'}
+                placeholder={isRtl ? 'مثال: 849204820' : 'e.g. 849204820'}
                 value={payRef}
                 onChange={(e) => setPayRef(e.target.value)}
               />
             </div>
 
             <Textarea
-              label="توضیحات واریز"
-              placeholder="مثال: واریز به حساب بانک ملت شرکت توسط مشتری..."
+              label={isRtl ? 'توضیحات واریز' : 'Payment Notes'}
+              placeholder={isRtl ? 'مثال: واریز به حساب بانک ملت شرکت توسط مشتری...' : 'e.g. Transfer to company Mellat account by customer...'}
               value={payNotes}
               onChange={(e) => setPayNotes(e.target.value)}
               rows={2}
@@ -310,7 +312,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
                 onChange={(e) => setNeedsFinanceReview(e.target.checked)}
                 className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-700 dark:bg-slate-900"
               />
-              <span className="font-medium">ارجاع به مدیریت مالی جهت بررسی و تطبیق سند (Finance Review)</span>
+              <span className="font-medium">{isRtl ? 'ارجاع به مدیریت مالی جهت بررسی و تطبیق سند' : 'Refer to Finance for document review'} (Finance Review)</span>
             </label>
 
             <div className="flex justify-end gap-2 pt-2">
