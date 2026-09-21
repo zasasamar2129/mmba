@@ -82,21 +82,23 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
   };
 
   const entityFilters = [
-    { key: 'ALL', label: 'همه بخش‌ها' },
-    { key: 'LEAD', label: 'سرنخ‌ها' },
-    { key: 'CUSTOMER', label: 'مشتریان' },
-    { key: 'PAYMENT', label: 'پرداخت‌ها' },
-    { key: 'CHECK', label: 'خزانه‌داری و چک' },
-    { key: 'CONTRACT', label: 'قراردادها' },
-    { key: 'SIM_CARD', label: 'انبار سیم‌کارت' },
-    { key: 'REPAIR_TICKET', label: 'تعمیرات' },
-    { key: 'USER', label: 'کاربران' },
-    { key: 'SETTINGS', label: 'تنظیمات و پشتیبان' },
+    { key: 'ALL', label: isRtl ? 'همه بخش‌ها' : 'All Modules' },
+    { key: 'LEAD', label: isRtl ? 'سرنخ‌ها' : 'Leads' },
+    { key: 'CUSTOMER', label: isRtl ? 'مشتریان' : 'Customers' },
+    { key: 'PAYMENT', label: isRtl ? 'پرداخت‌ها' : 'Payments' },
+    { key: 'CHECK', label: isRtl ? 'خزانه‌داری و چک' : 'Checks & Vault' },
+    { key: 'CONTRACT', label: isRtl ? 'قراردادها' : 'Contracts' },
+    { key: 'SIM_CARD', label: isRtl ? 'انبار سیم‌کارت' : 'SIM Inventory' },
+    { key: 'REPAIR_TICKET', label: isRtl ? 'تعمیرات' : 'Repairs' },
+    { key: 'USER', label: isRtl ? 'کاربران' : 'Users' },
+    { key: 'SETTINGS', label: isRtl ? 'تنظیمات و پشتیبان' : 'Settings & Backup' },
   ];
 
   const handleExportCsv = () => {
     try {
-      const headers = ['تاریخ و زمان', 'شناسه کاربر', 'نام کاربر', 'نقش', 'عملیات', 'بخش', 'موجودیت', 'شرح جزئیات'];
+      const headers = isRtl
+        ? ['تاریخ و زمان', 'شناسه کاربر', 'نام کاربر', 'نقش', 'عملیات', 'بخش', 'موجودیت', 'شرح جزئیات']
+        : ['Date & Time', 'User ID', 'User Name', 'Role', 'Action', 'Module', 'Entity', 'Details'];
       const rows = filteredLogs.map((l) => [
         `"${formatPersianDate(l.timestamp, true)}"`,
         `"${l.userId}"`,
@@ -115,9 +117,9 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       a.download = `mmba_audit_logs_${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      success('فایل اکسل/CSV لاگ‌های امنیتی دانلود شد.');
+      success(isRtl ? 'فایل اکسل/CSV لاگ‌های امنیتی دانلود شد.' : 'Security logs CSV downloaded.');
     } catch (err) {
-      error('خطا در خروجی لاگ‌ها');
+      error(isRtl ? 'خطا در خروجی لاگ‌ها' : 'Error exporting logs');
     }
   };
 
@@ -127,7 +129,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       error(res.message);
       return;
     }
-    success('لاگ حسابرسی با موفقیت حذف گردید.');
+    success(isRtl ? 'لاگ حسابرسی با موفقیت حذف گردید.' : 'Audit log deleted successfully.');
     setRawLogs(storage.getAuditLogs());
   };
 
@@ -139,10 +141,10 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           <div className="flex items-center gap-2">
             <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              <span>مرکز ثبت رویدادها و گزارش‌های حسابرسی (Audit Trail & Security Logs)</span>
+              <span>{isRtl ? 'مرکز ثبت رویدادها و گزارش‌های حسابرسی' : 'Audit Trail & Security Logs Center'}</span>
             </h1>
             <Badge variant="purple" size="sm">
-              <RTLNumber value={filteredLogs.length} type="count" suffix="رویداد" />
+              <RTLNumber value={filteredLogs.length} type="count" suffix={isRtl ? 'رویداد' : 'events'} />
             </Badge>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -168,7 +170,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
         <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
           <Lock className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>
-            <strong>امنیت لاگ‌ها:</strong> داده‌های حسابرسی به صورت غیرقابل دستکاری ثبت می‌شوند و هیچ کاربر عادی یا اپراتوری امکان ویرایش یا حذف تاریخچه فعالیت‌ها را ندارد.
+            <strong>{isRtl ? 'امنیت لاگ‌ها:' : 'Log Security:'}</strong> {isRtl ? 'داده‌های حسابرسی به صورت غیرقابل دستکاری ثبت می‌شوند و هیچ کاربر عادی یا اپراتوری امکان ویرایش یا حذف تاریخچه فعالیت‌ها را ندارد.' : 'Audit data is recorded tamper-proof; no regular user or operator can edit or delete activity history.'}
           </span>
         </div>
         <span className="text-[11px] font-mono text-slate-500 hidden md:inline">
@@ -185,7 +187,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="جستجو در لاگ‌ها (نام اپراتور، کد، نوع عملیات، متن جزئیات)..."
+            placeholder={isRtl ? 'جستجو در لاگ‌ها (نام اپراتور، کد، نوع عملیات، متن جزئیات)...' : 'Search logs (operator, code, action, details)...'}
             rightIcon={<Search className="w-4 h-4 text-slate-400" />}
           />
         </div>
@@ -216,7 +218,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             }}
             className="w-full h-9 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
           >
-            <option value="ALL">همه اپراتورها و کاربران</option>
+            <option value="ALL">{isRtl ? 'همه اپراتورها و کاربران' : 'All operators & users'}</option>
             {allUsers.map((u) => (
               <option key={u.id} value={u.id}>
                 {u.name} ({u.username})
@@ -243,7 +245,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
       {filteredLogs.length === 0 ? (
         <div className="p-12 text-center text-slate-500 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 space-y-3">
           <History className="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600" />
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-300">هیچ رویدادی با شرایط فوق ثبت نشده است</h3>
+          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-300">{isRtl ? 'هیچ رویدادی با شرایط فوق ثبت نشده است' : 'No events match the current filters'}</h3>
         </div>
       ) : viewMode === 'list' ? (
         /* ROW / LIST VIEW (TABLE) */
@@ -251,13 +253,13 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
           <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-3 w-36">تاریخ و ساعت</th>
-                <th className="p-3 w-32">اپراتور مجری</th>
-                <th className="p-3 w-32">نوع عملیات</th>
-                <th className="p-3 w-28">واحد / ماژول</th>
-                <th className="p-3">شرح جزئیات و تغییرات</th>
-                <th className="p-3 w-48">مقدار قبلی / جدید</th>
-                <th className="p-3 text-start w-20">مشاهده</th>
+                <th className="p-3 w-36">{isRtl ? 'تاریخ و ساعت' : 'Date & Time'}</th>
+                <th className="p-3 w-32">{isRtl ? 'اپراتور مجری' : 'Operator'}</th>
+                <th className="p-3 w-32">{isRtl ? 'نوع عملیات' : 'Action'}</th>
+                <th className="p-3 w-28">{isRtl ? 'واحد / ماژول' : 'Module'}</th>
+                <th className="p-3">{isRtl ? 'شرح جزئیات و تغییرات' : 'Details & Changes'}</th>
+                <th className="p-3 w-48">{isRtl ? 'مقدار قبلی / جدید' : 'Old / New Value'}</th>
+                <th className="p-3 text-start w-20">{isRtl ? 'مشاهده' : 'View'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -297,13 +299,13 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                       <div className="space-y-0.5 max-w-xs overflow-hidden text-ellipsis">
                         {log.oldValue && (
                           <div className="text-rose-600 dark:text-rose-400 truncate">
-                            <span className="font-bold">قبل: </span>
+                            <span className="font-bold">{isRtl ? 'قبل:' : 'Before:'} </span>
                             {typeof log.oldValue === 'object' ? JSON.stringify(log.oldValue) : String(log.oldValue)}
                           </div>
                         )}
                         {log.newValue && (
                           <div className="text-emerald-600 dark:text-emerald-400 truncate">
-                            <span className="font-bold">بعد: </span>
+                            <span className="font-bold">{isRtl ? 'بعد:' : 'After:'} </span>
                             {typeof log.newValue === 'object' ? JSON.stringify(log.newValue) : String(log.newValue)}
                           </div>
                         )}
@@ -319,7 +321,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                       type="button"
                       onClick={() => setSelectedLog(log)}
                       className="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg"
-                      title="مشاهده مشخصات کامل لاگ"
+                      title={isRtl ? 'مشاهده مشخصات کامل لاگ' : 'View full log details'}
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -364,13 +366,13 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 <div className="text-[11px] space-y-1 bg-slate-100/70 dark:bg-slate-800/50 p-2 rounded-lg">
                   {log.oldValue && (
                     <div className="text-rose-600 dark:text-rose-400 line-clamp-2">
-                      <span className="font-bold">مقدار قبلی: </span>
+                      <span className="font-bold">{isRtl ? 'مقدار قبلی:' : 'Previous:'} </span>
                       {typeof log.oldValue === 'object' ? JSON.stringify(log.oldValue) : String(log.oldValue)}
                     </div>
                   )}
                   {log.newValue && (
                     <div className="text-emerald-600 dark:text-emerald-400 line-clamp-2">
-                      <span className="font-bold">مقدار جدید: </span>
+                      <span className="font-bold">{isRtl ? 'مقدار جدید:' : 'New:'} </span>
                       {typeof log.newValue === 'object' ? JSON.stringify(log.newValue) : String(log.newValue)}
                     </div>
                   )}
@@ -384,7 +386,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                   onClick={() => setSelectedLog(log)}
                   leftIcon={<Eye className="w-3.5 h-3.5" />}
                 >
-                  مشاهده لاگ
+                  {isRtl ? 'مشاهده لاگ' : 'View Log'}
                 </Button>
               </div>
             </div>
@@ -399,7 +401,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
               <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <Shield className="w-4 h-4 text-indigo-600" />
-                <span>مشخصات کامل لاگ امنیتی {selectedLog.id}</span>
+                <span>{isRtl ? 'مشخصات کامل لاگ امنیتی' : 'Full Security Log'} {selectedLog.id}</span>
               </h3>
               <button
                 type="button"
@@ -413,25 +415,25 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             <div className="space-y-2 text-xs">
               <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl">
                 <div>
-                  <span className="text-slate-500">اپراتور: </span>
+                  <span className="text-slate-500">{isRtl ? 'اپراتور:' : 'Operator:'} </span>
                   <span className="font-bold text-slate-800 dark:text-slate-200">{selectedLog.userName} ({selectedLog.userId})</span>
                 </div>
                 <div>
-                  <span className="text-slate-500">نقش: </span>
-                  <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedLog.userRole || 'نامشخص'}</span>
+                  <span className="text-slate-500">{isRtl ? 'نقش:' : 'Role:'} </span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedLog.userRole || (isRtl ? 'نامشخص' : 'Unknown')}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500">تاریخ و زمان: </span>
+                  <span className="text-slate-500">{isRtl ? 'تاریخ و زمان:' : 'Date & Time:'} </span>
                   <span className="font-mono text-slate-700 dark:text-slate-300" dir="ltr">{formatPersianDate(selectedLog.timestamp, true)}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500">واحد / بخش: </span>
+                  <span className="text-slate-500">{isRtl ? 'واحد / بخش:' : 'Module:'} </span>
                   <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedLog.module || selectedLog.entityType || '-'}</span>
                 </div>
               </div>
 
               <div>
-                <span className="text-slate-500 block mb-1 font-semibold">شرح کامل اقدام:</span>
+                <span className="text-slate-500 block mb-1 font-semibold">{isRtl ? 'شرح کامل اقدام:' : 'Full Action Details:'}</span>
                 <p className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-slate-800 dark:text-slate-200 leading-relaxed">
                   {selectedLog.details}
                 </p>
@@ -439,7 +441,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
               {selectedLog.oldValue && (
                 <div>
-                  <span className="text-rose-600 font-semibold block mb-1">مقدار قبلی (Old Value):</span>
+                  <span className="text-rose-600 font-semibold block mb-1">{isRtl ? 'مقدار قبلی' : 'Old Value'}:</span>
                   <pre className="p-2.5 bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-300 rounded-xl overflow-x-auto font-mono text-[11px]">
                     {JSON.stringify(selectedLog.oldValue, null, 2)}
                   </pre>
@@ -448,7 +450,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
 
               {selectedLog.newValue && (
                 <div>
-                  <span className="text-emerald-600 font-semibold block mb-1">مقدار جدید (New Value):</span>
+                  <span className="text-emerald-600 font-semibold block mb-1">{isRtl ? 'مقدار جدید' : 'New Value'}:</span>
                   <pre className="p-2.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-300 rounded-xl overflow-x-auto font-mono text-[11px]">
                     {JSON.stringify(selectedLog.newValue, null, 2)}
                   </pre>
