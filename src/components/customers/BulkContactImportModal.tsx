@@ -13,6 +13,7 @@ import { Customer, CustomerStatus, ContactImportRow, ContactImportMetadata } fro
 import { normalizePhoneNumber } from '../../lib/numberUtils';
 import { storage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 
 export interface BulkContactImportModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
   onImportComplete,
 }) => {
   const { success, error, warning } = useToast();
+  const { isRtl } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState<'UPLOAD' | 'PREVIEW' | 'SUMMARY'>('UPLOAD');
@@ -116,7 +118,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
 
       if (name || mobile) {
         contacts.push({
-          name: name || 'مخاطب بدون نام',
+          name: name || (isRtl ? 'مخاطب بدون نام' : 'Unnamed contact'),
           mobile: mobile || '',
           phone: phone || '',
           email: email || '',
@@ -178,7 +180,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
 
       if (name || mobile) {
         contacts.push({
-          name: name || 'مخاطب بدون نام',
+          name: name || (isRtl ? 'مخاطب بدون نام' : 'Unnamed contact'),
           mobile: mobile || '',
           phone: phone || '',
           email: email || '',
@@ -215,7 +217,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
       }
 
       if (rawContacts.length === 0) {
-        throw new Error('هیچ مخاطب معتبری در فایل مورد نظر یافت نشد.');
+        throw new Error(isRtl ? 'هیچ مخاطب معتبری در فایل مورد نظر یافت نشد.' : 'No valid contacts found in the file.');
       }
 
       // Existing contacts for duplicate validation
@@ -241,7 +243,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
             rowNumber: idx + 1,
             data: raw,
             status: 'INVALID',
-            reason: 'نام مخاطب خالی است',
+            reason: isRtl ? 'نام مخاطب خالی است' : 'Contact name is empty',
           };
         }
 
@@ -250,7 +252,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
             rowNumber: idx + 1,
             data: raw,
             status: 'INVALID',
-            reason: 'شماره موبایل ثبت نشده است',
+            reason: isRtl ? 'شماره موبایل ثبت نشده است' : 'Mobile number missing',
           };
         }
 
@@ -269,7 +271,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
             rowNumber: idx + 1,
             data: raw,
             status: 'DUPLICATE',
-            reason: 'شماره در سطرهای قبلی همین فایل تکرار شده است',
+            reason: isRtl ? 'شماره در سطرهای قبلی همین فایل تکرار شده است' : 'Number duplicated in earlier rows',
             normalizedMobile: normMobile,
           };
         }
@@ -307,7 +309,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
       success(`تعداد ${validatedRows.length} ردیف با موفقیت خوانده و اعتبارسنجی شد.`);
     } catch (err: any) {
       console.error('Import Error:', err);
-      error(err.message || 'خطا در خواندن فایل');
+      error(err.message || (isRtl ? 'خطا در خواندن فایل' : 'Error reading file'));
     } finally {
       setIsLoading(false);
     }
@@ -363,13 +365,13 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
           storage.saveCustomer({
             id: `cust-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
             code: `CUST-${1040 + existingCustomers.length + successCount + 1}`,
-            name: row.data.name || 'مخاطب جدید',
+            name: row.data.name || (isRtl ? '{isRtl ? 'مخاطب جدید' : 'New Contacts'}' : 'New contact'),
             mobile: row.normalizedMobile || row.data.mobile || '',
             phone: row.data.phone || '',
             email: row.data.email || '',
             companyName: row.data.companyName || '',
             jobTitle: row.data.jobTitle || '',
-            city: 'تهران',
+            city: isRtl ? 'تهران' : 'Tehran',
             status: CustomerStatus.ACTIVE,
             registrationReason: row.data.registrationReason || defaultReason,
             notes: row.data.notes || `ثبت از فایل اکسل/vCard: ${fileName}`,
@@ -397,9 +399,9 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
       setSummary(meta);
       setStep('SUMMARY');
       onImportComplete();
-      success(`ورود اطلاعات با موفقیت انجام شد (${successCount} مخاطب جدید).`);
+      success(`ورود اطلاعات با موفقیت انجام شد (${successCount} {isRtl ? 'مخاطب جدید' : 'New Contacts'}).`);
     } catch (err: any) {
-      error(err.message || 'خطا در پردازش ورود گروهی');
+      error(err.message || (isRtl ? 'خطا در پردازش ورود گروهی' : 'Error processing bulk import'));
     } finally {
       setIsProcessingImport(false);
     }
@@ -426,7 +428,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title="ورود گروهی مخاطبان (Excel / CSV / vCard)"
+      title={isRtl ? 'ورود گروهی مخاطبان (Excel / CSV / vCard)' : 'Bulk Import Contacts (Excel / CSV / vCard)'}
       maxWidth="max-w-4xl"
     >
       {/* Step 1: Upload */}
@@ -435,28 +437,28 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
           <div className="bg-indigo-50/70 dark:bg-indigo-950/40 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-800/60 text-xs text-indigo-900 dark:text-indigo-200 leading-relaxed flex items-start gap-3">
             <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold mb-1">راهنمای بارگذاری گروهی:</p>
-              <p>شما می‌توانید فایل مخاطبان گوشی خود با فرمت <strong>VCF (vCard)</strong> یا فایل‌های <strong>Excel (.xlsx, .xls)</strong> و <strong>CSV</strong> را مستقیماً وارد کنید. سامانه به‌طور خودکار شماره‌های تکراری را شناسایی کرده و نام‌های فارسی و کاراکترهای یونیکد را پشتیبانی می‌کند.</p>
+              <p className="font-bold mb-1">{isRtl ? 'راهنمای بارگذاری گروهی:' : 'Bulk Upload Guide:'}</p>
+              <p>{isRtl ? 'شما می‌توانید فایل مخاطبان گوشی خود با فرمت' : 'You can upload phone contacts as'} <strong>VCF (vCard)</strong> {isRtl ? 'یا فایل‌های' : 'or'} <strong>Excel (.xlsx, .xls)</strong> {isRtl ? 'و' : 'and'} <strong>CSV</strong>. {isRtl ? 'سامانه به‌طور خودکار شماره‌های تکراری را شناسایی کرده و نام‌های فارسی و کاراکترهای یونیکد را پشتیبانی می‌کند.' : 'The system auto-detects duplicates and supports Persian names and Unicode characters.'}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                علت پیش‌فرض ثبت مخاطبان این فایل:
+                {isRtl ? 'علت پیش‌فرض ثبت مخاطبان این فایل:' : 'Default registration reason:'}
               </label>
               <Select
                 value={defaultReason}
                 onChange={(e) => setDefaultReason(e.target.value)}
               >
-                <option value="مشتری">مشتری</option>
-                <option value="مشتری بالقوه">مشتری بالقوه</option>
-                <option value="همکار">همکار</option>
-                <option value="تأمین‌کننده">تأمین‌کننده</option>
-                <option value="دوست/آشنا">دوست / آشنا</option>
-                <option value="تماس کاری">تماس کاری</option>
-                <option value="پیگیری فروش">پیگیری فروش</option>
-                <option value="سایر">سایر</option>
+                <option value="مشتری">{isRtl ? 'مشتری' : 'Customer'}</option>
+                <option value="مشتری بالقوه">{isRtl ? 'مشتری بالقوه' : 'Prospect'}</option>
+                <option value="همکار">{isRtl ? 'همکار' : 'Colleague'}</option>
+                <option value="تأمین‌کننده">{isRtl ? 'تأمین‌کننده' : 'Supplier'}</option>
+                <option value="دوست/آشنا">{isRtl ? 'دوست / آشنا' : 'Friend / Acquaintance'}</option>
+                <option value="تماس کاری">{isRtl ? 'تماس کاری' : 'Work Contact'}</option>
+                <option value="پیگیری فروش">{isRtl ? 'پیگیری فروش' : 'Sales Follow-up'}</option>
+                <option value="سایر">{isRtl ? 'سایر' : 'Other'}</option>
               </Select>
             </div>
           </div>
@@ -502,7 +504,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
           <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>فایل: {fileName}</span>
+                <span>{isRtl ? 'فایل:' : 'File:'} {fileName}</span>
                 <Badge variant="indigo">{fileType}</Badge>
               </div>
               <div className="text-xs text-slate-500 mt-1">
@@ -512,15 +514,15 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
 
             {/* Duplicate Handling Selector */}
             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
-              <span className="font-semibold text-slate-600 dark:text-slate-300">رفتار با تکراری‌ها:</span>
+              <span className="font-semibold text-slate-600 dark:text-slate-300">{isRtl ? 'رفتار با تکراری‌ها:' : 'Duplicate Handling:'}</span>
               <select
                 value={duplicateStrategy}
                 onChange={(e) => setDuplicateStrategy(e.target.value as any)}
                 className="bg-transparent font-bold text-indigo-600 dark:text-indigo-400 outline-none cursor-pointer"
               >
-                <option value="SKIP">رد کردن تکراری‌ها (پیش‌فرض)</option>
-                <option value="UPDATE">بروزرسانی مخاطب موجود</option>
-                <option value="IMPORT_AS_NEW">ثبت به‌عنوان مخاطب جدید</option>
+                <option value="SKIP">{isRtl ? 'رد کردن تکراری‌ها (پیش‌فرض)' : 'Skip duplicates (default)'}</option>
+                <option value="UPDATE">{isRtl ? 'بروزرسانی مخاطب موجود' : 'Update existing'}</option>
+                <option value="IMPORT_AS_NEW">{isRtl ? 'ثبت به‌عنوان {isRtl ? 'مخاطب جدید' : 'New Contacts'}' : 'Import as new'}</option>
               </select>
             </div>
           </div>
@@ -576,7 +578,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
 
             <div className="w-full sm:w-64">
               <Input
-                placeholder="جستجو در پیش‌نمایش..."
+                placeholder={isRtl ? 'جستجو در پیش‌نمایش...' : 'Search preview...'}
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
                 className="text-xs"
@@ -589,12 +591,12 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
             <table className="w-full text-end text-xs">
               <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
                 <tr>
-                  <th className="p-3 w-12 text-center">ردیف</th>
-                  <th className="p-3 w-28">وضعیت</th>
-                  <th className="p-3">نام مخاطب</th>
-                  <th className="p-3">شماره موبایل</th>
-                  <th className="p-3">شرکت / سمت</th>
-                  <th className="p-3">توضیح اعتبارسنجی</th>
+                  <th className="p-3 w-12 text-center">{isRtl ? 'ردیف' : '#'}</th>
+                  <th className="p-3 w-28">{isRtl ? 'وضعیت' : 'Status'}</th>
+                  <th className="p-3">{isRtl ? 'نام مخاطب' : 'Name'}</th>
+                  <th className="p-3">{isRtl ? 'شماره موبایل' : 'Mobile'}</th>
+                  <th className="p-3">{isRtl ? 'شرکت / سمت' : 'Company / Title'}</th>
+                  <th className="p-3">{isRtl ? 'توضیح اعتبارسنجی' : 'Validation'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
@@ -602,9 +604,9 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
                   <tr key={row.rowNumber} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                     <td className="p-3 text-center text-slate-400 font-mono">{row.rowNumber}</td>
                     <td className="p-3">
-                      {row.status === 'NEW' && <Badge variant="success">جدید</Badge>}
-                      {row.status === 'DUPLICATE' && <Badge variant="warning">تکراری</Badge>}
-                      {row.status === 'INVALID' && <Badge variant="danger">نامعتبر</Badge>}
+                      {row.status === 'NEW' && <Badge variant="success">{isRtl ? 'جدید' : 'New'}</Badge>}
+                      {row.status === 'DUPLICATE' && <Badge variant="warning">{isRtl ? 'تکراری' : 'Duplicate'}</Badge>}
+                      {row.status === 'INVALID' && <Badge variant="danger">{isRtl ? 'نامعتبر' : 'Invalid'}</Badge>}
                     </td>
                     <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{row.data.name || '—'}</td>
                     <td className="p-3 font-mono text-slate-700 dark:text-slate-300 dir-ltr text-end">{row.normalizedMobile || row.data.mobile || '—'}</td>
@@ -618,7 +620,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
                           {row.reason}
                         </span>
                       ) : (
-                        <span className="text-emerald-600">آماده برای ورود</span>
+                        <span className="text-emerald-600">{isRtl ? 'آماده برای ورود' : 'Ready for import'}</span>
                       )}
                     </td>
                   </tr>
@@ -626,7 +628,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
                 {filteredRows.length === 0 && (
                   <tr>
                     <td colSpan={6} className="p-6 text-center text-slate-400">
-                      موردی با فیلتر انتخاب شده یافت نشد.
+                      {isRtl ? 'موردی با فیلتر انتخاب شده یافت نشد.' : 'No rows match the selected filter.'}
                     </td>
                   </tr>
                 )}
@@ -637,7 +639,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
           {/* Action Footer */}
           <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
             <Button variant="outline" size="sm" onClick={resetState}>
-              انتخاب فایل دیگر
+              {isRtl ? 'انتخاب فایل دیگر' : 'Choose Another File'}
             </Button>
 
             <Button
@@ -648,7 +650,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
               disabled={isProcessingImport || totalNew + totalDuplicate === 0}
               leftIcon={<Check className="w-4 h-4" />}
             >
-              تأیید و اجرای ورود مخاطبان
+              {isRtl ? 'تأیید و اجرای ورود مخاطبان' : 'Confirm & Import Contacts'}
             </Button>
           </div>
         </div>
@@ -663,10 +665,10 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
 
           <div className="text-center">
             <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
-              عملیات ورود اطلاعات با موفقیت انجام شد
+              {isRtl ? 'عملیات ورود اطلاعات با موفقیت انجام شد' : 'Import completed successfully'}
             </h3>
             <p className="text-xs text-slate-500">
-              مخاطبان جدید به دفترچه مخاطبان MMBA اضافه شدند.
+              {isRtl ? 'مخاطبان جدید به دفترچه مخاطبان MMBA اضافه شدند.' : 'New contacts were added to the MMBA directory.'}
             </p>
           </div>
 
@@ -674,11 +676,11 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center">
               <div className="text-xl font-bold text-slate-900 dark:text-white">{summary.totalRows}</div>
-              <div className="text-xs text-slate-500 mt-0.5">کل ردیف‌ها</div>
+              <div className="text-xs text-slate-500 mt-0.5">{isRtl ? 'کل ردیف‌ها' : 'Total Rows'}</div>
             </div>
             <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center">
               <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{summary.successCount}</div>
-              <div className="text-xs text-emerald-600/80 mt-0.5">مخاطب جدید</div>
+              <div className="text-xs text-emerald-600/80 mt-0.5">{isRtl ? 'مخاطب جدید' : 'New Contacts'}</div>
             </div>
             <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-center">
               <div className="text-xl font-bold text-amber-600 dark:text-amber-400">{summary.duplicateCount}</div>
@@ -688,7 +690,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
             </div>
             <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-center">
               <div className="text-xl font-bold text-rose-600 dark:text-rose-400">{summary.invalidCount}</div>
-              <div className="text-xs text-rose-600/80 mt-0.5">ردیف نامعتبر</div>
+              <div className="text-xs text-rose-600/80 mt-0.5">{isRtl ? 'ردیف نامعتبر' : 'Invalid Rows'}</div>
             </div>
           </div>
 
