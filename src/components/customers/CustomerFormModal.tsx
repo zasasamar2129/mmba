@@ -223,7 +223,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     setNationalCode(existing.nationalCode || '');
     setEmail(existing.email || '');
     setCompanyName(existing.companyName || '');
-    setCity(existing.city || 'تهران');
+    setCity(existing.city || (isRtl ? 'تهران' : 'Tehran'));
     setAddress(existing.address || '');
     setStatus(existing.status ? (existing.status as CustomerStatus) : CustomerStatus.ACTIVE);
     setTags(existing.tags || []);
@@ -245,7 +245,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       setNationalCode(activeEditingCustomer.nationalCode || '');
       setEmail(activeEditingCustomer.email || '');
       setCompanyName(activeEditingCustomer.companyName || '');
-      setCity(activeEditingCustomer.city || 'تهران');
+      setCity(activeEditingCustomer.city || (isRtl ? 'تهران' : 'Tehran'));
       setAddress(activeEditingCustomer.address || '');
       setStatus(activeEditingCustomer.status ? (activeEditingCustomer.status as CustomerStatus) : CustomerStatus.ACTIVE);
       setTags(activeEditingCustomer.tags || []);
@@ -258,14 +258,14 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       setNationalCode('');
       setEmail('');
       setCompanyName('');
-      setCity('تهران');
+      setCity(isRtl ? 'تهران' : 'Tehran');
       setAddress('');
       setStatus(CustomerStatus.ACTIVE);
       setTags(['مشتری جدید']);
       setNotes('');
       setCreditLimit('0');
     }
-    success('پیش‌نویس پاک شد و فرم بازنشانی گردید');
+    success(isRtl ? 'پیش‌نویس پاک شد و فرم بازنشانی گردید' : 'Draft cleared and form reset');
   };
 
   const handleAddTag = () => {
@@ -282,11 +282,11 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      error('لطفاً نام و نام خانوادگی مخاطب را وارد کنید');
+      error(isRtl ? 'لطفاً نام و نام خانوادگی مخاطب را وارد کنید' : 'Please enter the customer name');
       return;
     }
     if (!mobile.trim()) {
-      error('لطفاً شماره موبایل را وارد کنید');
+      error(isRtl ? 'لطفاً شماره موبایل را وارد کنید' : 'Please enter the mobile number');
       return;
     }
 
@@ -325,14 +325,14 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       storage.clearDraft(draftKey);
       setHasRestoredDraft(false);
 
-      success(activeEditingCustomer ? 'اطلاعات مخاطب با موفقیت به‌روزرسانی شد' : 'پرونده مخاطب جدید با موفقیت ثبت شد');
+      success(activeEditingCustomer ? (isRtl ? 'اطلاعات مخاطب با موفقیت به‌روزرسانی شد' : 'Customer updated successfully') : (isRtl ? 'پرونده مخاطب جدید با موفقیت ثبت شد' : 'New customer profile created successfully'));
       onSaved(saved);
       onClose();
     } catch (err: any) {
       if (err?.code === 'DUPLICATE_PHONE' && err?.existingCustomer) {
-        error(err.message || 'این شماره از قبل در سیستم ثبت شده است.');
+        error(err.message || (isRtl ? 'این شماره از قبل در سیستم ثبت شده است.' : 'This number is already registered.'));
       } else {
-        error(err?.message || 'خطا در ثبت اطلاعات مخاطب');
+        error(err?.message || (isRtl ? 'خطا در ثبت اطلاعات مخاطب' : 'Error saving customer data'));
       }
     }
   };
@@ -345,10 +345,10 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
       title={
         <div className="flex items-center gap-2">
           <User className="w-5 h-5 text-indigo-400" />
-          <span>{activeEditingCustomer ? `ویرایش پرونده: ${activeEditingCustomer.name}` : 'ثبت مخاطب / مشتری جدید'}</span>
+          <span>{activeEditingCustomer ? (isRtl ? `ویرایش پرونده: ${activeEditingCustomer.name}` : `Edit Profile: ${activeEditingCustomer.name}`) : (isRtl ? 'ثبت مخاطب / مشتری جدید' : 'New Customer / Contact')}</span>
         </div>
       }
-      subtitle="تکمیل اطلاعات هویتی، تماس، یکتا بودن شماره، اعتبار مالی و دسته‌بندی"
+      subtitle={isRtl ? 'تکمیل اطلاعات هویتی، تماس، یکتا بودن شماره، اعتبار مالی و دسته‌بندی' : 'Complete identity, contact, unique number, financial credit and category information'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Duplicate Conflict Banner */}
@@ -358,11 +358,11 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
               <div className="flex-1 space-y-1">
                 <div className="font-bold text-sm text-rose-300">
-                  این شماره از قبل در سیستم ثبت شده است. آیا مایلید مخاطب موجود را ویرایش کنید؟
+                  {isRtl ? 'این شماره از قبل در سیستم ثبت شده است. آیا مایلید مخاطب موجود را ویرایش کنید؟' : 'This number already exists. Would you like to edit the existing contact?'}
                 </div>
                 <div className="text-slate-300 text-xs">
-                  شماره <span className="font-mono font-bold text-rose-200" dir="ltr">{duplicateConflict.number}</span> به نام{' '}
-                  <strong className="text-white font-bold underline">{duplicateConflict.existingContact.name}</strong> (کد پرونده: {duplicateConflict.existingContact.code}) در دیتابیس موجود است.
+                  {isRtl ? 'شماره' : 'Number'} <span className="font-mono font-bold text-rose-200" dir="ltr">{duplicateConflict.number}</span> {isRtl ? 'به نام' : 'belongs to'}{' '}
+                  <strong className="text-white font-bold underline">{duplicateConflict.existingContact.name}</strong> ({isRtl ? 'کد پرونده' : 'Record code'}: {duplicateConflict.existingContact.code}) {isRtl ? 'در دیتابیس موجود است.' : 'already exists in the database.'}
                 </div>
               </div>
             </div>
@@ -403,7 +403,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs animate-fadeIn">
             <span className="flex items-center gap-2">
               <RotateCcw className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>پیش‌نویس ذخیره‌شده خودکار شما بارگذاری شد.</span>
+              <span>{isRtl ? 'پیش‌نویس ذخیره‌شده خودکار شما بارگذاری شد.' : 'Your auto-saved draft has been restored.'}</span>
             </span>
             <button
               type="button"
@@ -417,17 +417,17 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Input
-            label="نام و نام خانوادگی / عنوان مخاطب"
+            label={isRtl ? 'نام و نام خانوادگی / عنوان مخاطب' : 'Full Name / Contact Title'}
             value={name}
             onChange={(e) => setName(e.target.value)}
             isRequired
-            placeholder="مثال: علی رضایی"
+            placeholder={isRtl ? 'مثال: علی رضایی' : 'e.g. Ali Rezaei'}
             rightIcon={<User className="w-4 h-4" />}
           />
 
           <div>
             <Input
-              label="شماره موبایل (یکتا)"
+              label={isRtl ? 'شماره موبایل (یکتا)' : 'Mobile Number (Unique)'}
               value={mobile}
               onChange={(e) => setMobile(e.target.value)}
               isRequired
@@ -446,7 +446,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <Input
-              label="تلفن ثابت / دفتر"
+              label={isRtl ? 'تلفن ثابت / دفتر' : 'Landline / Office'}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="021..."
@@ -460,17 +460,17 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           </div>
 
           <Input
-            label="کد ملی / شناسه ملی"
+            label={isRtl ? 'کد ملی / شناسه ملی' : 'National ID'}
             value={nationalCode}
             onChange={(e) => setNationalCode(e.target.value)}
-            placeholder="10 رقمی..."
+            placeholder={isRtl ? '۱۰ رقمی...' : '10 digits...'}
             rightIcon={<Hash className="w-4 h-4" />}
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Input
-            label="پست الکترونیک (ایمیل)"
+            label={isRtl ? 'پست الکترونیک (ایمیل)' : 'Email Address'}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -478,41 +478,41 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
           />
 
           <Input
-            label="نام شرکت / سازمان / فروشگاه"
+            label={isRtl ? 'نام شرکت / سازمان / فروشگاه' : 'Company / Organization Name'}
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
-            placeholder="مثال: بازرگانی نوین"
+            placeholder={isRtl ? 'مثال: بازرگانی نوین' : 'e.g. Novin Trading'}
             rightIcon={<Building2 className="w-4 h-4" />}
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <Input
-            label="سمت یا عنوان شغلی"
+            label={isRtl ? 'سمت یا عنوان شغلی' : 'Job Title / Position'}
             value={jobTitle}
             onChange={(e) => setJobTitle(e.target.value)}
-            placeholder="مثال: مدیر فروش / کارشناس تدارکات"
+            placeholder={isRtl ? 'مثال: مدیر فروش / کارشناس تدارکات' : 'e.g. Sales Manager / Procurement'}
           />
 
           <div>
             <Select
-              label="دلیل ثبت مخاطب در سامانه"
+              label={isRtl ? 'دلیل ثبت مخاطب در سامانه' : 'Registration Reason'}
               value={registrationReason}
               onChange={(e) => setRegistrationReason(e.target.value)}
               options={[
-                { value: 'مشتری', label: 'مشتری' },
-                { value: 'مشتری بالقوه', label: 'مشتری بالقوه' },
-                { value: 'همکار', label: 'همکار' },
-                { value: 'تأمین‌کننده', label: 'تأمین‌کننده' },
-                { value: 'دوست/آشنا', label: 'دوست / آشنا' },
-                { value: 'تماس کاری', label: 'تماس کاری' },
-                { value: 'پیگیری فروش', label: 'پیگیری فروش' },
-                { value: 'سایر', label: 'سایر (توضیح دلخواه)' },
+                { value: 'مشتری', label: isRtl ? 'مشتری' : 'Customer' },
+                { value: 'مشتری بالقوه', label: isRtl ? 'مشتری بالقوه' : 'Prospect' },
+                { value: 'همکار', label: isRtl ? 'همکار' : 'Colleague' },
+                { value: 'تأمین‌کننده', label: isRtl ? 'تأمین‌کننده' : 'Supplier' },
+                { value: 'دوست/آشنا', label: isRtl ? 'دوست / آشنا' : 'Friend / Acquaintance' },
+                { value: 'تماس کاری', label: isRtl ? 'تماس کاری' : 'Work Contact' },
+                { value: 'پیگیری فروش', label: isRtl ? 'پیگیری فروش' : 'Sales Follow-up' },
+                { value: 'سایر', label: isRtl ? 'سایر (توضیح دلخواه)' : 'Other (custom note)' },
               ]}
             />
             {registrationReason === 'سایر' && (
               <Input
-                placeholder="توضیح دلیل ثبت..."
+                placeholder={isRtl ? 'توضیح دلیل ثبت...' : 'Explain the reason...'}
                 value={registrationReasonOther}
                 onChange={(e) => setRegistrationReasonOther(e.target.value)}
                 className="mt-2 text-xs"
@@ -523,28 +523,28 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           <Input
-            label="شهر"
+            label={isRtl ? 'شهر' : 'City'}
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            placeholder="تهران"
+            placeholder={isRtl ? 'تهران' : 'Tehran'}
             rightIcon={<MapPin className="w-4 h-4" />}
           />
 
           <Select
-            label="وضعیت پرونده"
+            label={isRtl ? 'وضعیت پرونده' : 'Record Status'}
             value={status}
             onChange={(e) => setStatus(e.target.value as CustomerStatus)}
             options={[
-              { value: CustomerStatus.ACTIVE, label: 'فعال' },
-              { value: CustomerStatus.PROSPECT, label: 'مشتری بالقوه / سرنخ' },
-              { value: CustomerStatus.VIP, label: 'ویژه (VIP)' },
-              { value: CustomerStatus.INACTIVE, label: 'غیرفعال' },
-              { value: CustomerStatus.BLACKLISTED, label: 'مسدود / لیست سیاه' },
+              { value: CustomerStatus.ACTIVE, label: isRtl ? 'فعال' : 'Active' },
+              { value: CustomerStatus.PROSPECT, label: isRtl ? 'مشتری بالقوه / سرنخ' : 'Prospect / Lead' },
+              { value: CustomerStatus.VIP, label: isRtl ? 'ویژه (VIP)' : 'VIP' },
+              { value: CustomerStatus.INACTIVE, label: isRtl ? 'غیرفعال' : 'Inactive' },
+              { value: CustomerStatus.BLACKLISTED, label: isRtl ? 'مسدود / لیست سیاه' : 'Blacklisted' },
             ]}
           />
 
           <Input
-            label="سقف اعتبار مالی (تومان)"
+            label={isRtl ? 'سقف اعتبار مالی (تومان)' : 'Credit Limit (Toman)'}
             type="number"
             value={creditLimit}
             onChange={(e) => setCreditLimit(e.target.value)}
@@ -553,15 +553,15 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
         </div>
 
         <Input
-          label="آدرس پستی دقیق"
+          label={isRtl ? 'آدرس پستی دقیق' : 'Full Postal Address'}
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder="خیابان، پلاک، طبقه، واحد..."
+          placeholder={isRtl ? 'خیابان، پلاک، طبقه، واحد...' : 'Street, number, floor, unit...'}
         />
 
         {/* Tags */}
         <div className="space-y-1.5">
-          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">برچسب‌ها و گروه‌بندی</label>
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">{isRtl ? 'برچسب‌ها و گروه‌بندی' : 'Tags & Grouping'}</label>
           <div className="flex gap-2">
             <Input
               value={tagInput}
@@ -572,7 +572,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
                   handleAddTag();
                 }
               }}
-              placeholder="برچسب جدید (Enter بزنید)"
+              placeholder={isRtl ? 'برچسب جدید (Enter بزنید)' : 'New tag (press Enter)'}
               rightIcon={<Tag className="w-4 h-4" />}
             />
             <Button type="button" variant="secondary" size="sm" onClick={handleAddTag}>
@@ -600,10 +600,10 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
         {/* Notes with Voice Input */}
         <Textarea
-          label="یادداشت‌های پرونده مخاطب"
+          label={isRtl ? 'یادداشت‌های پرونده مخاطب' : 'Customer Notes'}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="سوابق، ترجیحات مشتری، نکات کلیدی و الزامات ارتباطی..."
+          placeholder={isRtl ? 'سوابق، ترجیحات مشتری، نکات کلیدی و الزامات ارتباطی...' : 'History, customer preferences, key notes and communication requirements...'}
           actionButton={
             <VoiceInputButton
               onTranscript={(transcript) => {
@@ -633,7 +633,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
               leftIcon={<Check className="w-4 h-4" />}
               className={duplicateConflict ? 'opacity-50 cursor-not-allowed' : ''}
             >
-              {activeEditingCustomer ? 'ذخیره تغییرات پرونده' : 'ایجاد پرونده مخاطب'}
+              {activeEditingCustomer ? (isRtl ? 'ذخیره تغییرات پرونده' : 'Save Profile Changes') : (isRtl ? 'ایجاد پرونده مخاطب' : 'Create Customer Record')}
             </Button>
           </div>
         </div>
