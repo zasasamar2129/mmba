@@ -9,6 +9,7 @@ import {
   ArrowUpRight, Plus, Sparkles, CheckSquare
 } from 'lucide-react';
 import { formatPrice, getRelativeTimeFa, isOverdue, isToday } from '../../lib/dateUtils';
+import { useTranslation } from '../../lib/i18n';
 import { canViewTask } from '../../lib/permissions';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
@@ -36,6 +37,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
   onNavigate,
   onOpenQuickAction,
 }) => {
+  const { isRtl } = useTranslation();
   // 1. WHAT NEEDS ATTENTION NOW?
   const allowedTasks = (tasks || []).filter((t) => canViewTask(currentUser, t));
   const overdueTasks = allowedTasks.filter((t) => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED && isOverdue(t.dueDate));
@@ -121,7 +123,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">وظایف معوق / عقب‌افتاده</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{isRtl ? 'وظایف معوق / عقب‌افتاده' : 'Overdue / Late Tasks'}</span>
               <Badge variant={overdueTasks.length > 0 ? 'danger' : 'success'} size="sm" dot>
                 {overdueTasks.length} وظیفه
               </Badge>
@@ -133,13 +135,13 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
                     {overdueTasks[0].title}
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                    مسئول: {overdueTasks[0].assignedUserName || 'تعیین نشده'} • سررسید: {getRelativeTimeFa(overdueTasks[0].dueDate)}
+                    {isRtl ? 'مسئول:' : 'Assignee:'} {overdueTasks[0].assignedUserName || (isRtl ? 'تعیین نشده' : 'Unassigned')} • {isRtl ? 'سررسید:' : 'Due:'} {isRtl ? getRelativeTimeFa(overdueTasks[0].dueDate) : getRelativeTimeFa(overdueTasks[0].dueDate)}
                   </p>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs py-1">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>عالی! هیچ وظیفه معوقی وجود ندارد.</span>
+                  <span>{isRtl ? 'عالی! هیچ وظیفه معوقی وجود ندارد.' : 'Great! No overdue tasks.'}</span>
                 </div>
               )}
             </div>
@@ -155,9 +157,9 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">دریافتی‌های منتظر تایید مالی</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{isRtl ? 'دریافتی‌های منتظر تایید مالی' : 'Payments Awaiting Finance Approval'}</span>
               <Badge variant={pendingPayments.length > 0 ? 'warning' : 'success'} size="sm" dot>
-                {pendingPayments.length} سند
+                {pendingPayments.length} {isRtl ? 'سند' : 'records'}
               </Badge>
             </div>
             <div className="mt-3">
@@ -173,7 +175,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
               ) : (
                 <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs py-1">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>تمامی پرداخت‌ها بررسی و تایید شده‌اند.</span>
+                  <span>{isRtl ? 'تمامی پرداخت‌ها بررسی و تایید شده‌اند.' : 'All payments are reviewed and verified.'}</span>
                 </div>
               )}
             </div>
@@ -189,9 +191,9 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">تعمیرات نیازمند تایید مشتری</span>
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{isRtl ? 'تعمیرات نیازمند تایید مشتری' : 'Repairs Awaiting Customer Approval'}</span>
               <Badge variant={urgentRepairs.length > 0 ? 'purple' : 'success'} size="sm" dot>
-                {urgentRepairs.length} دستگاه
+                {urgentRepairs.length} {isRtl ? 'دستگاه' : 'devices'}
               </Badge>
             </div>
             <div className="mt-3">
@@ -207,7 +209,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
               ) : (
                 <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 text-xs py-1">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>دستگاه بلاتکلیفی در تعمیرگاه نیست.</span>
+                  <span>{isRtl ? 'دستگاه بلاتکلیفی در تعمیرگاه نیست.' : 'No pending devices in the repair shop.'}</span>
                 </div>
               )}
             </div>
@@ -237,8 +239,8 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
             {todayTasks.length === 0 ? (
               <div className="text-center py-8 text-slate-500 dark:text-slate-400 space-y-1">
                 <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500/60 dark:text-emerald-400/60 mb-2" />
-                <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">برای امروز وظیفه اضطراری باقی نمانده است</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">می‌توانید وظایف روزهای آینده را بررسی کنید.</p>
+                <p className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{isRtl ? 'برای امروز وظیفه اضطراری باقی نمانده است' : 'No urgent tasks remain for today'}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">{isRtl ? 'می‌توانید وظایف روزهای آینده را بررسی کنید.' : 'You can review upcoming tasks for the next days.'}</p>
               </div>
             ) : (
               todayTasks.map((t) => (
@@ -272,7 +274,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
           <div className="flex items-center justify-between">
             <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>خلاصه عملیات کسب‌وکار</span>
+              <span>{isRtl ? 'خلاصه عملیات کسب‌وکار' : 'Business Operations Summary'}</span>
             </h3>
           </div>
 
@@ -286,8 +288,8 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
                   <Users className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">کل پرونده‌های فعال مشتریان</span>
-                  <p className="text-base font-bold text-slate-900 dark:text-slate-100">{activeCustomersCount} مشتری</p>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'کل پرونده‌های فعال مشتریان' : 'Total Active Customer Records'}</span>
+                  <p className="text-base font-bold text-slate-900 dark:text-slate-100">{activeCustomersCount} {isRtl ? 'مشتری' : 'customers'}</p>
                 </div>
               </div>
               <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -302,7 +304,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
                   <CreditCard className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">مجموع وصولی‌های قطعی</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'مجموع وصولی‌های قطعی' : 'Total Collected Revenue'}</span>
                   <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{formatPrice(totalReceivables)}</p>
                 </div>
               </div>
@@ -318,8 +320,8 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
                   <Wrench className="w-4 h-4" />
                 </div>
                 <div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">دستگاه‌های در حال تعمیر</span>
-                  <p className="text-base font-bold text-amber-600 dark:text-amber-300">{inProgressRepairsCount} دستگاه</p>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'دستگاه‌های در حال تعمیر' : 'Devices In Repair'}</span>
+                  <p className="text-base font-bold text-amber-600 dark:text-amber-300">{inProgressRepairsCount} {isRtl ? 'دستگاه' : 'devices'}</p>
                 </div>
               </div>
               <ArrowUpRight className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -356,7 +358,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-200">
-                      {cl.customerName || 'مشتری'}
+                      {cl.customerName || (isRtl ? 'مشتری' : 'Customer')}
                     </span>
                     <Badge variant="purple" size="sm">
                       {cl.callType}
@@ -375,7 +377,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
               </div>
 
               <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center text-[11px] text-slate-400 dark:text-slate-500 shrink-0 pt-1 sm:pt-0">
-                <span>ثبت: {cl.userName}</span>
+                <span>{isRtl ? 'ثبت:' : 'By:'} {cl.userName}</span>
                 <span>{getRelativeTimeFa(cl.createdAt)}</span>
               </div>
             </div>
