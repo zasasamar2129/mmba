@@ -262,7 +262,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       tomorrow.setHours(12, 0, 0, 0);
       setDueDate(tomorrow.toISOString().substring(0, 16));
     }
-    success('پیش‌نویس پاک شد و فرم بازنشانی گردید');
+    success(isRtl ? 'پیش‌نویس پاک شد و فرم بازنشانی گردید' : 'Draft cleared and form reset');
   };
 
   const handleToggleShared = (userId: string) => {
@@ -291,7 +291,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     if (result) {
       setVoiceNoteAudioUrl(result.dataUrl);
       setVoiceNoteDuration(result.duration);
-      success('یادداشت صوتی با موفقیت ضبط شد');
+      success(isRtl ? 'یادداشت صوتی با موفقیت ضبط شد' : 'Voice note recorded successfully');
     }
   };
 
@@ -381,7 +381,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           createdById: currentUser.id,
           createdByName: currentUser.name,
           category: VoiceNoteCategory.TASK_INSTRUCTION,
-          tags: ['دستور صوتی', 'وظیفه'],
+          tags: [isRtl ? 'دستور صوتی' : 'voice-order', isRtl ? 'وظیفه' : 'task'],
           relatedEntityType: 'TASK',
           relatedEntityId: taskId,
           createdAt: new Date().toISOString(),
@@ -421,7 +421,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
     storage.clearDraft(draftKey);
     setHasRestoredDraft(false);
 
-    success(taskToEdit ? 'وظیفه با موفقیت ویرایش شد' : 'وظیفه جدید با موفقیت ایجاد شد');
+    success(taskToEdit ? (isRtl ? 'وظیفه با موفقیت ویرایش شد' : 'Task updated successfully') : (isRtl ? 'وظیفه جدید با موفقیت ایجاد شد' : 'New task created successfully'));
     onSaved(saved);
     onClose();
   };
@@ -436,17 +436,17 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       title={
         <div className="flex items-center gap-2">
           <CheckSquare className="w-5 h-5 text-emerald-400" />
-          <span>{taskToEdit ? 'ویرایش وظیفه و اقدام' : 'تعریف وظیفه جدید'}</span>
+          <span>{taskToEdit ? (isRtl ? 'ویرایش وظیفه و اقدام' : 'Edit Task') : (isRtl ? 'تعریف وظیفه جدید' : 'New Task')}</span>
         </div>
       }
-      subtitle="تخصیص مسئول، تعیین سطح اولویت، ضبط دستور صوتی و موعد سررسید"
+      subtitle={isRtl ? 'تخصیص مسئول، تعیین سطح اولویت، ضبط دستور صوتی و موعد سررسید' : 'Assign owner, set priority, record voice order, and due date'}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {hasRestoredDraft && (
           <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs animate-fadeIn">
             <span className="flex items-center gap-2">
               <RotateCcw className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>پیش‌نویس ذخیره‌شده خودکار شما بازیابی گردید.</span>
+              <span>{isRtl ? 'پیش‌نویس ذخیره‌شده خودکار شما بازیابی گردید.' : 'Your auto-saved draft has been restored.'}</span>
             </span>
             <button
               type="button"
@@ -459,20 +459,20 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         )}
 
         <Input
-          label="عنوان وظیفه / اقدام"
+          label={isRtl ? 'عنوان وظیفه / اقدام' : 'Task Title'}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="مثال: ارسال پیش‌فاکتور رسمی و پیگیری واریز پیش‌پرداخت"
+          placeholder={isRtl ? 'مثال: ارسال پیش‌فاکتور رسمی و پیگیری واریز پیش‌پرداخت' : 'e.g. Send formal proforma and follow up deposit payment'}
           isRequired
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <Select
-            label="مشتری مرتبط (اختیاری)"
+            label={isRtl ? 'مشتری مرتبط (اختیاری)' : 'Linked Customer (optional)'}
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value)}
             options={[
-              { value: '', label: 'بدون مشتری / کار داخلی سازمانی' },
+              { value: '', label: isRtl ? 'بدون مشتری / کار داخلی سازمانی' : 'No customer / internal task' },
               ...(allCustomers || []).map((c) => ({
                 value: c.id,
                 label: `${c.name} (${c.mobile})`,
@@ -481,7 +481,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           />
 
           <Select
-            label="مسئول اصلی انجام (تخصیص به)"
+            label={isRtl ? 'مسئول اصلی انجام (تخصیص به)' : 'Assign To'}
             value={assignedUserId}
             onChange={(e) => {
               const newId = e.target.value;
@@ -502,10 +502,10 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                 <Share2 className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>اشتراک‌گذاری با سایر همکاران (دسترسی مشاهده و انجام مشترک):</span>
+                <span>{isRtl ? 'اشتراک‌گذاری با سایر همکاران (دسترسی مشاهده و انجام مشترک):' : 'Share with colleagues (view & joint completion):'}</span>
               </span>
               <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                {sharedWithUserIds.length > 0 ? `${sharedWithUserIds.length} نفر انتخاب شده` : 'اختیاری'}
+                {sharedWithUserIds.length > 0 ? (isRtl ? `${sharedWithUserIds.length} نفر انتخاب شده` : `${sharedWithUserIds.length} selected`) : (isRtl ? 'اختیاری' : 'Optional')}
               </span>
             </div>
 
@@ -538,26 +538,26 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <Select
-            label="سطح اولویت وظیفه"
+            label={isRtl ? 'سطح اولویت وظیفه' : 'Task Priority'}
             value={priority}
             onChange={(e) => setPriority(e.target.value as TaskPriority)}
             options={[
-              { value: TaskPriority.LOW, label: '🟢 اولویت پایین' },
-              { value: TaskPriority.MEDIUM, label: '🟡 اولویت متوسط' },
-              { value: TaskPriority.HIGH, label: '🟠 اولویت بالا' },
-              { value: TaskPriority.URGENT, label: '🔴 اضطراری و فوری' },
+              { value: TaskPriority.LOW, label: isRtl ? '🟢 اولویت پایین' : '🟢 Low' },
+              { value: TaskPriority.MEDIUM, label: isRtl ? '🟡 اولویت متوسط' : '🟡 Medium' },
+              { value: TaskPriority.HIGH, label: isRtl ? '🟠 اولویت بالا' : '🟠 High' },
+              { value: TaskPriority.URGENT, label: isRtl ? '🔴 اضطراری و فوری' : '🔴 Urgent' },
             ]}
           />
 
           <Select
-            label="وضعیت پیشرفت"
+            label={isRtl ? 'وضعیت پیشرفت' : 'Progress Status'}
             value={status}
             onChange={(e) => setStatus(e.target.value as TaskStatus)}
             options={[
-              { value: TaskStatus.PENDING, label: '⏳ در انتظار انجام' },
-              { value: TaskStatus.IN_PROGRESS, label: '🔄 در حال انجام' },
-              { value: TaskStatus.COMPLETED, label: '✅ تکمیل شده' },
-              { value: TaskStatus.CANCELLED, label: '❌ لغو شده' },
+              { value: TaskStatus.PENDING, label: isRtl ? '⏳ در انتظار انجام' : '⏳ Pending' },
+              { value: TaskStatus.IN_PROGRESS, label: isRtl ? '🔄 در حال انجام' : '🔄 In Progress' },
+              { value: TaskStatus.COMPLETED, label: isRtl ? '✅ تکمیل شده' : '✅ Completed' },
+              { value: TaskStatus.CANCELLED, label: isRtl ? '❌ لغو شده' : '❌ Cancelled' },
             ]}
           />
         </div>
@@ -567,7 +567,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           <div className="flex items-center justify-between flex-wrap gap-2">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>مهلت سررسید و زمان تحویل اقدام</span>
+              <span>{isRtl ? 'مهلت سررسید و زمان تحویل اقدام' : 'Due Date & Delivery Time'}</span>
               <span className="text-rose-500 dark:text-rose-400 font-bold">*</span>
             </span>
 
@@ -612,13 +612,13 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
           </div>
 
           <JalaliDatePicker
-            label="انتخاب دقیق تاریخ و ساعت سررسید"
+            label={isRtl ? 'انتخاب دقیق تاریخ و ساعت سررسید' : 'Select Due Date & Time'}
             value={dueDate}
             onChange={(val) => setDueDate(val)}
             showTime
             includeTime
             isRequired
-            placeholder="برای انتخاب تاریخ شمسی و ساعت کلیک کنید..."
+            placeholder={isRtl ? 'برای انتخاب تاریخ شمسی و ساعت کلیک کنید...' : 'Click to pick Jalali date & time...'}
           />
         </div>
 
@@ -644,7 +644,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               onClick={() => setIsVoiceSectionOpen(!isVoiceSectionOpen)}
               className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-indigo-100 dark:bg-indigo-600/20 hover:bg-indigo-200 dark:hover:bg-indigo-600/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/40 transition-colors flex items-center gap-1.5"
             >
-              {isVoiceSectionOpen ? 'بستن پنل صوت' : voiceNoteAudioUrl ? 'مشاهده/تغییر صوت' : '🎙️ ضبط یا افزودن صوت'}
+              {isVoiceSectionOpen ? (isRtl ? 'بستن پنل صوت' : 'Close Audio Panel') : voiceNoteAudioUrl ? (isRtl ? 'مشاهده/تغییر صوت' : 'View / Change Audio') : (isRtl ? '🎙️ ضبط یا افزودن صوت' : '🎙️ Record or Add Audio')}
             </button>
           </div>
 
@@ -654,7 +654,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
               <div className="flex items-center justify-between text-xs text-indigo-700 dark:text-indigo-300 font-semibold">
                 <span className="flex items-center gap-1.5">
                   <Volume2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                  <span>فایل صوتی پیوست وظیفه</span>
+                  <span>{isRtl ? 'فایل صوتی پیوست وظیفه' : 'Task Audio Attachment'}</span>
                 </span>
                 <button
                   type="button"
@@ -662,7 +662,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   className="text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 text-[11px] flex items-center gap-1 hover:underline"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>حذف صوت</span>
+                  <span>{isRtl ? 'حذف صوت' : 'Remove Audio'}</span>
                 </button>
               </div>
 
@@ -670,7 +670,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
 
               {voiceNoteTranscript && (
                 <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
-                  <span className="font-bold text-indigo-600 dark:text-indigo-400 block mb-0.5">متن پیاده‌سازی شده از صوت:</span>
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400 block mb-0.5">{isRtl ? 'متن پیاده‌سازی شده از' : 'Transcribed from'} صوت:</span>
                   {voiceNoteTranscript}
                 </div>
               )}
@@ -691,7 +691,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   }`}
                 >
                   <Mic className="w-3.5 h-3.5" />
-                  <span>ضبط مستقیم با میکروفون</span>
+                  <span>{isRtl ? 'ضبط مستقیم با میکروفون' : 'Record with Microphone'}</span>
                 </button>
                 <button
                   type="button"
@@ -703,7 +703,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   }`}
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>آپلود فایل صوتی</span>
+                  <span>{isRtl ? 'آپلود فایل صوتی' : 'Upload Audio File'}</span>
                 </button>
               </div>
 
@@ -712,7 +712,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                   {/* Status Indicator */}
                   <div className="flex items-center justify-between text-xs px-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-semibold text-slate-400">وضعیت:</span>
+                      <span className="font-semibold text-slate-400">{isRtl ? 'وضعیت:' : 'Status:'}</span>
                       {isRequestingPermission ? (
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold animate-pulse">
                           <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
@@ -721,7 +721,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                       ) : isRecording ? (
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[11px] font-bold animate-pulse">
                           <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                          {isPaused ? 'مکث ضبط' : 'در حال ضبط زنده...'}
+                          {isPaused ? (isRtl ? 'مکث ضبط' : 'Paused') : (isRtl ? 'در حال ضبط زنده...' : 'Recording...')}
                         </span>
                       ) : recorderStatus === 'permission_denied' ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[11px] font-medium">
@@ -729,7 +729,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                           دسترسی مسدود شد
                         </span>
                       ) : (
-                        <span className="text-slate-500 text-[11px]">آماده ضبط</span>
+                        <span className="text-slate-500 text-[11px]">{isRtl ? 'آماده ضبط' : 'Ready to record'}</span>
                       )}
                     </div>
                   </div>
@@ -739,7 +739,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                     <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-end text-xs text-amber-300 animate-fade-in flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 flex-shrink-0 text-amber-400 mt-0.5" />
                       <p className="text-[11px] text-amber-200">
-                        لطفاً در پیام بالای صفحه مرورگر روی <strong>Allow (اجازه دادن)</strong> کلیک کنید.
+                        {isRtl ? 'لطفاً در پیام بالای صفحه مرورگر روی دکمه' : 'In the browser popup at the top, click'}{' '}<strong>Allow</strong>{isRtl ? ' کلیک کنید.' : '.'}
                       </p>
                     </div>
                   )}
@@ -768,7 +768,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                             className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold flex items-center gap-1"
                           >
                             <RefreshCw className="w-3 h-3" />
-                            <span>تلاش مجدد و فعال‌سازی میکروفون</span>
+                            <span>{isRtl ? 'تلاش مجدد و فعال‌سازی میکروفون' : 'Retry & Enable Microphone'}</span>
                           </button>
                         </div>
                       )}
@@ -809,7 +809,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                         className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 flex items-center gap-2 transition-transform active:scale-95"
                       >
                         <Mic className="w-4 h-4" />
-                        <span>{isRequestingPermission ? 'در حال درخواست مجوز...' : 'شروع ضبط صوت'}</span>
+                        <span>{isRequestingPermission ? (isRtl ? 'در حال درخواست مجوز...' : 'Requesting permission...') : (isRtl ? 'شروع ضبط صوت' : 'Start Recording')}</span>
                       </button>
                     ) : (
                       <>
@@ -819,7 +819,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                           className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-slate-300 dark:border-slate-700"
                         >
                           {isPaused ? <Play className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />}
-                          <span>{isPaused ? 'ادامه' : 'توقف موقت'}</span>
+                          <span>{isPaused ? (isRtl ? 'ادامه' : 'Resume') : (isRtl ? 'توقف موقت' : 'Pause')}</span>
                         </button>
 
                         <button
@@ -828,14 +828,14 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
                           className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/30 flex items-center gap-1.5 transition-transform active:scale-95"
                         >
                           <Square className="w-3.5 h-3.5 fill-current" />
-                          <span>تکمیل و ثبت صوت</span>
+                          <span>{isRtl ? 'تکمیل و ثبت صوت' : 'Finish & Save Audio'}</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={handleCancelVoiceRecording}
                           className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 border border-slate-200 dark:border-slate-800 transition-colors"
-                          title="لغو ضبط"
+                          title={isRtl ? 'لغو ضبط' : 'Cancel recording'}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -874,11 +874,11 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
         </div>
 
         <Textarea
-          label="توضیحات و جزئیات تکمیلی وظیفه"
+          label={isRtl ? 'توضیحات و جزئیات تکمیلی وظیفه' : 'Notes & Details'}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={3}
-          placeholder="دستورالعمل متنی، نیازمندی‌ها یا فایل‌های مورد نیاز..."
+          placeholder={isRtl ? 'دستورالعمل متنی، نیازمندی‌ها یا فایل‌های مورد نیاز...' : 'Instructions, requirements or needed files...'}
           actionButton={
             <VoiceInputButton
               onTranscript={(transcript) => {
@@ -893,7 +893,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
             انصراف
           </Button>
           <Button variant="primary" size="sm" type="submit" leftIcon={<Check className="w-4 h-4" />}>
-            {taskToEdit ? 'ذخیره تغییرات وظیفه' : 'ایجاد وظیفه'}
+            {taskToEdit ? (isRtl ? 'ذخیره تغییرات وظیفه' : 'Save Task Changes') : (isRtl ? 'ایجاد وظیفه' : 'Create Task')}
           </Button>
         </div>
       </form>
