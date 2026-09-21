@@ -62,26 +62,26 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
       if (updated) {
         setReports(storage.getProblemReports());
         setSelectedReport(updated);
-        success(`وضعیت گزارش به «${getStatusTitle(newStatus)}» تغییر یافت.`);
+        success(isRtl ? `وضعیت گزارش به «${getStatusTitle(newStatus)}» تغییر یافت.` : `Report status changed to "${getStatusTitle(newStatus)}".`);
       }
     } catch (err: any) {
-      toastError('خطا در به‌روزرسانی وضعیت گزارش');
+      toastError(isRtl ? 'خطا در به‌روزرسانی وضعیت گزارش' : 'Error updating report status');
     } finally {
       setIsUpdating(false);
     }
   };
 
   const handleDeleteReport = async (reportId: string) => {
-    if (!window.confirm('آیا از حذف این گزارش خطا اطمینان دارید؟')) return;
+    if (!window.confirm(isRtl ? 'آیا از حذف این گزارش خطا اطمینان دارید؟' : 'Are you sure you want to delete this error report?')) return;
     try {
       await storage.deleteProblemReport(reportId);
       setReports(storage.getProblemReports());
       if (selectedReport?.id === reportId) {
         setSelectedReport(null);
       }
-      success('گزارش با موفقیت حذف گردید.');
+      success(isRtl ? 'گزارش با موفقیت حذف گردید.' : 'Report deleted successfully.');
     } catch {
-      toastError('خطا در حذف گزارش');
+      toastError(isRtl ? 'خطا در حذف گزارش' : 'Error deleting report');
     }
   };
 
@@ -89,60 +89,60 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
     switch (status) {
       case ProblemReportStatus.RESOLVED:
       case 'RESOLVED':
-        return 'حل شده (Resolved)';
+        return isRtl ? 'حل شده (Resolved)' : 'Resolved';
       case ProblemReportStatus.IN_PROGRESS:
       case 'IN_PROGRESS':
-        return 'در حال بررسی (In Progress)';
+        return isRtl ? 'در حال بررسی (In Progress)' : 'In Progress';
       case ProblemReportStatus.REJECTED:
       case 'REJECTED':
-        return 'رد شده (Rejected)';
+        return isRtl ? 'رد شده (Rejected)' : 'Rejected';
       case ProblemReportStatus.PENDING:
       case 'PENDING':
       default:
-        return 'در انتظار بررسی (Pending)';
+        return isRtl ? 'در انتظار بررسی (Pending)' : 'Pending';
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'RESOLVED':
-        return <Badge variant="success" size="sm" dot>حل شده</Badge>;
+        return <Badge variant="success" size="sm" dot>{isRtl ? 'حل شده' : 'Resolved'}</Badge>;
       case 'IN_PROGRESS':
-        return <Badge variant="info" size="sm" dot>در حال پیگیری</Badge>;
+        return <Badge variant="info" size="sm" dot>{isRtl ? 'در حال پیگیری' : 'In Progress'}</Badge>;
       case 'REJECTED':
-        return <Badge variant="danger" size="sm" dot>رد شده</Badge>;
+        return <Badge variant="danger" size="sm" dot>{isRtl ? 'رد شده' : 'Rejected'}</Badge>;
       case 'PENDING':
       default:
-        return <Badge variant="warning" size="sm" dot>در انتظار بررسی</Badge>;
+        return <Badge variant="warning" size="sm" dot>{isRtl ? 'در انتظار بررسی' : 'Pending'}</Badge>;
     }
   };
 
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return <Badge variant="danger" size="sm">بحرانی</Badge>;
+        return <Badge variant="danger" size="sm">{isRtl ? 'بحرانی' : 'Critical'}</Badge>;
       case 'HIGH':
-        return <Badge variant="rose" size="sm">مهم و فوری</Badge>;
+        return <Badge variant="rose" size="sm">{isRtl ? 'مهم و فوری' : 'High'}</Badge>;
       case 'LOW':
-        return <Badge variant="default" size="sm">کم</Badge>;
+        return <Badge variant="default" size="sm">{isRtl ? 'کم' : 'Low'}</Badge>;
       case 'NORMAL':
       default:
-        return <Badge variant="info" size="sm">عادی</Badge>;
+        return <Badge variant="info" size="sm">{isRtl ? 'عادی' : 'Normal'}</Badge>;
     }
   };
 
   const getCategoryTitle = (cat?: string) => {
     switch (cat) {
       case 'BUG':
-        return '🐛 خطای نرم‌افزاری';
+        return isRtl ? '🐛 خطای نرم‌افزاری' : '🐛 Software Bug';
       case 'UI_ISSUE':
-        return '🎨 به‌هم‌ریختگی ظاهری';
+        return isRtl ? '🎨 به‌هم‌ریختگی ظاهری' : '🎨 UI Issue';
       case 'DATA_SYNC':
-        return '🔄 مشکل همگام‌سازی داده';
+        return isRtl ? '🔄 مشکل همگام‌سازی داده' : '🔄 Data Sync Issue';
       case 'FEATURE_REQUEST':
-        return '💡 پیشنهاد امکانات جدید';
+        return isRtl ? '💡 پیشنهاد امکانات جدید' : '💡 Feature Request';
       default:
-        return '❓ سایر موضوعات';
+        return isRtl ? '❓ سایر موضوعات' : '❓ Other';
     }
   };
 
@@ -156,14 +156,14 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
               <AlertTriangle className="w-5 h-5" />
             </div>
             <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
-              مدیریت و پیگیری گزارشات خطای کاربران (Bug Reports)
+              {isRtl ? 'مدیریت و پیگیری گزارشات خطای کاربران' : 'User Bug Reports Management'}
             </h2>
             <Badge variant="rose" size="sm">
-              {filteredReports.length} گزارش
+              {filteredReports.length} {isRtl ? 'گزارش' : 'reports'}
             </Badge>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            مشاهده گزارش‌های ارسالی همکاران، اسکرین‌شات‌های ثبت شده، اولویت‌بندی و ثبت پاسخ و وضعیت حل مشکلات
+            {isRtl ? 'مشاهده گزارش‌های ارسالی همکاران، اسکرین‌شات‌های ثبت شده، اولویت‌بندی و ثبت پاسخ و وضعیت حل مشکلات' : 'Review colleague reports, screenshots, prioritize, and update resolution status'}
           </p>
         </div>
 
@@ -174,7 +174,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
             onClick={() => setReports(storage.getProblemReports())}
             leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
           >
-            بروزرسانی لیست
+            {isRtl ? 'بروزرسانی لیست' : 'Refresh List'}
           </Button>
         </div>
       </div>
@@ -184,13 +184,13 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="جستجو در عنوان، شرح مشکل، نام کاربر ثبت‌کننده..."
+          placeholder={isRtl ? 'جستجو در عنوان، شرح مشکل، نام کاربر ثبت‌کننده...' : 'Search title, description, reporter name...'}
           rightIcon={<Search className="w-4 h-4" />}
         />
 
         <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-200 dark:border-slate-800/80">
           <div className="flex items-center gap-1.5 overflow-x-auto">
-            <span className="text-xs text-slate-500 dark:text-slate-400">وضعیت:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'وضعیت:' : 'Status:'}</span>
             {['ALL', 'PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'].map((st) => (
               <button
                 key={st}
@@ -203,20 +203,20 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                 }`}
               >
                 {st === 'ALL'
-                  ? 'همه'
+                  ? (isRtl ? 'همه' : 'All')
                   : st === 'PENDING'
-                  ? 'در انتظار'
+                  ? (isRtl ? 'در انتظار' : 'Pending')
                   : st === 'IN_PROGRESS'
-                  ? 'در حال پیگیری'
+                  ? (isRtl ? 'در حال پیگیری' : 'In Progress')
                   : st === 'RESOLVED'
-                  ? 'حل شده'
-                  : 'رد شده'}
+                  ? (isRtl ? 'حل شده' : 'Resolved')
+                  : (isRtl ? 'رد شده' : 'Rejected')}
               </button>
             ))}
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto">
-            <span className="text-xs text-slate-500 dark:text-slate-400">اولویت:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'اولویت:' : 'Priority:'}</span>
             {['ALL', 'CRITICAL', 'HIGH', 'NORMAL', 'LOW'].map((pr) => (
               <button
                 key={pr}
@@ -229,14 +229,14 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                 }`}
               >
                 {pr === 'ALL'
-                  ? 'همه'
+                  ? (isRtl ? 'همه' : 'All')
                   : pr === 'CRITICAL'
-                  ? 'بحرانی'
+                  ? (isRtl ? 'بحرانی' : 'Critical')
                   : pr === 'HIGH'
-                  ? 'بالا'
+                  ? (isRtl ? 'بالا' : 'High')
                   : pr === 'NORMAL'
-                  ? 'عادی'
-                  : 'پایین'}
+                  ? (isRtl ? 'عادی' : 'Normal')
+                  : (isRtl ? 'پایین' : 'Low')}
               </button>
             ))}
           </div>
@@ -247,8 +247,8 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
       {filteredReports.length === 0 ? (
         <div className="p-12 text-center text-slate-500 rounded-3xl bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 space-y-3">
           <AlertCircle className="w-10 h-10 mx-auto text-slate-400 dark:text-slate-600" />
-          <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">هیچ گزارش خطایی با فیلترهای انتخابی یافت نشد</h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400">تمام گزارشات ثبت شده توسط کاربران در این بخش به مدیران نمایش داده می‌شود.</p>
+          <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">{isRtl ? 'هیچ گزارش خطایی با فیلترهای انتخابی یافت نشد' : 'No error reports match the selected filters'}</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'تمام گزارشات ثبت شده توسط کاربران در این بخش به مدیران نمایش داده می‌شود.' : 'All user-submitted reports appear here for administrators.'}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3">
@@ -292,7 +292,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
 
                   {report.adminNotes && (
                     <div className="p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-500/30 text-xs text-indigo-900 dark:text-indigo-200">
-                      <span className="font-bold text-indigo-800 dark:text-indigo-300 block mb-1">یادداشت و نتیجه بررسی مدیریت:</span>
+                      <span className="font-bold text-indigo-800 dark:text-indigo-300 block mb-1">{isRtl ? 'یادداشت و نتیجه بررسی مدیریت:' : 'Admin Review Note:'}</span>
                       <p>{report.adminNotes}</p>
                     </div>
                   )}
@@ -301,10 +301,10 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                   <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
                     <span className="flex items-center gap-1">
                       <UserIcon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                      <span>ثبت توسط: <strong className="text-slate-800 dark:text-slate-200">{report.userName}</strong> ({report.userRole})</span>
+                      <span>{isRtl ? 'ثبت توسط:' : 'Reported by:'} <strong className="text-slate-800 dark:text-slate-200">{report.userName}</strong> ({report.userRole})</span>
                     </span>
-                    {report.userMobile && <span>• موبایل: {report.userMobile}</span>}
-                    {report.userEmail && <span>• ایمیل: {report.userEmail}</span>}
+                    {report.userMobile && <span>{isRtl ? '• موبایل:' : '• Mobile:'} {report.userMobile}</span>}
+                    {report.userEmail && <span>{isRtl ? '• ایمیل:' : '• Email:'} {report.userEmail}</span>}
                   </div>
                 </div>
 
@@ -313,7 +313,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                   <div className="md:col-span-1 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 p-1 group relative">
                     <img
                       src={report.screenshotUrl}
-                      alt="اسکرین‌شات خطا"
+                      alt={isRtl ? 'اسکرین‌شات خطا' : 'Error screenshot'}
                       className="w-full h-24 object-cover rounded-lg cursor-pointer group-hover:scale-105 transition-transform"
                       onClick={() => setPreviewImage(report.screenshotUrl || null)}
                     />
@@ -324,7 +324,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                     >
                       <Eye className="w-4 h-4" />
                     </button>
-                    <span className="block text-[10px] text-slate-500 dark:text-slate-400 text-center mt-1">تصویر پیوست</span>
+                    <span className="block text-[10px] text-slate-500 dark:text-slate-400 text-center mt-1">{isRtl ? 'تصویر پیوست' : 'Attachment'}</span>
                   </div>
                 )}
               </div>
@@ -341,7 +341,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                     }}
                     leftIcon={<MessageSquare className="w-3.5 h-3.5" />}
                   >
-                    بررسی و پاسخ به گزارش
+                    {isRtl ? 'بررسی و پاسخ به گزارش' : 'Review & Respond'}
                   </Button>
 
                   {report.status !== 'RESOLVED' ? (
@@ -352,7 +352,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                       leftIcon={<Check className="w-3.5 h-3.5" />}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white border-none"
                     >
-                      علامت‌گذاری به عنوان حل شده
+                      {isRtl ? 'علامت‌گذاری به عنوان حل شده' : 'Mark as Resolved'}
                     </Button>
                   ) : (
                     <Button
@@ -361,7 +361,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                       onClick={() => handleUpdateStatus(report.id, 'IN_PROGRESS')}
                       leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
                     >
-                      بازگشایی مجدد
+                      {isRtl ? 'بازگشایی مجدد' : 'Reopen'}
                     </Button>
                   )}
                 </div>
@@ -372,7 +372,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                   onClick={() => handleDeleteReport(report.id)}
                   leftIcon={<Trash2 className="w-3.5 h-3.5" />}
                 >
-                  حذف گزارش
+                  {isRtl ? 'حذف گزارش' : 'Delete Report'}
                 </Button>
               </div>
             </div>
@@ -392,8 +392,8 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                 <MessageSquare className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">بررسی گزارش مشکل: {selectedReport.title}</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">ثبت وضعیت و توضیحات پاسخ برای کاربر</p>
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{isRtl ? 'بررسی گزارش مشکل:' : 'Review Report:'} {selectedReport.title}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'ثبت وضعیت و توضیحات پاسخ برای کاربر' : 'Set status and response for the user'}</p>
               </div>
             </div>
           }
@@ -401,7 +401,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
           <div className="space-y-4 text-end text-xs">
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="font-bold text-slate-800 dark:text-slate-200">شرح ارسالی کاربر ({selectedReport.userName}):</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{isRtl ? 'شرح ارسالی کاربر' : 'User Submission'} ({selectedReport.userName}):</span>
                 {getStatusBadge(selectedReport.status)}
               </div>
               <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap">{selectedReport.description}</p>
@@ -409,14 +409,14 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
 
             {selectedReport.screenshotUrl && (
               <div className="space-y-1">
-                <label className="font-semibold text-slate-700 dark:text-slate-300 block">اسکرین‌شات ثبت شده:</label>
+                <label className="font-semibold text-slate-700 dark:text-slate-300 block">{isRtl ? 'اسکرین‌شات ثبت شده:' : 'Screenshot:'}</label>
                 <div
                   className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 max-h-60 cursor-pointer"
                   onClick={() => setPreviewImage(selectedReport.screenshotUrl || null)}
                 >
                   <img
                     src={selectedReport.screenshotUrl}
-                    alt="اسکرین‌شات"
+                    alt={isRtl ? 'اسکرین‌شات' : 'Screenshot'}
                     className="w-full object-contain max-h-60"
                   />
                 </div>
@@ -425,13 +425,13 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
 
             {/* Change Status */}
             <div className="space-y-1.5">
-              <label className="font-semibold text-slate-700 dark:text-slate-300 block">تغییر وضعیت گزارش:</label>
+              <label className="font-semibold text-slate-700 dark:text-slate-300 block">{isRtl ? 'تغییر وضعیت گزارش:' : 'Change Report Status:'}</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {[
-                  { key: 'PENDING', label: 'در انتظار', color: 'border-amber-500/40 text-amber-600 dark:text-amber-300' },
-                  { key: 'IN_PROGRESS', label: 'در حال پیگیری', color: 'border-sky-500/40 text-sky-600 dark:text-sky-300' },
-                  { key: 'RESOLVED', label: 'حل شده', color: 'border-emerald-500/40 text-emerald-600 dark:text-emerald-300' },
-                  { key: 'REJECTED', label: 'رد شده', color: 'border-rose-500/40 text-rose-600 dark:text-rose-300' },
+                  { key: 'PENDING', label: isRtl ? 'در انتظار' : 'Pending', color: 'border-amber-500/40 text-amber-600 dark:text-amber-300' },
+                  { key: 'IN_PROGRESS', label: isRtl ? 'در حال پیگیری' : 'In Progress', color: 'border-sky-500/40 text-sky-600 dark:text-sky-300' },
+                  { key: 'RESOLVED', label: isRtl ? 'حل شده' : 'Resolved', color: 'border-emerald-500/40 text-emerald-600 dark:text-emerald-300' },
+                  { key: 'REJECTED', label: isRtl ? 'رد شده' : 'Rejected', color: 'border-rose-500/40 text-rose-600 dark:text-rose-300' },
                 ].map((item) => (
                   <button
                     key={item.key}
@@ -452,12 +452,12 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
             {/* Admin Note textarea */}
             <div className="space-y-1.5">
               <label className="font-semibold text-slate-700 dark:text-slate-300 block">
-                توضیحات و پاسخ مدیریت (جهت ثبت در سابقه):
+                {isRtl ? 'توضیحات و پاسخ مدیریت (جهت ثبت در سابقه):' : 'Admin Note & Response (for records):'}
               </label>
               <textarea
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
-                placeholder="توضیحاتی پیرامون نحوه رفع مشکل یا دلیل رد گزارش بنویسید..."
+                placeholder={isRtl ? 'توضیحاتی پیرامون نحوه رفع مشکل یا دلیل رد گزارش بنویسید...' : 'Explain how the issue was resolved or why the report was rejected...'}
                 rows={3}
                 className="w-full p-3 rounded-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
               />
@@ -465,7 +465,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
 
             <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-800">
               <Button variant="outline" size="sm" onClick={() => setSelectedReport(null)}>
-                بستن
+                {isRtl ? 'بستن' : 'Close'}
               </Button>
               <Button
                 variant="primary"
@@ -474,7 +474,7 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
                 disabled={isUpdating}
                 leftIcon={<Check className="w-4 h-4" />}
               >
-                ذخیره یادداشت مدیریت
+                {isRtl ? 'ذخیره یادداشت مدیریت' : 'Save Admin Note'}
               </Button>
             </div>
           </div>
@@ -487,17 +487,17 @@ export const ProblemReportViewer: React.FC<ProblemReportViewerProps> = ({ curren
           isOpen={true}
           onClose={() => setPreviewImage(null)}
           maxWidth="2xl"
-          title="مشاهده بزرگ اسکرین‌شات پیوست"
+          title={isRtl ? 'مشاهده بزرگ اسکرین‌شات پیوست' : 'View Attached Screenshot'}
         >
           <div className="text-center">
             <img
               src={previewImage}
-              alt="اسکرین شات بزرگ"
+              alt={isRtl ? 'اسکرین شات بزرگ' : 'Large screenshot'}
               className="max-w-full max-h-[75vh] object-contain mx-auto rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm"
             />
             <div className="mt-4">
               <Button variant="outline" size="sm" onClick={() => setPreviewImage(null)}>
-                بستن تصویر
+                {isRtl ? 'بستن تصویر' : 'Close Image'}
               </Button>
             </div>
           </div>
