@@ -127,24 +127,24 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              دسته‌بندی موضوع:
+              {isRtl ? 'دسته‌بندی موضوع:' : 'Issue Category:'}
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value as any)}
               className="w-full h-10 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
             >
-              <option value="BUG">🐛 خطای سیستمی یا عملکردی (Bug)</option>
-              <option value="UI_ISSUE">🎨 به‌هم‌ریختگی ظاهری یا نمایش (UI)</option>
-              <option value="DATA_SYNC">🔄 عدم ذخیره یا همگام‌سازی داده</option>
-              <option value="FEATURE_REQUEST">💡 پیشنهاد و بهبود قابلیت</option>
-              <option value="OTHER">❓ سایر موارد</option>
+              <option value="BUG">{isRtl ? '🐛 خطای سیستمی یا عملکردی' : '🐛 Bug / System Malfunction'}</option>
+              <option value="UI_ISSUE">{isRtl ? '🎨 به‌هم‌ریختگی ظاهری یا نمایش' : '🎨 UI / Display Issue'}</option>
+              <option value="DATA_SYNC">{isRtl ? '🔄 عدم ذخیره یا همگام‌سازی داده' : '🔄 Data Save / Sync Issue'}</option>
+              <option value="FEATURE_REQUEST">{isRtl ? '💡 پیشنهاد و بهبود قابلیت' : '💡 Feature Request'}</option>
+              <option value="OTHER">{isRtl ? '❓ سایر موارد' : '❓ Other'}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              میزان اهمیت و اولویت:
+              {isRtl ? 'میزان اهمیت و اولویت:' : 'Issue Priority:'}
             </label>
             <select
               value={priority}
@@ -171,7 +171,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
         {/* Description */}
         <div className="space-y-1.5">
           <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-            شرح دقیق و مراحل تکرار مشکل: <span className="text-rose-500 dark:text-rose-400">*</span>
+            {isRtl ? 'شرح دقیق و مراحل تکرار مشکل:' : 'Detailed description & reproduction steps:'} <span className="text-rose-500 dark:text-rose-400">*</span>
           </label>
           <textarea
             value={description}
@@ -223,7 +223,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
             </div>
           ) : (
             <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              می‌توانید تصویر یا اسکرین‌شات خطا را از طریق دکمه بالا بارگذاری نمایید تا بررسی برای تیم مدیریت دقیق‌تر و سریع‌تر انجام شود.
+              {isRtl ? 'می‌توانید تصویر یا اسکرین‌شات خطا را از طریق دکمه بالا بارگذاری نمایید تا بررسی برای تیم مدیریت دقیق‌تر و سریع‌تر انجام شود.' : 'You can upload the error screenshot via the button above so the admin team can investigate faster and more accurately.'}
             </p>
           )}
         </div>
@@ -243,7 +243,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
             onClick={onClose}
             disabled={isSubmitting}
           >
-            انصراف
+            {isRtl ? 'انصراف' : 'Cancel'}
           </Button>
 
           <Button

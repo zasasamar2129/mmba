@@ -614,7 +614,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               onChange={(e) => setOutcome(e.target.value)}
               rows={3}
               className="w-full text-xs p-2.5 rounded-xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:border-indigo-500 focus:outline-none leading-relaxed resize-none"
-              placeholder={isRtl ? 'نتیجه گفتگو چه شد؟ (توضیحات داده شد، پیش‌فاکتور ارسال شد، مهلت بررسی خواسته شد...)' : 'What was the outcome? (info given, proforma sent, review time requested...)'}"
+              placeholder={isRtl ? 'نتیجه گفتگو چه شد؟ (توضیحات داده شد، پیش‌فاکتور ارسال شد، مهلت بررسی خواسته شد...)' : 'What was the outcome? (info given, proforma sent, review time requested...)'}
             />
           </div>
         </div>

@@ -93,7 +93,7 @@ export const BroadcastModal: React.FC<BroadcastModalProps> = ({
         }, 1200);
       }
     } catch (err: any) {
-      setError(err.message || 'خطا در ارسال پیام همگانی');
+      setError(err.message || (isRtl ? 'خطا در ارسال پیام همگانی' : 'Error sending broadcast'));
     } finally {
       setSending(false);
     }

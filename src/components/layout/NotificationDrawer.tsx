@@ -100,7 +100,7 @@ export const NotificationDrawer: React.FC<NotificationDrawerProps> = ({
       if (res.success) {
         success(isRtl ? 'اعلان آزمایشی ارسال شد' : 'Test notification sent');
       } else {
-        info(isRtl ? 'بیپ تست پخش شد (ارسال پوش با پیغام: ' : 'Test beep played (push with message: ') + (res.error || (isRtl ? 'در صف' : 'queued')) + ')');
+        info((isRtl ? 'بیپ تست پخش شد (ارسال پوش با پیغام: ' : 'Test beep played (push message: ') + (res.error || (isRtl ? 'در صف' : 'queued')) + ')');
       }
     } catch (e: any) {
       info(isRtl ? 'سیگنال صوتی تست پخش شد' : 'Test audio signal played');

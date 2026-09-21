@@ -365,7 +365,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
           storage.saveCustomer({
             id: `cust-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
             code: `CUST-${1040 + existingCustomers.length + successCount + 1}`,
-            name: row.data.name || (isRtl ? '{isRtl ? 'مخاطب جدید' : 'New Contacts'}' : 'New contact'),
+            name: row.data.name || (isRtl ? 'مخاطب جدید' : 'New contact'),
             mobile: row.normalizedMobile || row.data.mobile || '',
             phone: row.data.phone || '',
             email: row.data.email || '',
@@ -522,7 +522,7 @@ export const BulkContactImportModal: React.FC<BulkContactImportModalProps> = ({
               >
                 <option value="SKIP">{isRtl ? 'رد کردن تکراری‌ها (پیش‌فرض)' : 'Skip duplicates (default)'}</option>
                 <option value="UPDATE">{isRtl ? 'بروزرسانی مخاطب موجود' : 'Update existing'}</option>
-                <option value="IMPORT_AS_NEW">{isRtl ? 'ثبت به‌عنوان {isRtl ? 'مخاطب جدید' : 'New Contacts'}' : 'Import as new'}</option>
+                <option value="IMPORT_AS_NEW">{isRtl ? 'ثبت به‌عنوان مخاطب جدید' : 'Import as New Contact'}</option>
               </select>
             </div>
           </div>

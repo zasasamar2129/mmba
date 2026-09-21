@@ -66,7 +66,7 @@ export const TextNoteModal: React.FC<TextNoteModalProps> = ({
       const payload: Partial<VoiceNote> & { noteType?: NoteType | string; audioDataUrl?: string } = {
         id: note?.id,
         noteType: NoteType.TEXT,
-        title: title.trim() || (isEdit ? note?.title || 'یادداشت متنی' : 'یادداشت متنی جدید'),
+        title: title.trim() || (isEdit ? note?.title || (isRtl ? 'یادداشت متنی' : 'Text Note') : (isRtl ? 'یادداشت متنی جدید' : 'New Text Note')),
         body: body.trim(),
         customerId: customerId || undefined,
         customerName: customer?.name,
