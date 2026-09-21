@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { SimCard, Customer, Contract, User } from '../../types';
 import { storage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
+import { useTranslation } from '../../lib/i18n';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -39,6 +40,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
   allUsers = [],
   onSuccess,
 }) => {
+  const { isRtl } = useTranslation();
   const { success, error } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -121,7 +123,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
   const handleReserveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCustomerId) {
-      error('لطفاً مشتری رزروکننده را انتخاب فرمایید.');
+      error(isRtl ? 'لطفاً مشتری رزروکننده را انتخاب فرمایید.' : 'Please select the reserving customer.');
       return;
     }
     const customer = customers.find((c) => c.id === selectedCustomerId);
@@ -131,18 +133,18 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
     try {
       const updated = await storage.reserveSimCard(sim.id, {
         customerId: selectedCustomerId,
-        customerName: customer?.name || 'مشتری نامشخص',
+        customerName: customer?.name || (isRtl ? 'مشتری نامشخص' : 'Unknown customer'),
         depositAmount: deposit,
         deadline: reservationDeadline || undefined,
         notes: reservationNotes || undefined,
         userId: currentUser.id,
         userName: currentUser.name,
       });
-      success(`سیم‌کارت ${sim.phoneNumber} با موفقیت رزرو شد.`);
+      success(isRtl ? `سیم‌کارت ${sim.phoneNumber} با موفقیت رزرو شد.` : `SIM ${sim.phoneNumber} reserved successfully.`);
       onSuccess(updated);
       onClose();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت رزرو سیم‌کارت');
+      error(err.message || (isRtl ? 'خطا در ثبت رزرو سیم‌کارت' : 'Error reserving SIM card'));
     } finally {
       setIsLoading(false);
     }
@@ -153,14 +155,14 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
     setIsLoading(true);
     try {
       const updated = await storage.cancelSimReservation(sim.id, {
-        reason: cancellationReason || 'انصراف مشتری',
+        reason: cancellationReason || (isRtl ? 'انصراف مشتری' : 'Customer cancelled'),
         refundDeposit: refundRequired,
       });
       success(`رزرو سیم‌کارت ${sim.phoneNumber} لغو گردید و به وضعیت موجود بازگشت.`);
       onSuccess(updated);
       onClose();
     } catch (err: any) {
-      error(err.message || 'خطا در لغو رزرو');
+      error(err.message || (isRtl ? 'خطا در لغو رزرو' : 'Error cancelling reservation'));
     } finally {
       setIsLoading(false);
     }
@@ -169,7 +171,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
   const handleSellSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!saleCustomerId) {
-      error('لطفاً مشتری خریدار را انتخاب کنید.');
+      error(isRtl ? 'لطفاً مشتری خریدار را انتخاب کنید.' : 'Please select the buying customer.');
       return;
     }
     const customer = (customers || []).find((c) => c.id === saleCustomerId);
@@ -180,7 +182,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
     try {
       const updated = await storage.sellSimCard(sim.id, {
         customerId: saleCustomerId,
-        customerName: customer?.name || 'مشتری خریدار',
+        customerName: customer?.name || (isRtl ? 'مشتری خریدار' : 'Buyer'),
         contractId: saleContractId || `cnt-auto-${Date.now()}`,
         contractNumber: contract?.contractNumber || `CNT-${Date.now().toString().slice(-5)}`,
         salePrice: price,
@@ -188,11 +190,11 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
         buyerNationalId: buyerNationalId || customer?.nationalId,
         deliveryMethod,
       });
-      success(`فروش سیم‌کارت ${sim.phoneNumber} ثبت و وضعیت به فروخته شده تغییر یافت.`);
+      success(isRtl ? `فروش سیم‌کارت ${sim.phoneNumber} ثبت و وضعیت به فروخته شده تغییر یافت.` : `SIM ${sim.phoneNumber} sold, status changed to Sold.`);
       onSuccess(updated);
       onClose();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت فروش سیم‌کارت');
+      error(err.message || (isRtl ? 'خطا در ثبت فروش سیم‌کارت' : 'Error registering SIM sale'));
     } finally {
       setIsLoading(false);
     }
@@ -212,11 +214,11 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
         mortgageEndDate,
         notes: mortgageNotes,
       });
-      success(isMortgaged ? `وضعیت رهن سیم‌کارت ${sim.phoneNumber} ثبت شد.` : `رهن سیم‌کارت فک و آزاد گردید.`);
+      success(isMortgaged ? (isRtl ? `وضعیت رهن سیم‌کارت ${sim.phoneNumber} ثبت شد.` : `Mortgage status for SIM ${sim.phoneNumber} registered.`) : (isRtl ? `رهن سیم‌کارت فک و آزاد گردید.` : `Mortgage on SIM released.`));
       onSuccess(updated);
       onClose();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت رهن');
+      error(err.message || (isRtl ? 'خطا در ثبت رهن' : 'Error registering mortgage'));
     } finally {
       setIsLoading(false);
     }
@@ -225,15 +227,15 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
   const handleConsignmentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consOwnerCustomerId) {
-      error('لطفاً مالک / مشتری صاحب سیم‌کارت را انتخاب فرمایید.');
+      error(isRtl ? 'لطفاً مالک / مشتری صاحب سیم‌کارت را انتخاب فرمایید.' : 'Please select the SIM owner / customer.');
       return;
     }
     if (!consRequestedPrice) {
-      error('لطفاً قیمت پیشنهادی مالک را وارد کنید.');
+      error(isRtl ? 'لطفاً قیمت پیشنهادی مالک را وارد کنید.' : 'Please enter the owner requested price.');
       return;
     }
     if (!consResponsibleUserId) {
-      error('لطفاً مسئول پیگیری را انتخاب کنید.');
+      error(isRtl ? 'لطفاً مسئول پیگیری را انتخاب کنید.' : 'Please select the responsible user.');
       return;
     }
     const ownerCustomer = (customers || []).find((c) => c.id === consOwnerCustomerId);
@@ -247,7 +249,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
         simId: sim.id,
         simPhoneNumber: sim.phoneNumber,
         ownerCustomerId: consOwnerCustomerId,
-        ownerCustomerName: ownerCustomer?.name || 'مشتری نامشخص',
+        ownerCustomerName: ownerCustomer?.name || (isRtl ? 'مشتری نامشخص' : 'Unknown customer'),
         receivedAt: new Date().toISOString(),
         requestedPrice,
         commissionType: consCommissionType,
@@ -284,11 +286,11 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
         details: `ثبت امانی سیم‌کارت ${sim.phoneNumber} از ${ownerCustomer?.name || ''} با قیمت پیشنهادی ${requestedPrice}`,
       });
 
-      success(`سیم‌کارت ${sim.phoneNumber} به صورت امانی از ${ownerCustomer?.name || ''} ثبت شد.`);
+      success(isRtl ? `سیم‌کارت ${sim.phoneNumber} به صورت امانی از ${ownerCustomer?.name || ''} ثبت شد.` : `SIM ${sim.phoneNumber} registered on consignment from ${ownerCustomer?.name || ''}.`);
       onSuccess(updatedSim);
       onClose();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت امانی سیم‌کارت');
+      error(err.message || (isRtl ? 'خطا در ثبت امانی سیم‌کارت' : 'Error registering consignment'));
     } finally {
       setIsLoading(false);
     }
@@ -300,14 +302,14 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
       onClose={onClose}
       title={
         mode === 'RESERVE'
-          ? `رزرو و دریافت بیعانه: ${sim.phoneNumber}`
+          ? (isRtl ? `رزرو و دریافت بیعانه: ${sim.phoneNumber}` : `Reserve & Deposit: ${sim.phoneNumber}`)
           : mode === 'CANCEL_RESERVE'
-          ? `لغو رزرو سیم‌کارت: ${sim.phoneNumber}`
+          ? (isRtl ? `لغو رزرو سیم‌کارت: ${sim.phoneNumber}` : `Cancel SIM Reservation: ${sim.phoneNumber}`)
           : mode === 'SELL'
-          ? `ثبت فروش قطعی سیم‌کارت: ${sim.phoneNumber}`
+          ? (isRtl ? `{isRtl ? 'ثبت فروش قطعی' : 'Confirm Sale'} سیم‌کارت: ${sim.phoneNumber}` : `Register SIM Sale: ${sim.phoneNumber}`)
           : mode === 'CONSIGNMENT'
-          ? `ثبت امانی سیم‌کارت: ${sim.phoneNumber}`
-          : `مدیریت رهن و تسهیلات: ${sim.phoneNumber}`
+          ? (isRtl ? `ثبت امانی سیم‌کارت: ${sim.phoneNumber}` : `Register Consignment: ${sim.phoneNumber}`)
+          : (isRtl ? `مدیریت رهن و تسهیلات: ${sim.phoneNumber}` : `Mortgage Management: ${sim.phoneNumber}`)
       }
       size="lg"
     >
@@ -321,7 +323,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
             <Badge variant="default" size="sm">{sim.operator}</Badge>
           </div>
           <div className="text-xs text-slate-500">
-            قیمت پایه: <span className="font-bold text-slate-800 dark:text-slate-200"><RTLNumber value={sim.salePrice || 0} type="price" /></span>
+            {isRtl ? 'قیمت پایه:' : 'Base Price:'} <span className="font-bold text-slate-800 dark:text-slate-200"><RTLNumber value={sim.salePrice || 0} type="price" /></span>
           </div>
         </div>
 
@@ -330,20 +332,20 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
           <form onSubmit={handleReserveSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
-                label="مشتری رزروکننده"
+                label={isRtl ? 'مشتری رزروکننده' : 'Reserving Customer'}
                 value={selectedCustomerId}
                 onChange={(e) => setSelectedCustomerId(e.target.value)}
                 isRequired
               >
-                <option value="">-- انتخاب مشتری --</option>
+                <option value="">{isRtl ? '-- انتخاب مشتری --' : '-- Select customer --'}</option>
                 {(customers || []).map((c) => (
                   <option key={c.id} value={c.id}>{c.name} ({c.phone || ''})</option>
                 ))}
               </Select>
 
               <Input
-                label="مبلغ بیعانه دریافتی (تومان)"
-                placeholder="مثال: ۵,۰۰۰,۰۰۰"
+                label={isRtl ? 'مبلغ بیعانه دریافتی (تومان)' : 'Deposit Received (Toman)'}
+                placeholder={isRtl ? 'مثال: ۵,۰۰۰,۰۰۰' : 'e.g. 5,000,000'}
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
                 isRequired
@@ -352,30 +354,30 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
-                label="مهلت رزرو تا تاریخ"
+                label={isRtl ? 'مهلت رزرو تا تاریخ' : 'Reservation Deadline'}
                 type="date"
                 value={reservationDeadline}
                 onChange={(e) => setReservationDeadline(e.target.value)}
               />
               <Input
-                label="ثبت‌کننده رزرو"
+                label={isRtl ? 'ثبت‌کننده رزرو' : 'Reserved By'}
                 value={currentUser.name}
                 disabled
               />
             </div>
 
             <Textarea
-              label="توضیحات و شرایط توافق بیعانه"
-              placeholder="مثال: در صورت عدم تسویه تا ۴۸ ساعت، بیعانه مسترد نمی‌گردد..."
+              label={isRtl ? 'توضیحات و شرایط توافق بیعانه' : 'Deposit Terms & Notes'}
+              placeholder={isRtl ? 'مثال: در صورت عدم تسویه تا ۴۸ ساعت، بیعانه مسترد نمی‌گردد...' : 'e.g. If not settled within 48h, deposit non-refundable...'}
               value={reservationNotes}
               onChange={(e) => setReservationNotes(e.target.value)}
               rows={2}
             />
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="sm" type="button" onClick={onClose}>انصراف</Button>
+              <Button variant="ghost" size="sm" type="button" onClick={onClose}>{isRtl ? 'انصراف' : 'Cancel'}</Button>
               <Button variant="primary" size="sm" type="submit" isLoading={isLoading} leftIcon={<Bookmark className="w-4 h-4" />}>
-                تایید و ثبت رزرو
+                {isRtl ? 'تایید و ثبت رزرو' : 'Confirm & Reserve'}
               </Button>
             </div>
           </form>
@@ -385,12 +387,12 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
         {mode === 'CANCEL_RESERVE' && (
           <form onSubmit={handleCancelReserveSubmit} className="space-y-4">
             <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs leading-relaxed">
-              این سیم‌کارت در حال حاضر به نام «{sim.reservationCustomerName || 'مشتری'}» رزرو است. با لغو رزرو، وضعیت خط به <strong>موجود (AVAILABLE)</strong> تغییر خواهد یافت.
+              {isRtl ? `این سیم‌کارت در حال حاضر به نام «${sim.reservationCustomerName || 'مشتری'}» رزرو است. با لغو رزرو، وضعیت خط به موجود (AVAILABLE) تغییر خواهد یافت.` : `This SIM is currently reserved to "${sim.reservationCustomerName || 'Customer'}". Cancelling will change status to Available.`}
             </div>
 
             <Textarea
-              label="دلیل لغو رزرو (الزامی)"
-              placeholder="مثال: انصراف مشتری، اتمام مهلت ۴۸ ساعته، عدم توافق قیمت..."
+              label={isRtl ? 'دلیل لغو رزرو (الزامی)' : 'Cancellation Reason (Required)'}
+              placeholder={isRtl ? 'مثال: انصراف مشتری، اتمام مهلت ۴۸ ساعته، عدم توافق قیمت...' : 'e.g. Customer cancelled, 48h deadline expired, price disagreement...'}
               value={cancellationReason}
               onChange={(e) => setCancellationReason(e.target.value)}
               rows={2}
@@ -398,9 +400,9 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
             />
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="sm" type="button" onClick={onClose}>انصراف</Button>
+              <Button variant="ghost" size="sm" type="button" onClick={onClose}>{isRtl ? 'انصراف' : 'Cancel'}</Button>
               <Button variant="danger" size="sm" type="submit" isLoading={isLoading} leftIcon={<XCircle className="w-4 h-4" />}>
-                تایید لغو رزرو
+                {isRtl ? 'تایید لغو رزرو' : 'Confirm Cancellation'}
               </Button>
             </div>
           </form>
@@ -411,7 +413,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
           <form onSubmit={handleSellSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
-                label="مشتری خریدار"
+                label={isRtl ? 'مشتری خریدار' : 'Buying Customer'}
                 value={saleCustomerId}
                 onChange={(e) => {
                   setSaleCustomerId(e.target.value);
@@ -423,14 +425,14 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
                 }}
                 isRequired
               >
-                <option value="">-- انتخاب خریدار --</option>
+                <option value="">{isRtl ? '-- انتخاب خریدار --' : '-- Select buyer --'}</option>
                 {(customers || []).map((c) => (
                   <option key={c.id} value={c.id}>{c.name} ({c.phone || ''})</option>
                 ))}
               </Select>
 
               <Input
-                label="قیمت فروش نهایی (تومان)"
+                label={isRtl ? 'قیمت فروش نهایی (تومان)' : 'Final Sale Price (Toman)'}
                 value={salePrice}
                 onChange={(e) => setSalePrice(e.target.value)}
                 isRequired
@@ -439,11 +441,11 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
-                label="قرارداد مرتبط (اختیاری)"
+                label={isRtl ? 'قرارداد مرتبط (اختیاری)' : 'Related Contract (Optional)'}
                 value={saleContractId}
                 onChange={(e) => setSaleContractId(e.target.value)}
               >
-                <option value="">-- ایجاد قرارداد خودکار یا بدون قرارداد --</option>
+                <option value="">{isRtl ? '-- ایجاد قرارداد خودکار یا بدون قرارداد --' : '-- Auto-create contract or none --'}</option>
                 {(contracts || []).map((ct) => (
                   <option key={ct.id} value={ct.id}>
                     {ct.contractNumber || ''} - {ct.title || ''}
@@ -452,20 +454,20 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
               </Select>
 
               <Select
-                label="شیوه تحویل سیم‌کارت"
+                label={isRtl ? 'شیوه تحویل سیم‌کارت' : 'Delivery Method'}
                 value={deliveryMethod}
                 onChange={(e) => setDeliveryMethod(e.target.value)}
               >
-                <option value="OFFICE_PICKUP">تحویل حضوری در دفتر</option>
-                <option value="COURIER">ارسال با پیک / پست پیشتاز</option>
-                <option value="NAME_TRANSFER">انتقال سند در دفتر پیشخوان</option>
+                <option value="OFFICE_PICKUP">{isRtl ? 'تحویل حضوری در دفتر' : 'Office Pickup'}</option>
+                <option value="COURIER">{isRtl ? 'ارسال با پیک / پست پیشتاز' : 'Courier / Express Post'}</option>
+                <option value="NAME_TRANSFER">{isRtl ? 'انتقال سند در دفتر پیشخوان' : 'Title Transfer at Office'}</option>
               </Select>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="sm" type="button" onClick={onClose}>انصراف</Button>
+              <Button variant="ghost" size="sm" type="button" onClick={onClose}>{isRtl ? 'انصراف' : 'Cancel'}</Button>
               <Button variant="primary" size="sm" type="submit" isLoading={isLoading} leftIcon={<ShoppingCart className="w-4 h-4" />}>
-                ثبت فروش قطعی
+                {isRtl ? 'ثبت فروش قطعی' : 'Confirm Sale'}
               </Button>
             </div>
           </form>
@@ -476,16 +478,16 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
           <form onSubmit={handleMortgageSubmit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
-                label="نام شخص یا نهاد مرتهن (وثیقه‌گذار / وام‌دهنده)"
-                placeholder="مثال: بانک ملی / شخص سرمایه‌گذار"
+                label={isRtl ? 'نام شخص یا نهاد مرتهن (وثیقه‌گذار / وام‌دهنده)' : 'Mortgagee Name (Lender / Creditor)'}
+                placeholder={isRtl ? 'مثال: بانک ملی / شخص سرمایه‌گذار' : 'e.g. National Bank / Private Investor'}
                 value={mortgageeName}
                 onChange={(e) => setMortgageeName(e.target.value)}
                 isRequired
               />
 
               <Input
-                label="مبلغ رهن / ارزش وثیقه (تومان)"
-                placeholder="مثال: ۵۰,۰۰۰,۰۰۰"
+                label={isRtl ? 'مبلغ رهن / ارزش وثیقه (تومان)' : 'Mortgage Amount / Collateral Value (Toman)'}
+                placeholder={isRtl ? 'مثال: ۵۰,۰۰۰,۰۰۰' : 'e.g. 50,000,000'}
                 value={mortgageAmount}
                 onChange={(e) => setMortgageAmount(e.target.value)}
                 isRequired
@@ -494,13 +496,13 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
-                label="تاریخ شروع رهن"
+                label={isRtl ? 'تاریخ شروع رهن' : 'Mortgage Start Date'}
                 type="date"
                 value={mortgageStartDate}
                 onChange={(e) => setMortgageStartDate(e.target.value)}
               />
               <Input
-                label="تاریخ سررسید / پایان رهن"
+                label={isRtl ? 'تاریخ سررسید / پایان رهن' : 'Mortgage Due / End Date'}
                 type="date"
                 value={mortgageEndDate}
                 onChange={(e) => setMortgageEndDate(e.target.value)}
@@ -508,15 +510,15 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
             </div>
 
             <Textarea
-              label="توضیحات و شرایط فک رهن"
-              placeholder="توضیحات توافق بازپرداخت و انتقال سند پس از تسویه..."
+              label={isRtl ? 'توضیحات و شرایط فک رهن' : 'Mortgage Release Terms'}
+              placeholder={isRtl ? 'توضیحات توافق بازپرداخت و انتقال سند پس از تسویه...' : 'e.g. Repayment terms, title transfer after settlement...'}
               value={mortgageNotes}
               onChange={(e) => setMortgageNotes(e.target.value)}
               rows={2}
             />
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="sm" type="button" onClick={onClose}>انصراف</Button>
+              <Button variant="ghost" size="sm" type="button" onClick={onClose}>{isRtl ? 'انصراف' : 'Cancel'}</Button>
               <Button variant="primary" size="sm" type="submit" isLoading={isLoading} leftIcon={<Lock className="w-4 h-4" />}>
                 ذخیره وضعیت رهن
               </Button>
@@ -533,7 +535,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
-                label="مالک / مشتری صاحب سیم‌کارت"
+                label={isRtl ? 'مالک / مشتری صاحب سیم‌کارت' : 'Owner / SIM Holder'}
                 value={consOwnerCustomerId}
                 onChange={(e) => setConsOwnerCustomerId(e.target.value)}
                 isRequired
@@ -545,18 +547,18 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
               </Select>
 
               <Input
-                label="قیمت پیشنهادی مالک (تومان)"
+                label={isRtl ? 'قیمت پیشنهادی مالک (تومان)' : 'Owner Requested Price (Toman)'}
                 value={consRequestedPrice}
                 onChange={(e) => setConsRequestedPrice(e.target.value)}
                 isRequired
-                placeholder="مثال: ۸۵۰,۰۰۰,۰۰۰"
+                placeholder={isRtl ? 'مثال: ۸۵۰,۰۰۰,۰۰۰' : 'e.g. 850,000,000'}
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                  نوع کمیسیون <span className="text-rose-500">*</span>
+                  {isRtl ? 'نوع کمیسیون' : 'Commission Type'} <span className="text-rose-500">*</span>
                 </label>
                 <div className="flex gap-2">
                   <button
@@ -585,17 +587,17 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
               </div>
 
               <Input
-                label={consCommissionType === 'PERCENTAGE' ? 'درصد کمیسیون (مثال: ۵)' : 'مبلغ کمیسیون (تومان)'}
+                label={consCommissionType === 'PERCENTAGE' ? (isRtl ? 'درصد کمیسیون (مثال: ۵)' : 'Commission % (e.g. 5)') : (isRtl ? 'مبلغ کمیسیون (تومان)' : 'Commission Amount (Toman)')}
                 value={consCommissionValue}
                 onChange={(e) => setConsCommissionValue(e.target.value)}
                 isRequired
-                placeholder={consCommissionType === 'PERCENTAGE' ? '۵' : 'مثال: ۱۰,۰۰۰,۰۰۰'}
+                placeholder={consCommissionType === 'PERCENTAGE' ? (isRtl ? '۵' : '5') : (isRtl ? 'مثال: ۱۰,۰۰۰,۰۰۰' : 'e.g. 10,000,000')}
               />
             </div>
 
             <Textarea
-              label="شرایط توافق"
-              placeholder="مثال: سیم‌کارت تا ۳ ماه در اختیار فروشگاه؛ فروش فقط نقدی؛ عدم مسئولیت در صورت مفقودی..."
+              label={isRtl ? 'شرایط توافق' : 'Agreed Terms'}
+              placeholder={isRtl ? 'مثال: سیم‌کارت تا ۳ ماه در اختیار فروشگاه؛ فروش فقط نقدی؛ عدم مسئولیت در صورت مفقودی...' : 'e.g. SIM held 3 months; cash-only sale; no liability if lost...'}
               value={consAgreedTerms}
               onChange={(e) => setConsAgreedTerms(e.target.value)}
               rows={2}
@@ -603,7 +605,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Select
-                label="مسئول پیگیری"
+                label={isRtl ? 'مسئول پیگیری' : 'Responsible User'}
                 value={consResponsibleUserId}
                 onChange={(e) => setConsResponsibleUserId(e.target.value)}
                 isRequired
@@ -615,7 +617,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
               </Select>
 
               <Input
-                label="تاریخ پایان امانت (اختیاری)"
+                label={isRtl ? 'تاریخ پایان امانت (اختیاری)' : 'Consignment End Date (Optional)'}
                 type="date"
                 value={consExpiryAt}
                 onChange={(e) => setConsExpiryAt(e.target.value)}
@@ -623,15 +625,15 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
             </div>
 
             <Textarea
-              label="توضیحات و اسناد مرتبط"
-              placeholder="توضیحات تکمیلی..."
+              label={isRtl ? 'توضیحات و اسناد مرتبط' : 'Notes & Related Documents'}
+              placeholder={isRtl ? 'توضیحات تکمیلی...' : 'Additional notes...'}
               value={consNotes}
               onChange={(e) => setConsNotes(e.target.value)}
               rows={2}
             />
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button variant="ghost" size="sm" type="button" onClick={onClose}>انصراف</Button>
+              <Button variant="ghost" size="sm" type="button" onClick={onClose}>{isRtl ? 'انصراف' : 'Cancel'}</Button>
               <Button variant="primary" size="sm" type="submit" isLoading={isLoading} leftIcon={<Handshake className="w-4 h-4" />}>
                 ثبت امانی سیم‌کارت
               </Button>
