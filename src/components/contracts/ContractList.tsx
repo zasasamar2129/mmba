@@ -116,13 +116,13 @@ export const ContractList: React.FC<ContractListProps> = ({
         return t('contracts.typeInstallment');
       case ContractType.SIM_SALE:
       case 'SIM_SALE':
-        return 'فروش سیم‌کارت';
+        return isRtl ? 'فروش سیم‌کارت' : 'SIM Card Sale';
       case ContractType.SUBSCRIPTION:
       case 'SUBSCRIPTION':
-        return 'اشتراک و اجاره';
+        return isRtl ? 'اشتراک و اجاره' : 'Subscription & Rent';
       case ContractType.REPAIR:
       case 'REPAIR':
-        return 'تعمیرات و خدمات';
+        return isRtl ? 'تعمیرات و خدمات' : 'Repairs & Services';
       default:
         return String(tp);
     }
@@ -231,7 +231,7 @@ export const ContractList: React.FC<ContractListProps> = ({
                   ? t('contracts.typeService')
                   : tp === 'INSTALLMENT'
                   ? t('contracts.typeInstallment')
-                  : 'سیم‌کارت'}
+                  : (isRtl ? 'سیم‌کارت' : 'SIM Card')}
               </button>
             ))}
           </div>
@@ -266,15 +266,15 @@ export const ContractList: React.FC<ContractListProps> = ({
           <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-3 w-32">شماره قرارداد</th>
-                <th className="p-3">عنوان قرارداد</th>
-                <th className="p-3 w-40">طرف قرارداد (مشتری)</th>
-                <th className="p-3 w-28">نوع</th>
-                <th className="p-3 w-36">مبلغ کل</th>
-                <th className="p-3 w-32">پیش‌پرداخت</th>
-                <th className="p-3 w-28">وضعیت</th>
-                <th className="p-3 w-32">تاریخ شروع</th>
-                <th className="p-3 text-start w-48">اقدامات</th>
+                <th className="p-3 w-32">{isRtl ? 'شماره قرارداد' : 'Contract #'}</th>
+                <th className="p-3">{isRtl ? 'عنوان قرارداد' : 'Title'}</th>
+                <th className="p-3 w-40">{isRtl ? 'طرف قرارداد (مشتری)' : 'Customer Party'}</th>
+                <th className="p-3 w-28">{isRtl ? 'نوع' : 'Type'}</th>
+                <th className="p-3 w-36">{isRtl ? 'مبلغ کل' : 'Total'}</th>
+                <th className="p-3 w-32">{isRtl ? 'پیش‌پرداخت' : 'Prepayment'}</th>
+                <th className="p-3 w-28">{isRtl ? 'وضعیت' : 'Status'}</th>
+                <th className="p-3 w-32">{isRtl ? 'تاریخ شروع' : 'Start Date'}</th>
+                <th className="p-3 text-start w-48">{isRtl ? 'اقدامات' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -348,7 +348,7 @@ export const ContractList: React.FC<ContractListProps> = ({
                           onEditContract(c);
                         }}
                         className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                        title="ویرایش"
+                        title={isRtl ? 'ویرایش' : 'Edit'}
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
@@ -357,7 +357,7 @@ export const ContractList: React.FC<ContractListProps> = ({
                         type="button"
                         onClick={(e) => handleDelete(c.id, e)}
                         className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                        title="حذف"
+                        title={isRtl ? 'حذف' : 'Delete'}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
