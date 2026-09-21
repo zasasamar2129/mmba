@@ -97,7 +97,7 @@ export const LeadList: React.FC<LeadListProps> = ({
   const handleCreateQuickLead = (e: React.FormEvent) => {
     e.preventDefault();
     if (!quickMobile.trim()) {
-      error('شماره موبایل برای ایجاد سرنخ الزامی است');
+      error(isRtl ? 'شماره موبایل برای ایجاد سرنخ الزامی است' : 'A mobile number is required to create a lead');
       return;
     }
     try {
@@ -105,7 +105,7 @@ export const LeadList: React.FC<LeadListProps> = ({
         mobile: quickMobile.trim(),
         name: quickName.trim() || undefined,
         notes: quickNotes.trim() || undefined,
-        source: quickSource.trim() || 'تماس ورودی',
+        source: quickSource.trim() || (isRtl ? 'تماس ورودی' : 'Incoming Call'),
         status: LeadStatus.NEW_LEAD,
       });
       success(`سرنخ جدید با کد «${saved.leadCode}» ثبت شد.`);
@@ -115,14 +115,14 @@ export const LeadList: React.FC<LeadListProps> = ({
       setQuickNotes('');
       refreshLeads();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت سرنخ');
+      error(err.message || (isRtl ? 'خطا در ثبت سرنخ' : 'Error creating lead'));
     }
   };
 
   const handleDeleteLead = (id: string, code: string) => {
     if (window.confirm(`آیا از حذف سرنخ ${code} اطمینان دارید؟`)) {
       storage.deleteLead(id);
-      success('سرنخ با موفقیت حذف گردید');
+      success(isRtl ? 'سرنخ با موفقیت حذف گردید' : 'Lead deleted successfully');
       refreshLeads();
       if (selectedLeadForTimeline?.id === id) {
         setSelectedLeadForTimeline(null);
@@ -133,17 +133,17 @@ export const LeadList: React.FC<LeadListProps> = ({
   const getStatusBadge = (status: LeadStatus | string) => {
     switch (status) {
       case LeadStatus.NEW_LEAD:
-        return <Badge variant="info">سرنخ جدید</Badge>;
+        return <Badge variant="info">{isRtl ? 'سرنخ جدید' : 'New Lead'}</Badge>;
       case LeadStatus.CONTACTED:
-        return <Badge variant="default">تماس گرفته شده</Badge>;
+        return <Badge variant="default">{isRtl ? 'تماس گرفته شده' : 'Contacted'}</Badge>;
       case LeadStatus.FOLLOW_UP:
-        return <Badge variant="warning">نیازمند پیگیری</Badge>;
+        return <Badge variant="warning">{isRtl ? 'نیازمند پیگیری' : 'Needs Follow-up'}</Badge>;
       case LeadStatus.NEGOTIATION:
-        return <Badge variant="indigo">در حال مذاکره</Badge>;
+        return <Badge variant="indigo">{isRtl ? 'در حال مذاکره' : 'In Negotiation'}</Badge>;
       case LeadStatus.CONVERTED:
-        return <Badge variant="success">تبدیل شده به مشتری</Badge>;
+        return <Badge variant="success">{isRtl ? 'تبدیل شده به مشتری' : 'Converted'}</Badge>;
       case LeadStatus.LOST:
-        return <Badge variant="danger">عدم توافق / لغو</Badge>;
+        return <Badge variant="danger">{isRtl ? 'عدم توافق / لغو' : 'Lost / Cancelled'}</Badge>;
       default:
         return <Badge variant="default">{status}</Badge>;
     }
@@ -222,9 +222,9 @@ export const LeadList: React.FC<LeadListProps> = ({
             onChange={(e) => setSortOrder(e.target.value as any)}
             className="w-full h-9 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-800 dark:text-slate-200 focus:outline-none focus:border-indigo-500 font-medium"
           >
-            <option value="newest">مرتب‌سازی: جدیدترین سرنخ‌ها</option>
-            <option value="oldest">مرتب‌سازی: قدیمی‌ترین سرنخ‌ها</option>
-            <option value="code">مرتب‌سازی: بر اساس کد سرنخ</option>
+            <option value="newest">{isRtl ? 'مرتب‌سازی: جدیدترین سرنخ‌ها' : 'Sort: Newest leads'}</option>
+            <option value="oldest">{isRtl ? 'مرتب‌سازی: قدیمی‌ترین سرنخ‌ها' : 'Sort: Oldest leads'}</option>
+            <option value="code">{isRtl ? 'مرتب‌سازی: بر اساس کد سرنخ' : 'Sort: Lead code'}</option>
           </select>
         </div>
       </div>
@@ -246,7 +246,7 @@ export const LeadList: React.FC<LeadListProps> = ({
       {filteredLeads.length === 0 ? (
         <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-2xl">
           <UserPlus className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-          <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">سرنخی با شرایط فوق یافت نشد</h4>
+          <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">{isRtl ? 'سرنخی با شرایط فوق یافت نشد' : 'No leads match the current filters'}</h4>
           <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
             با برقراری تماس‌های ناشناس یا دکمه «ثبت سرنخ جدید»، اطلاعات در سامانه درج می‌شود.
           </p>
@@ -257,14 +257,14 @@ export const LeadList: React.FC<LeadListProps> = ({
           <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-3 w-28">کد سرنخ</th>
-                <th className="p-3">نام و مخاطب</th>
-                <th className="p-3 w-32">شماره تماس</th>
-                <th className="p-3 w-32">وضعیت</th>
-                <th className="p-3 w-28">منبع</th>
-                <th className="p-3 min-w-[220px]">آخرین پیگیری / اپراتور</th>
-                <th className="p-3 w-36">وضعیت هشدار</th>
-                <th className="p-3 text-start w-52">اقدامات</th>
+                <th className="p-3 w-28">{isRtl ? 'کد سرنخ' : 'Lead Code'}</th>
+                <th className="p-3">{isRtl ? 'نام و مخاطب' : 'Name & Contact'}</th>
+                <th className="p-3 w-32">{isRtl ? 'شماره تماس' : 'Phone'}</th>
+                <th className="p-3 w-32">{isRtl ? 'وضعیت' : 'Status'}</th>
+                <th className="p-3 w-28">{isRtl ? 'منبع' : 'Source'}</th>
+                <th className="p-3 min-w-[220px]">{isRtl ? 'آخرین پیگیری / اپراتور' : 'Last Follow-up / Agent'}</th>
+                <th className="p-3 w-36">{isRtl ? 'وضعیت هشدار' : 'Alert'}</th>
+                <th className="p-3 text-start w-52">{isRtl ? 'اقدامات' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -288,7 +288,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                     {/* Name */}
                     <td className="p-3">
                       <div className="font-bold text-slate-900 dark:text-slate-100">
-                        {lead.name || 'مخاطب ناشناس / بدون نام'}
+                        {lead.name || (isRtl ? 'مخاطب ناشناس / بدون نام' : 'Unnamed lead')}
                       </div>
                       {lead.notes && (
                         <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-xs mt-0.5">
@@ -309,7 +309,7 @@ export const LeadList: React.FC<LeadListProps> = ({
 
                     {/* Source */}
                     <td className="p-3 text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                      {lead.source || 'تماس ورودی'}
+                      {lead.source || (isRtl ? 'تماس ورودی' : 'Incoming Call')}
                     </td>
 
                     {/* Last Follow-Up & Operator */}
@@ -328,7 +328,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">بدون پیگیری</span>
+                        <span className="text-slate-400 text-[11px]">{isRtl ? 'بدون پیگیری' : 'No follow-up'}</span>
                       )}
                     </td>
 
@@ -340,7 +340,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                           پیگیری اخیر (مراقبت)
                         </span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">عادی</span>
+                        <span className="text-slate-400 text-[11px]">{isRtl ? 'عادی' : 'Normal'}</span>
                       )}
                     </td>
 
@@ -352,7 +352,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                           size="xs"
                           onClick={() => setSelectedLeadForTimeline(lead)}
                           leftIcon={<History className="w-3.5 h-3.5 text-indigo-600" />}
-                          title="تایم‌لاین و ثبت فعالیت"
+                          title={isRtl ? 'تایم‌لاین و ثبت فعالیت' : 'Timeline & log activity'}
                         >
                           تایم‌لاین ({lead.activities?.length || 0})
                         </Button>
@@ -363,7 +363,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                             size="xs"
                             onClick={() => onRecordCallForLead(lead)}
                             leftIcon={<PhoneCall className="w-3.5 h-3.5 text-blue-600" />}
-                            title="ثبت تماس تلفنی"
+                            title={isRtl ? 'ثبت تماس تلفنی' : 'Log phone call'}
                           >
                             تماس
                           </Button>
@@ -375,7 +375,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                             size="xs"
                             onClick={() => setSelectedLeadForConvert(lead)}
                             leftIcon={<UserCheck className="w-3.5 h-3.5" />}
-                            title="تبدیل به پرونده مشتری دائمی"
+                            title={isRtl ? 'تبدیل به پرونده مشتری دائمی' : 'Convert to permanent customer'}
                           >
                             تبدیل
                           </Button>
@@ -386,7 +386,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                               size="xs"
                               onClick={() => onOpenCustomerDetail(lead.convertedCustomerId!)}
                               leftIcon={<ArrowUpRight className="w-3.5 h-3.5" />}
-                              title="مشاهده پرونده مشتری"
+                              title={isRtl ? 'مشاهده پرونده مشتری' : 'View customer profile'}
                             >
                               مشتری
                             </Button>
@@ -397,7 +397,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                           type="button"
                           onClick={() => handleDeleteLead(lead.id, lead.leadCode)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                          title="حذف سرنخ"
+                          title={isRtl ? 'حذف سرنخ' : 'Delete lead'}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -435,7 +435,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                       {getStatusBadge(lead.status)}
                     </div>
                     <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 mt-1.5">
-                      {lead.name || 'مخاطب ناشناس / بدون نام'}
+                      {lead.name || (isRtl ? 'مخاطب ناشناس / بدون نام' : 'Unnamed lead')}
                     </h3>
                   </div>
 
@@ -451,7 +451,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                   <div className="mt-2.5 p-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-800 dark:text-amber-300 text-[11px] flex items-center gap-1.5">
                     <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                     <span className="truncate">
-                      پیگیری در {lead.lastFollowUp.jalaliDate} توسط {lead.lastFollowUp.operatorName}
+                      {isRtl ? `پیگیری در ${lead.lastFollowUp.jalaliDate} توسط ${lead.lastFollowUp.operatorName}` : `Followed up on ${lead.lastFollowUp.jalaliDate} by ${lead.lastFollowUp.operatorName}`}
                     </span>
                   </div>
                 )}
@@ -460,7 +460,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                 {lead.lastFollowUp ? (
                   <div className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/60 p-2 rounded-xl mt-2.5 border border-slate-100 dark:border-slate-800/60">
                     <div className="flex items-center justify-between text-[10px] text-slate-500 mb-0.5">
-                      <span>آخرین پیگیری: {lead.lastFollowUp.operatorName}</span>
+                      <span>{isRtl ? 'آخرین پیگیری:' : 'Last follow-up:'} {lead.lastFollowUp.operatorName}</span>
                       <span dir="ltr">{lead.lastFollowUp.jalaliDate}</span>
                     </div>
                     <p className="line-clamp-2 text-slate-700 dark:text-slate-200">{lead.lastFollowUp.result}</p>
@@ -475,9 +475,9 @@ export const LeadList: React.FC<LeadListProps> = ({
                 <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800/80">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    {lead.activities?.length || 0} فعالیت ثبت شده
+                    {lead.activities?.length || 0} {isRtl ? 'فعالیت ثبت شده' : 'activities logged'}
                   </span>
-                  <span>منبع: {lead.source || 'تماس ورودی'}</span>
+                  <span>{isRtl ? 'منبع:' : 'Source:'} {lead.source || (isRtl ? 'تماس ورودی' : 'Incoming Call')}</span>
                 </div>
 
                 {/* Action buttons */}
@@ -530,7 +530,7 @@ export const LeadList: React.FC<LeadListProps> = ({
                     type="button"
                     onClick={() => handleDeleteLead(lead.id, lead.leadCode)}
                     className="p-1.5 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    title="حذف سرنخ"
+                    title={isRtl ? 'حذف سرنخ' : 'Delete lead'}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -580,13 +580,13 @@ export const LeadList: React.FC<LeadListProps> = ({
         title={
           <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100">
             <UserPlus className="w-5 h-5 text-indigo-600" />
-            <span>ثبت سریع سرنخ جدید</span>
+            <span>{isRtl ? 'ثبت سریع سرنخ جدید' : 'Quick Add Lead'}</span>
           </div>
         }
       >
         <form onSubmit={handleCreateQuickLead} className="space-y-3.5 text-end">
           <Input
-            label="شماره موبایل *"
+            label={isRtl ? 'شماره موبایل *' : 'Mobile *'}
             value={quickMobile}
             onChange={(e) => setQuickMobile(e.target.value)}
             placeholder="0912xxxxxxx"
@@ -596,17 +596,17 @@ export const LeadList: React.FC<LeadListProps> = ({
           />
 
           <Input
-            label="نام مخاطب (در صورت اعلام)"
+            label={isRtl ? 'نام مخاطب (در صورت اعلام)' : 'Contact Name (if provided)'}
             value={quickName}
             onChange={(e) => setQuickName(e.target.value)}
-            placeholder="مثال: آقای اکبری"
+            placeholder={isRtl ? 'مثال: آقای اکبری' : 'e.g. Mr. Akbari'}
           />
 
           <Input
-            label="منبع تماس / ارجاع"
+            label={isRtl ? 'منبع تماس / ارجاع' : 'Call / Referral Source'}
             value={quickSource}
             onChange={(e) => setQuickSource(e.target.value)}
-            placeholder="تماس ورودی، وبسایت، تبلیغات، ..."
+            placeholder={isRtl ? 'تماس ورودی، وبسایت، تبلیغات، ...' : 'Incoming call, website, ads...'}
           />
 
           <div>
@@ -618,7 +618,7 @@ export const LeadList: React.FC<LeadListProps> = ({
               onChange={(e) => setQuickNotes(e.target.value)}
               rows={3}
               className="w-full text-xs p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:border-indigo-500 resize-none"
-              placeholder="درخواست استعلام قیمت سیم‌کارت، مشاوره و..."
+              placeholder={isRtl ? 'درخواست استعلام قیمت سیم‌کارت، مشاوره و...' : 'e.g. SIM price inquiry, consultation...'}
             />
           </div>
 
