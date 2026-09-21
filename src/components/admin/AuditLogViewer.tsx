@@ -148,7 +148,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             </Badge>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            ردیابی دقیق و دائمی تمامی تغییرات سامانه به همراه اپراتور مجری، تاریخ و ساعت، مقادیر قبلی و جدید (غیرقابل حذف توسط کاربران عادی)
+            {isRtl ? 'ردیابی دقیق و دائمی تمامی تغییرات سامانه به همراه اپراتور مجری، تاریخ و ساعت، مقادیر قبلی و جدید (غیرقابل حذف توسط کاربران عادی)' : 'Permanent, precise tracking of all system changes with operator, date/time, and old/new values (cannot be deleted by regular users)'}
           </p>
         </div>
 
@@ -160,7 +160,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
             leftIcon={<Download className="w-4 h-4" />}
             className="w-full sm:w-auto"
           >
-            خروجی CSV / اکسل
+            {isRtl ? 'خروجی CSV / اکسل' : 'Export CSV / Excel'}
           </Button>
         </div>
       </div>
@@ -464,7 +464,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({
                 size="sm"
                 onClick={() => setSelectedLog(null)}
               >
-                بستن
+                {isRtl ? 'بستن' : 'Close'}
               </Button>
             </div>
           </div>

@@ -120,7 +120,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
             </Badge>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {t('payments.subtitle')} - مجموع دریافتی‌ها: <strong className="text-emerald-600 dark:text-emerald-400">{formatToman(totalReceived)}</strong>
+            {t('payments.subtitle')} - {isRtl ? 'مجموع دریافتی‌ها:' : 'Total received:'} <strong className="text-emerald-600 dark:text-emerald-400">{formatToman(totalReceived)}</strong>
           </p>
         </div>
 
@@ -175,7 +175,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                 : tp === 'BANK_TRANSFER'
                 ? t('payments.methodBankTransfer')
                 : tp === 'POS'
-                ? 'کارتخوان (POS)'
+                ? (isRtl ? 'کارتخوان (POS)' : 'POS (Card Reader)')
                 : tp === 'CASH'
                 ? t('payments.methodCash')
                 : t('payments.methodGateway')}
@@ -215,14 +215,14 @@ export const PaymentList: React.FC<PaymentListProps> = ({
           <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-3 w-36">تاریخ پرداخت</th>
-                <th className="p-3">نام طرف حساب / مشتری</th>
-                <th className="p-3 w-36">مبلغ دریافتی</th>
-                <th className="p-3 w-32">روش پرداخت</th>
-                <th className="p-3 w-36">شماره ارجاع / پیگیری</th>
-                <th className="p-3 w-28">فیش و پیوست</th>
-                <th className="p-3">شرح / بابت</th>
-                <th className="p-3 text-start w-24">عملیات</th>
+                <th className="p-3 w-36">{isRtl ? 'تاریخ پرداخت' : 'Payment Date'}</th>
+                <th className="p-3">{isRtl ? 'نام طرف حساب / مشتری' : 'Customer / Party'}</th>
+                <th className="p-3 w-36">{isRtl ? 'مبلغ دریافتی' : 'Amount Received'}</th>
+                <th className="p-3 w-32">{isRtl ? 'روش پرداخت' : 'Payment Method'}</th>
+                <th className="p-3 w-36">{isRtl ? 'شماره ارجاع / پیگیری' : 'Reference / Tracking'}</th>
+                <th className="p-3 w-28">{isRtl ? 'فیش و پیوست' : 'Receipt & Attachments'}</th>
+                <th className="p-3">{isRtl ? 'شرح / بابت' : 'Description / Purpose'}</th>
+                <th className="p-3 text-start w-24">{isRtl ? 'عملیات' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -276,7 +276,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                           className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 hover:underline bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded"
                         >
                           <Paperclip className="w-3 h-3" />
-                          <span>{paymentAtts.length} فایل</span>
+                          <span>{paymentAtts.length} {isRtl ? 'فایل' : 'file'}</span>
                         </button>
                       ) : (
                         <span className="text-slate-400 text-[11px]">-</span>
@@ -295,7 +295,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                           type="button"
                           onClick={() => onEditPayment(p)}
                           className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-                          title="ویرایش پرداخت"
+                          title={isRtl ? 'ویرایش پرداخت' : 'Edit payment'}
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
@@ -369,7 +369,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                 {paymentAtts.length > 0 && (
                   <div className="p-3 rounded-xl bg-slate-100/80 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800/80 space-y-2">
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
-                      فیش‌های واریزی و مدارک متصل:
+                      {isRtl ? 'فیش‌های واریزی و مدارک متصل:' : 'Payment receipts & attached documents:'}
                     </span>
                     <div className="flex flex-wrap gap-2">
                       {paymentAtts.map((att) => (
@@ -399,7 +399,7 @@ export const PaymentList: React.FC<PaymentListProps> = ({
                       onClick={() => onEditPayment(p)}
                       leftIcon={<Edit3 className="w-3.5 h-3.5" />}
                     >
-                      ویرایش رکورد
+                      {isRtl ? 'ویرایش رکورد' : 'Edit Record'}
                     </Button>
                   </div>
                 )}

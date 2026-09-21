@@ -184,7 +184,7 @@ export const SettingsBackup: React.FC<SettingsBackupProps> = ({ onFullReset, cur
           }`}
         >
           <Users className="w-4 h-4 text-indigo-400" />
-          <span>افراد ثبت‌کننده (سندزن - سقف ۱۰ خط)</span>
+          <span>{isRtl ? 'افراد ثبت‌کننده (سندزن - سقف ۱۰ خط)' : 'Registered Holders (10-line cap)'}</span>
         </button>
       </div>
 
@@ -195,10 +195,12 @@ export const SettingsBackup: React.FC<SettingsBackupProps> = ({ onFullReset, cur
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-slate-900 dark:text-slate-100 font-bold">
                 <Users className="w-5 h-5 text-indigo-500" />
-                <span>مدیریت متمرکز افراد ثبت‌کننده (سندزن سیم‌کارت‌ها)</span>
+                <span>{isRtl ? 'مدیریت متمرکز افراد ثبت‌کننده (سندزن سیم‌کارت‌ها)' : 'Central Management of Registered Holders (SIM documenters)'}</span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                طبق قوانین و بخشنامه رگولاتوری ارتباطات، هر کدملی حداکثر مجاز به ثبت ۱۰ سیم‌کارت فعال در کلیه اپراتورهاست. در این بخش می‌توانید پرونده افراد سندزن، کدملی، شماره شبا جهت تسویه و سیم‌کارت‌های متصل به هر فرد را بررسی فرمایید.
+                {isRtl
+                  ? 'طبق قوانین و بخشنامه رگولاتوری ارتباطات، هر کدملی حداکثر مجاز به ثبت ۱۰ سیم‌کارت فعال در کلیه اپراتورهاست. در این بخش می‌توانید پرونده افراد سندزن، کدملی، شماره شبا جهت تسویه و سیم‌کارت‌های متصل به هر فرد را بررسی فرمایید.'
+                  : 'Per telecom regulatory rules, each national ID is limited to a maximum of 10 active SIMs across all operators. Review documenter records, national IDs, IBANs for settlement, and their linked SIMs here.'}
               </p>
             </div>
 
@@ -208,7 +210,7 @@ export const SettingsBackup: React.FC<SettingsBackupProps> = ({ onFullReset, cur
               onClick={() => setIsHoldersModalOpen(true)}
               leftIcon={<Users className="w-4 h-4" />}
             >
-              مدیریت و ثبت سندزن جدید
+              {isRtl ? 'مدیریت و ثبت سندزن جدید' : 'Manage & Add New Documenter'}
             </Button>
           </div>
 
@@ -225,16 +227,16 @@ export const SettingsBackup: React.FC<SettingsBackupProps> = ({ onFullReset, cur
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-sm text-slate-900 dark:text-slate-100">{h.fullName}</span>
                     {isFull ? (
-                      <Badge variant="danger" size="sm">تکمیل ظرفیت (۱۰/۱۰)</Badge>
+                      <Badge variant="danger" size="sm">{isRtl ? 'تکمیل ظرفیت (۱۰/۱۰)' : 'Capacity Full (10/10)'}</Badge>
                     ) : (
-                      <Badge variant="emerald" size="sm">{activeCount}/10 فعال</Badge>
+                      <Badge variant="emerald" size="sm">{activeCount}/10 {isRtl ? 'فعال' : 'active'}</Badge>
                     )}
                   </div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-                    <div>کدملی: <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{h.nationalId}</span></div>
-                    <div>موبایل: <span className="font-mono">{h.mobile}</span></div>
+                    <div>{isRtl ? 'کدملی:' : 'National ID:'} <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{h.nationalId}</span></div>
+                    <div>{isRtl ? 'موبایل:' : 'Mobile:'} <span className="font-mono">{h.mobile}</span></div>
                     {h.shebaNumber && (
-                      <div className="truncate">شبا: <span className="font-mono text-[11px]">{h.shebaNumber}</span></div>
+                      <div className="truncate">{isRtl ? 'شبا:' : 'IBAN:'} <span className="font-mono text-[11px]">{h.shebaNumber}</span></div>
                     )}
                   </div>
                   {/* Progress bar */}
@@ -248,8 +250,8 @@ export const SettingsBackup: React.FC<SettingsBackupProps> = ({ onFullReset, cur
                       />
                     </div>
                     <div className="flex justify-between text-[10px] text-slate-400">
-                      <span>{10 - activeCount} جایگاه خالی</span>
-                      <span>سقف: ۱۰ سیم‌کارت</span>
+                      <span>{10 - activeCount} {isRtl ? 'جایگاه خالی' : 'slots left'}</span>
+                      <span>{isRtl ? 'سقف: ۱۰ سیم‌کارت' : 'Cap: 10 SIMs'}</span>
                     </div>
                   </div>
                 </div>

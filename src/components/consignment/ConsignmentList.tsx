@@ -135,7 +135,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
         actualCommission: commission,
         ownerPayableAmount: payable,
         buyerCustomerId: saleBuyerId,
-        buyerCustomerName: buyer?.name || 'خریدار نامشخص',
+        buyerCustomerName: buyer?.name || (isRtl ? 'خریدار نامشخص' : 'Unnamed buyer'),
         settlementStatus: saleSettlement,
       });
 
@@ -144,7 +144,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
       if (sim && sim.status !== 'SOLD') {
         await storage.sellSimCard(sim.id, {
           customerId: saleBuyerId,
-          customerName: buyer?.name || 'خریدار',
+          customerName: buyer?.name || (isRtl ? 'خریدار' : 'Buyer'),
           contractId: `cnt-auto-${Date.now()}`,
           contractNumber: `CNT-${Date.now().toString().slice(-5)}`,
           salePrice,
@@ -172,7 +172,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
       setSellCons(null);
       onRefresh();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت فروش امانی');
+      error(err.message || (isRtl ? 'خطا در ثبت فروش امانی' : 'Error recording consignment sale'));
     }
   };
 
@@ -204,7 +204,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
       setReturnCons(null);
       onRefresh();
     } catch (err: any) {
-      error(err.message || 'خطا در ثبت عودت');
+      error(err.message || (isRtl ? 'خطا در ثبت عودت' : 'Error recording return'));
     }
   };
 
@@ -225,7 +225,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
       success(t('consignment.settleSuccess'));
       onRefresh();
     } catch (err: any) {
-      error(err.message || 'خطا در تسویه');
+      error(err.message || (isRtl ? 'خطا در تسویه' : 'Error settling'));
     }
   };
 
@@ -332,13 +332,13 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
           <table className="w-full text-end text-xs">
             <thead className="bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
               <tr>
-                <th className="p-3">سیم‌کارت</th>
-                <th className="p-3">مالک</th>
-                <th className="p-3">قیمت پیشنهادی</th>
-                <th className="p-3">وضعیت</th>
-                <th className="p-3">مسئول</th>
-                <th className="p-3">دریافت</th>
-                <th className="p-3 text-start">اقدامات</th>
+                <th className="p-3">{isRtl ? 'سیم‌کارت' : 'SIM'}</th>
+                <th className="p-3">{isRtl ? 'مالک' : 'Owner'}</th>
+                <th className="p-3">{isRtl ? 'قیمت پیشنهادی' : 'Requested Price'}</th>
+                <th className="p-3">{isRtl ? 'وضعیت' : 'Status'}</th>
+                <th className="p-3">{isRtl ? 'مسئول' : 'Responsible'}</th>
+                <th className="p-3">{isRtl ? 'دریافت' : 'Received'}</th>
+                <th className="p-3 text-start">{isRtl ? 'اقدامات' : 'Actions'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -354,7 +354,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
                   <td className="p-3 whitespace-nowrap">
                     {statusBadge(c.status, isRtl)}
                     {c.status === 'SOLD' && c.settlementStatus === 'SETTLED' && (
-                      <span className="ms-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold">تسویه شده</span>
+                      <span className="ms-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold">{isRtl ? 'تسویه شده' : 'Settled'}</span>
                     )}
                   </td>
                   <td className="p-3 whitespace-nowrap text-slate-600 dark:text-slate-400">{c.responsibleUserName}</td>
@@ -364,7 +364,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
                   <td className="p-3 text-start whitespace-nowrap">
                     <div className="flex items-center justify-end gap-1.5">
                       <Button variant="outline" size="xs" onClick={() => setSelectedCons(c)} leftIcon={<Eye className="w-3 h-3" />}>
-                        جزئیات
+                        {isRtl ? 'جزئیات' : 'Details'}
                       </Button>
                       {c.status === 'CONSIGNMENT' && (
                         <>
@@ -375,7 +375,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
                             {isRtl ? 'عودت' : 'Return'}
                           </Button>
                           <Button variant="outline" size="xs" onClick={() => setContactCons(c)} leftIcon={<History className="w-3 h-3 text-indigo-500" />}>
-                            پیگیری
+                            {isRtl ? 'پیگیری' : 'Follow-up'}
                           </Button>
                         </>
                       )}
@@ -540,7 +540,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
                 onChange={(e) => setSaleBuyerId(e.target.value)}
                 isRequired
               >
-                <option value="">-- انتخاب خریدار --</option>
+                <option value="">-- {isRtl ? 'انتخاب خریدار' : 'Select buyer'} --</option>
                 {(customers || []).map((c) => (
                   <option key={c.id} value={c.id}>{c.name} ({c.phone || ''})</option>
                 ))}
@@ -549,7 +549,7 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
-                label={`${t('consignment.actualCommission')} (${sellCons.commissionType === 'PERCENTAGE' ? `${sellCons.commissionValue}%` : 'تومان'})`}
+                label={`${t('consignment.actualCommission')} (${sellCons.commissionType === 'PERCENTAGE' ? `${sellCons.commissionValue}%` : (isRtl ? 'تومان' : 'Toman')})`}
                 value={saleCommission}
                 onChange={(e) => {
                   setSaleCommission(e.target.value);

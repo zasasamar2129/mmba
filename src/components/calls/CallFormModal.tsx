@@ -437,7 +437,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               leftIcon={<UserCheck className="w-3.5 h-3.5" />}
               className="shrink-0"
             >
-              تبدیل به پرونده مشتری
+              {isRtl ? 'تبدیل به پرونده مشتری' : 'Convert to Customer'}
             </Button>
           </div>
         )}
@@ -447,7 +447,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
             <div className="flex items-center justify-between">
               <span className="font-bold text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
                 <UserPlus className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                این شماره در بانک اطلاعاتی موجود نیست و به صورت خودکار به عنوان «سرنخ جدید (Lead)» ثبت می‌شود.
+                {isRtl ? 'این شماره در بانک اطلاعاتی موجود نیست و به صورت خودکار به عنوان «سرنخ جدید (Lead)» ثبت می‌شود.' : 'This number is not in the database and will be automatically logged as a new lead.'}
               </span>
 
               <button
@@ -580,7 +580,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                 <HelpCircle className="w-3.5 h-3.5 text-amber-500" />
-                درخواست و نیاز تماس‌گیرنده (Request)
+                {isRtl ? 'درخواست و نیاز تماس‌گیرنده (Request)' : 'Caller Request & Needs (Request)'}
               </label>
               <VoiceInputButton
                 onTranscript={(transcript) => {
@@ -601,7 +601,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
             <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                 <Check className="w-3.5 h-3.5 text-emerald-500" />
-                نتیجه مذاکره و توافق (Outcome)
+                {isRtl ? 'نتیجه مذاکره و توافق (Outcome)' : 'Negotiation Result & Agreement (Outcome)'}
               </label>
               <VoiceInputButton
                 onTranscript={(transcript) => {
@@ -624,7 +624,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
           <div className="flex items-center justify-between">
             <label className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
               <FileText className="w-3.5 h-3.5 text-indigo-500" />
-              یادداشت‌های تکمیلی و نکات مهم
+              {isRtl ? 'یادداشت‌های تکمیلی و نکات مهم' : 'Additional Notes & Key Points'}
             </label>
             <VoiceInputButton
               onTranscript={(transcript) => {
@@ -646,7 +646,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <Mic className="w-3.5 h-3.5 text-purple-500" />
-              متن پیاده‌سازی شده صوتی (Voice Transcript)
+              {isRtl ? 'متن پیاده‌سازی شده صوتی (Voice Transcript)' : 'Voice Transcript'}
             </span>
             <VoiceInputButton
               onTranscript={(transcript) => {
@@ -719,7 +719,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               disabled={isSubmitting}
               className="flex-1 sm:flex-none"
             >
-              انصراف
+              {isRtl ? 'انصراف' : 'Cancel'}
             </Button>
           </div>
 
@@ -741,7 +741,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
                 leftIcon={<Calendar className="w-4 h-4 text-indigo-500" />}
                 className="flex-1 sm:flex-none"
               >
-                ثبت و تنظیم پیگیری
+                {isRtl ? 'ثبت و تنظیم پیگیری' : 'Save & Set Follow-up'}
               </Button>
             )}
 
@@ -753,7 +753,7 @@ export const CallFormModal: React.FC<CallFormModalProps> = ({
               leftIcon={<Check className="w-4 h-4" />}
               className="flex-1 sm:flex-none"
             >
-              ثبت نهایی تعامل
+              {isRtl ? 'ثبت نهایی تعامل' : 'Submit Interaction'}
             </Button>
           </div>
         </div>

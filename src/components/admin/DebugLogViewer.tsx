@@ -11,9 +11,11 @@ import {
   Filter, ShieldAlert, CheckCircle2, Info, AlertTriangle, Bug,
   Activity, RefreshCw, Layers, Copy, Check
 } from 'lucide-react';
+import { useTranslation } from '../../lib/i18n';
 
 export const DebugLogViewer: React.FC = () => {
   const { success } = useToast();
+  const { isRtl } = useTranslation();
   const [logs, setLogs] = useState<SystemLogEntry[]>(() => logger.getLogs());
   const [isLive, setIsLive] = useState<boolean>(true);
   const [levelFilter, setLevelFilter] = useState<'ALL' | LogLevel>('ALL');
@@ -38,13 +40,13 @@ export const DebugLogViewer: React.FC = () => {
   // Periodic poll if user pauses and unpauses
   const handleRefresh = () => {
     setLogs(logger.getLogs());
-    success('لاگ‌ها به‌روزرسانی شدند');
+    success(isRtl ? 'لاگ‌ها به‌روزرسانی شدند' : 'Logs refreshed');
   };
 
   const handleClear = () => {
     logger.clearLogs();
     setLogs(logger.getLogs());
-    success('تمامی لاگ‌های دیباگ پاکسازی شدند');
+    success(isRtl ? 'تمامی لاگ‌های دیباگ پاکسازی شدند' : 'All debug logs cleared');
   };
 
   const handleExport = () => {
@@ -56,7 +58,7 @@ export const DebugLogViewer: React.FC = () => {
     a.download = `mmba_debug_logs_${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    success('فایل لاگ‌ها با فرمت JSON دانلود شد');
+    success(isRtl ? 'فایل لاگ‌ها با فرمت JSON دانلود شد' : 'Logs downloaded as JSON file');
   };
 
   const handleCopyLog = (log: SystemLogEntry) => {
@@ -122,11 +124,11 @@ export const DebugLogViewer: React.FC = () => {
             <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400">
               <Terminal className="w-5 h-5" />
             </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">مانیتورینگ و دیباگ زنده لاگ‌های سیستم</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{isRtl ? 'مانیتورینگ و دیباگ زنده لاگ‌های سیستم' : 'Live System Log Monitoring & Debug'}</h3>
             <span className={`w-2.5 h-2.5 rounded-full ${isLive ? 'bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-slate-400 dark:bg-slate-600'}`} />
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            مشاهده کنسول، فراخوانی‌های شبکه، تراکنش‌های ذخیره‌سازی و رویدادهای زنده سیستم MMBA
+            {isRtl ? 'مشاهده کنسول، فراخوانی‌های شبکه، تراکنش‌های ذخیره‌سازی و رویدادهای زنده سیستم MMBA' : 'View console, network calls, storage transactions and live MMBA system events'}
           </p>
         </div>
 
@@ -139,7 +141,7 @@ export const DebugLogViewer: React.FC = () => {
             leftIcon={isLive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
             className={isLive ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-none' : ''}
           >
-            {isLive ? 'جریان زنده فعال (Live Mode)' : 'حالت عادی (Paused)'}
+            {isLive ? (isRtl ? 'جریان زنده فعال (Live Mode)' : 'Live Mode Active') : (isRtl ? 'حالت عادی (Paused)' : 'Normal (Paused)')}
           </Button>
 
           <Button
@@ -148,7 +150,7 @@ export const DebugLogViewer: React.FC = () => {
             onClick={handleRefresh}
             leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
           >
-            تازه‌سازی
+            {isRtl ? 'تازه‌سازی' : 'Refresh'}
           </Button>
 
           <Button
@@ -157,7 +159,7 @@ export const DebugLogViewer: React.FC = () => {
             onClick={handleExport}
             leftIcon={<Download className="w-3.5 h-3.5" />}
           >
-            خروجی JSON
+            {isRtl ? 'خروجی JSON' : 'Export JSON'}
           </Button>
 
           <Button
@@ -166,7 +168,7 @@ export const DebugLogViewer: React.FC = () => {
             onClick={handleClear}
             leftIcon={<Trash2 className="w-3.5 h-3.5" />}
           >
-            پاکسازی
+            {isRtl ? 'پاکسازی' : 'Clear All'}
           </Button>
         </div>
       </div>
@@ -177,12 +179,12 @@ export const DebugLogViewer: React.FC = () => {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="جستجو در پیام، جزئیات، کاربر..."
+            placeholder={isRtl ? 'جستجو در پیام، جزئیات، کاربر...' : 'Search message, details, user...'}
             rightIcon={<Search className="w-4 h-4" />}
           />
 
           <div className="flex items-center gap-1.5 overflow-x-auto py-1">
-            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">سطح خطا:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{isRtl ? 'سطح خطا:' : 'Level:'}</span>
             {(['ALL', 'info', 'warn', 'error', 'debug'] as const).map((lvl) => (
               <button
                 key={lvl}
@@ -200,7 +202,7 @@ export const DebugLogViewer: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1.5 overflow-x-auto py-1">
-            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">منبع:</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{isRtl ? 'منبع:' : 'Source:'}</span>
             {['ALL', 'client', 'server', 'api', 'storage', 'security', 'user'].map((src) => (
               <button
                 key={src}
@@ -231,7 +233,7 @@ export const DebugLogViewer: React.FC = () => {
           </div>
 
           <span className="text-xs font-mono text-slate-400">
-            نمایش {filteredLogs.length} از {logs.length} رویداد
+            {isRtl ? `نمایش ${filteredLogs.length} از ${logs.length} رویداد` : `Showing ${filteredLogs.length} of ${logs.length} events`}
           </span>
         </div>
 
@@ -244,7 +246,7 @@ export const DebugLogViewer: React.FC = () => {
           {filteredLogs.length === 0 ? (
             <div className="py-12 text-center text-slate-500 font-sans" dir="rtl">
               <Terminal className="w-8 h-8 mx-auto text-slate-600 mb-2" />
-              <p>هیچ لاگی منطبق بر این فیلترها وجود ندارد.</p>
+              <p>{isRtl ? 'هیچ لاگی منطبق بر این فیلترها وجود ندارد.' : 'No logs match these filters.'}</p>
             </div>
           ) : (
             filteredLogs.map((log) => (
@@ -280,7 +282,7 @@ export const DebugLogViewer: React.FC = () => {
                     type="button"
                     onClick={() => handleCopyLog(log)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-white"
-                    title="کپی لاگ"
+                    title={isRtl ? 'کپی لاگ' : 'Copy log'}
                   >
                     {copiedId === log.id ? (
                       <Check className="w-3.5 h-3.5 text-emerald-400" />

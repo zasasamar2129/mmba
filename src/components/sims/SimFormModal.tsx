@@ -112,7 +112,7 @@ export const SimFormModal: React.FC<SimFormModalProps> = ({
 
     if (registeredHolderId && selectedHolder) {
       if (selectedHolder.isAtCapacity && simToEdit?.registeredHolderId !== registeredHolderId) {
-        error(`شخص انتخاب شده (${selectedHolder.fullName}) به سقف قانونی ۱۰ سیم‌کارت رسیده است. لطفاً شخص دیگری را انتخاب فرمایید.`);
+        error(isRtl ? `شخص انتخاب شده (${selectedHolder.fullName}) به سقف قانونی ۱۰ سیم‌کارت رسیده است. لطفاً شخص دیگری را انتخاب فرمایید.` : `The selected person (${selectedHolder.fullName}) has reached the legal 10-SIM limit. Please select another person.`);
         return;
       }
     }
@@ -232,19 +232,19 @@ export const SimFormModal: React.FC<SimFormModalProps> = ({
           <div className="flex items-center justify-between">
             <label className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
               <UserCheck className="w-4 h-4 text-indigo-500" />
-              <span>شخص ثبت‌کننده / سندزن (رگولاتوری - سقف ۱۰ خط)</span>
+              <span>{isRtl ? 'شخص ثبت‌کننده / سندزن (رگولاتوری - سقف ۱۰ خط)' : 'Registered Holder (Regulatory - 10-line cap)'}</span>
             </label>
-            <span className="text-[11px] text-slate-400">قاعده حداکثر ۱۰ سیم‌کارت</span>
+            <span className="text-[11px] text-slate-400">{isRtl ? 'قاعده حداکثر ۱۰ سیم‌کارت' : 'Maximum 10 SIMs rule'}</span>
           </div>
 
           <Select
             value={registeredHolderId}
             onChange={(e) => setRegisteredHolderId(e.target.value)}
             options={[
-              { value: '', label: '-- بدون شخص ثبت‌کننده ثانویه (شرکتی / نامشخص) --' },
+              { value: '', label: isRtl ? '-- بدون شخص ثبت‌کننده ثانویه (شرکتی / نامشخص) --' : '-- No secondary registered holder (Company / Unknown) --' },
               ...(registeredHolders || []).map((h) => ({
                 value: h.id,
-                label: `${h.fullName} (${h.nationalId}) - ${h.activeSimCount || 0}/10 خط فعال ${h.isAtCapacity ? '[تکمیل ظرفیت]' : ''}`,
+                label: `${h.fullName} (${h.nationalId}) - ${h.activeSimCount || 0}/10 ${isRtl ? 'خط فعال' : 'active lines'} ${h.isAtCapacity ? (isRtl ? '[تکمیل ظرفیت]' : '[Capacity full]') : ''}`,
                 disabled: h.isAtCapacity && simToEdit?.registeredHolderId !== h.id,
               })),
             ]}
@@ -311,7 +311,7 @@ export const SimFormModal: React.FC<SimFormModalProps> = ({
           <Checkbox
             checked={isMortgaged}
             onChange={(e) => setIsMortgaged(e.target.checked)}
-            label="این سیم‌کارت در رهن یا وثیقه است (رهنی / تسهیلاتی)"
+            label={isRtl ? 'این سیم‌کارت در رهن یا وثیقه است (رهنی / تسهیلاتی)' : 'This SIM is mortgaged / pledged (Loan-backed)'}
             icon={<Lock className="w-4 h-4 text-purple-500" />}
             colorScheme="purple"
             size="md"
@@ -320,16 +320,16 @@ export const SimFormModal: React.FC<SimFormModalProps> = ({
           {isMortgaged && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <Input
-                label="نام مرتهن / وام‌دهنده"
+                label={isRtl ? 'نام مرتهن / وام‌دهنده' : 'Mortgagee / Lender Name'}
                 value={mortgageeName}
                 onChange={(e) => setMortgageeName(e.target.value)}
-                placeholder="مثال: بانک سامان / سرمایه‌گذار"
+                placeholder={isRtl ? 'مثال: بانک سامان / سرمایه‌گذار' : 'e.g. Saman Bank / Investor'}
               />
               <Input
-                label="ارزش / مبلغ رهن (تومان)"
+                label={isRtl ? 'ارزش / مبلغ رهن (تومان)' : 'Mortgage Value / Amount (Toman)'}
                 value={mortgageAmount}
                 onChange={(e) => setMortgageAmount(e.target.value)}
-                placeholder="مثال: 40000000"
+                placeholder={isRtl ? 'مثال: 40000000' : 'e.g. 40000000'}
               />
             </div>
           )}

@@ -135,9 +135,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
                   <UserIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                  <span>انتخاب سریع کاربر (جهت ورود یا تست نقش):</span>
+                  <span>{isRtl ? 'انتخاب سریع کاربر (جهت ورود یا تست نقش):' : 'Quick user selection (login or role test):'}</span>
                 </span>
-                <span className="text-[11px] text-slate-500 font-mono">رمز پیش‌فرض: 123</span>
+                <span className="text-[11px] text-slate-500 font-mono">{isRtl ? 'رمز پیش‌فرض' : 'Default password'}: 123</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto pe-1">
@@ -196,7 +196,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                     </Badge>
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                    نام کاربری: <span className="font-mono text-indigo-600 dark:text-indigo-300 font-semibold">{selectedQuickUser.username}</span>
+                    {isRtl ? 'نام کاربری:' : 'Username:'} <span className="font-mono text-indigo-600 dark:text-indigo-300 font-semibold">{selectedQuickUser.username}</span>
                   </p>
                 </div>
               </div>
@@ -206,7 +206,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 onClick={handleClearSelection}
                 className="text-[11px] text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               >
-                تغییر کاربر
+                {isRtl ? 'تغییر کاربر' : 'Change User'}
               </button>
             </div>
           )}
@@ -215,8 +215,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <form onSubmit={handleSubmit} className="space-y-4">
             {!selectedQuickUser && (
               <Input
-                label="نام کاربری، ایمیل یا شماره موبایل"
-                placeholder="مثال: sajjad_owner یا 09120000001"
+                label={isRtl ? 'نام کاربری، ایمیل یا شماره موبایل' : 'Username, email, or mobile number'}
+                placeholder={isRtl ? 'مثال: sajjad_owner یا 09120000001' : 'e.g. sajjad_owner or 09120000001'}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 rightIcon={<UserIcon className="w-4 h-4 text-slate-400" />}
@@ -226,12 +226,12 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                رمز عبور {selectedQuickUser && <span className="text-indigo-600 dark:text-indigo-400 font-normal">({selectedQuickUser.name})</span>}
+                {isRtl ? 'رمز عبور' : 'Password'} {selectedQuickUser && <span className="text-indigo-600 dark:text-indigo-400 font-normal">({selectedQuickUser.name})</span>}
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="رمز عبور خود را وارد کنید..."
+                  placeholder={isRtl ? 'رمز عبور خود را وارد کنید...' : 'Enter your password...'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoFocus={!!selectedQuickUser}
@@ -252,7 +252,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
             {errorMsg && (
               <div className="p-3 rounded-xl bg-rose-100 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-300 text-xs flex items-center gap-2">
-                <span className="font-bold">خطا:</span>
+                <span className="font-bold">{isRtl ? 'خطا:' : 'Error:'}</span>
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -266,7 +266,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 leftIcon={<LogIn className="w-5 h-5" />}
                 className="w-full shadow-lg shadow-indigo-600/30 font-bold"
               >
-                ورود به سامانه
+                {isRtl ? 'ورود به سامانه' : 'Sign In'}
               </Button>
             </div>
           </form>
@@ -275,7 +275,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
             <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
               <KeyRound className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400" />
-              <span>رمز عبور پیش‌فرض تمام کاربران آزمایشی:</span>
+              <span>{isRtl ? 'رمز عبور پیش‌فرض تمام کاربران آزمایشی:' : 'Default password for all demo users:'}</span>
             </span>
             <span className="px-2 py-0.5 rounded-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-amber-600 dark:text-amber-300">
               123

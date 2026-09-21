@@ -480,7 +480,9 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
           <div className="space-y-1">
             <p className="font-bold">{isRtl ? 'قانون رگولاتوری و سقف مجاز مالکیت سیم‌کارت:' : 'Regulatory rule & max SIM ownership limit:'}</p>
             <p className="leading-relaxed text-slate-600 dark:text-slate-300">
-              طبق مصوبه سازمان تنظیم مقررات، به نام هر شخص حقیقی حداکثر ۱۰ سیم‌کارت فعال در شبکه مخابراتی کشور قابل ثبت است. سامانه وضعیت ظرفیت (سقف ۱۰ خط) و اسناد شناسایی هر فرد را به صورت خودکار نگهداری می‌کند.
+              {isRtl
+                ? 'طبق مصوبه سازمان تنظیم مقررات، به نام هر شخص حقیقی حداکثر ۱۰ سیم‌کارت فعال در شبکه مخابراتی کشور قابل ثبت است. سامانه وضعیت ظرفیت (سقف ۱۰ خط) و اسناد شناسایی هر فرد را به صورت خودکار نگهداری می‌کند.'
+                : 'Under telecom regulation, a maximum of 10 active SIMs can be registered to a natural person. The system automatically tracks capacity (10-line cap) and each person\'s identity documents.'}
             </p>
           </div>
         </div>
@@ -511,7 +513,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
             leftIcon={<UserPlus className="w-4 h-4" />}
             className="w-full sm:w-auto font-bold"
           >
-            ثبت شخص جدید
+            {isRtl ? 'ثبت شخص جدید' : 'Add New Contact'}
           </Button>
         </div>
 
@@ -603,7 +605,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                   <span>{isRtl ? 'تصویر یا مدرک کارت ملی (اختیاری)' : 'National ID Image (optional)'}</span>
                 </span>
                 <span className="text-[11px] text-slate-400 font-normal">
-                  فرمت‌های مجاز: JPG, PNG, WEBP, PDF (حداکثر ۱۵ مگابایت)
+                  {isRtl ? 'فرمت‌های مجاز: JPG, PNG, WEBP, PDF (حداکثر ۱۵ مگابایت)' : 'Allowed formats: JPG, PNG, WEBP, PDF (max 15 MB)'}
                 </span>
               </label>
 
@@ -626,10 +628,10 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                     <Upload className="w-5 h-5" />
                   </div>
                   <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                    برای بارگذاری تصویر کارت ملی کلیک کنید یا فایل را به اینجا بکشید
+                    {isRtl ? 'برای بارگذاری تصویر کارت ملی کلیک کنید یا فایل را به اینجا بکشید' : 'Click to upload national ID image or drag a file here'}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    اسکن یا عکس واضح از روی کارت ملی هوشمند شخص
+                    {isRtl ? 'اسکن یا عکس واضح از روی کارت ملی هوشمند شخص' : 'A clear scan or photo of the smart national ID card'}
                   </p>
                 </div>
               ) : (
@@ -673,7 +675,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                       </div>
                       <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
-                        آماده ذخیره‌سازی در پرونده
+                        {isRtl ? 'آماده ذخیره‌سازی در پرونده' : 'Ready to save to the record'}
                       </p>
                     </div>
                   </div>
@@ -699,7 +701,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                       leftIcon={<Eye className="w-3.5 h-3.5" />}
                       className="text-xs h-8"
                     >
-                      مشاهده
+                      {isRtl ? 'مشاهده' : 'View'}
                     </Button>
                     <Button
                       variant="outline"
@@ -709,7 +711,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                       leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
                       className="text-xs h-8"
                     >
-                      تغییر
+                      {isRtl ? 'تغییر' : 'Change'}
                     </Button>
                     <Button
                       variant="ghost"
@@ -719,7 +721,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                       leftIcon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />}
                       className="text-xs h-8 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                     >
-                      حذف
+                      {isRtl ? 'حذف' : 'Delete'}
                     </Button>
                   </div>
                 </div>
@@ -733,7 +735,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                 type="button"
                 onClick={() => setIsAddingOrEditing(false)}
               >
-                انصراف
+                {isRtl ? 'انصراف' : 'Cancel'}
               </Button>
               <Button
                 variant="primary"
@@ -787,16 +789,16 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                           <Badge variant="danger" size="sm">{isRtl ? 'تکمیل ظرفیت (۱۰/۱۰)' : 'Capacity Full (10/10)'}</Badge>
                         ) : (
                           <Badge variant={activeCount >= 8 ? 'warning' : 'emerald'} size="sm">
-                            {activeCount} از ۱۰ خط فعال
+                            {activeCount} {isRtl ? 'از ۱۰ خط فعال' : 'of 10 active lines'}
                           </Badge>
                         )}
                         {hasIdCard ? (
                           <Badge variant="primary" size="sm" className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                            کارت ملی بارگذاری شده
+                            {isRtl ? 'کارت ملی بارگذاری شده' : 'National ID Uploaded'}
                           </Badge>
                         ) : (
                           <span className="text-[10px] text-slate-400 italic">
-                            (بدون تصویر کارت ملی)
+                            ({isRtl ? 'بدون تصویر کارت ملی' : 'No national ID image'})
                           </span>
                         )}
                       </div>
@@ -814,14 +816,14 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                         </span>
                         {holder.shebaNumber && (
                           <span className="font-mono text-[11px] text-slate-400">
-                            شبا: {holder.shebaNumber}
+                            {isRtl ? 'شبا:' : 'IBAN:'} {holder.shebaNumber}
                           </span>
                         )}
                       </div>
 
                       {holder.notes && (
                         <p className="text-xs text-slate-500 dark:text-slate-400 italic pt-0.5">
-                          یادداشت: {holder.notes}
+                          {isRtl ? 'یادداشت:' : 'Note:'} {holder.notes}
                         </p>
                       )}
 
@@ -925,7 +927,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                             title={isRtl ? 'مشاهده سیم‌کارت‌های این فرد' : 'View SIMs of this person'}
                           >
                             <Smartphone className="w-3.5 h-3.5 ms-1" />
-                            سیم‌کارت‌ها
+                            {isRtl ? 'سیم‌کارت‌ها' : 'SIMs'}
                           </Button>
                         )}
                         <Button
@@ -946,7 +948,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                               return;
                             }
                             if (activeCount > 0) {
-                              error(`امکان حذف این شخص وجود ندارد؛ تعداد ${activeCount} سیم‌کارت فعال به نام ایشان ثبت است.`);
+                              error(isRtl ? `امکان حذف این شخص وجود ندارد؛ تعداد ${activeCount} سیم‌کارت فعال به نام ایشان ثبت است.` : `This person cannot be deleted; ${activeCount} active SIMs are registered under their name.`);
                               return;
                             }
                             setDeletingHolder(holder);
@@ -972,8 +974,8 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
         <Modal
           isOpen={true}
           onClose={() => setViewingHolder(null)}
-          title={`کارت ملی: ${viewingHolder.fullName}`}
-          subtitle={`{isRtl ? 'کد ملی:' : 'National ID:'} ${viewingHolder.nationalId} | شماره همراه: ${viewingHolder.mobile}`}
+          title={isRtl ? `کارت ملی: ${viewingHolder.fullName}` : `National ID: ${viewingHolder.fullName}`}
+          subtitle={`${isRtl ? 'کد ملی:' : 'National ID:'} ${viewingHolder.nationalId} | ${isRtl ? 'شماره همراه:' : 'Mobile:'} ${viewingHolder.mobile}`}
           size="lg"
         >
           <div className="space-y-4">
@@ -988,7 +990,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
               ) : (
                 <img
                   src={viewingHolder.nationalIdImageUrl}
-                  alt={`کارت ملی ${viewingHolder.fullName}`}
+                  alt={isRtl ? `کارت ملی ${viewingHolder.fullName}` : `National ID of ${viewingHolder.fullName}`}
                   className="max-h-[55vh] w-auto max-w-full object-contain rounded-xl shadow-md"
                 />
               )}
@@ -1014,7 +1016,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                   leftIcon={<Download className="w-4 h-4" />}
                   className="font-bold flex-1 sm:flex-initial"
                 >
-                  دانلود تصویر کارت ملی
+                  {isRtl ? 'دانلود تصویر کارت ملی' : 'Download National ID Image'}
                 </Button>
 
                 <Button
@@ -1034,7 +1036,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                   leftIcon={<Printer className="w-4 h-4" />}
                   className="hidden sm:inline-flex"
                 >
-                  چاپ
+                  {isRtl ? 'چاپ' : 'Print'}
                 </Button>
               </div>
 
@@ -1109,7 +1111,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                 size="sm"
                 onClick={() => setViewingHolder(null)}
               >
-                بستن
+                {isRtl ? 'بستن' : 'Close'}
               </Button>
             </div>
           </div>
@@ -1148,7 +1150,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                 size="sm"
                 onClick={() => setDeletingHolder(null)}
               >
-                انصراف
+                {isRtl ? 'انصراف' : 'Cancel'}
               </Button>
               <Button
                 variant="danger"
@@ -1157,7 +1159,7 @@ export const RegisteredHoldersModal: React.FC<RegisteredHoldersModalProps> = ({
                 onClick={handleConfirmDelete}
                 leftIcon={<Trash2 className="w-4 h-4" />}
               >
-                تایید و حذف دائم
+                {isRtl ? 'تایید و حذف دائم' : 'Confirm & Delete Permanently'}
               </Button>
             </div>
           </div>

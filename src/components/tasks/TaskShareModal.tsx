@@ -6,6 +6,7 @@ import { storage } from '../../services/storage';
 import { useToast } from '../ui/Toast';
 import { Share2, Users, Check, ShieldAlert, ArrowRightLeft, UserCheck } from 'lucide-react';
 import { isAdmin } from '../../lib/permissions';
+import { useTranslation } from '../../lib/i18n';
 
 export interface TaskShareModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
   onTaskUpdated,
 }) => {
   const { success, error } = useToast();
+  const { isRtl } = useTranslation();
 
   const [selectedSharedUserIds, setSelectedSharedUserIds] = useState<string[]>([]);
   const [reassignUserId, setReassignUserId] = useState<string>('');
@@ -67,7 +69,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
     };
 
     const saved = storage.saveTask(updatedTask);
-    success('دسترسی‌های اشتراک‌گذاری وظیفه با موفقیت به‌روزرسانی شد');
+    success(isRtl ? 'دسترسی‌های اشتراک‌گذاری وظیفه با موفقیت به‌روزرسانی شد' : 'Task sharing permissions updated successfully');
     onTaskUpdated(saved);
     onClose();
   };
@@ -76,7 +78,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
   const handleReassign = () => {
     if (!task) return;
     if (!reassignUserId) {
-      error('لطفاً کاربر جدید را جهت واگذاری انتخاب کنید');
+      error(isRtl ? 'لطفاً کاربر جدید را جهت واگذاری انتخاب کنید' : 'Please select a new user to assign the task to');
       return;
     }
 
@@ -98,7 +100,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
     };
 
     const saved = storage.saveTask(updatedTask);
-    success(`وظیفه با موفقیت به «${targetUser.name}» واگذار شد`);
+    success(isRtl ? `وظیفه با موفقیت به «${targetUser.name}» واگذار شد` : `Task reassigned to "${targetUser.name}"`);
     onTaskUpdated(saved);
     onClose();
   };
@@ -114,24 +116,24 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
       title={
         <div className="flex items-center gap-2">
           <Share2 className="w-5 h-5 text-indigo-400" />
-          <span>اشتراک‌گذاری و واگذاری وظیفه</span>
+          <span>{isRtl ? 'اشتراک‌گذاری و واگذاری وظیفه' : 'Share & Delegate Task'}</span>
         </div>
       }
-      subtitle={`وظیفه: «${task.title}»`}
+      subtitle={isRtl ? `وظیفه: «${task.title}»` : `Task: "${task.title}"`}
     >
       <div className="space-y-4">
         {/* Info Card */}
         <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs space-y-2">
           <div className="flex items-center justify-between text-slate-300">
-            <span className="text-slate-400">ایجادکننده (ادمین):</span>
-            <span className="font-semibold text-slate-200">{task.creatorUserName || 'مدیر سیستم'}</span>
+            <span className="text-slate-400">{isRtl ? 'ایجادکننده (ادمین):' : 'Creator (Admin):'}</span>
+            <span className="font-semibold text-slate-200">{task.creatorUserName || (isRtl ? 'مدیر سیستم' : 'System Admin')}</span>
           </div>
           <div className="flex items-center justify-between text-slate-300">
-            <span className="text-slate-400">مسئول اصلی انجام:</span>
+            <span className="text-slate-400">{isRtl ? 'مسئول اصلی انجام:' : 'Assigned User:'}</span>
             <span className="font-bold text-indigo-300">{task.assignedUserName}</span>
           </div>
           <p className="text-[11px] text-slate-500 pt-1 border-t border-slate-800 leading-relaxed">
-            🔒 <strong>قانون محرمانگی وظایف:</strong> این وظیفه فقط برای ایجادکننده (ادمین)، مسئول اصلی و کاربرانی که وظیفه با آنها به اشتراک گذاشته شده، قابل مشاهده و دسترسی است.
+            🔒 <strong>{isRtl ? 'قانون محرمانگی وظایف:' : 'Task Confidentiality Rule:'}</strong> {isRtl ? 'این وظیفه فقط برای ایجادکننده (ادمین)، مسئول اصلی و کاربرانی که وظیفه با آنها به اشتراک گذاشته شده، قابل مشاهده و دسترسی است.' : 'This task is only visible to the creator (admin), the assigned user, and users it has been shared with.'}
           </p>
         </div>
 
@@ -147,7 +149,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>اشتراک‌گذاری همزمان (دسترسی مشاهده/همکاری)</span>
+            <span>{isRtl ? 'اشتراک‌گذاری همزمان (دسترسی مشاهده/همکاری)' : 'Share Simultaneously (View / Collaboration)'}</span>
           </button>
 
           <button
@@ -160,7 +162,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
             }`}
           >
             <ArrowRightLeft className="w-4 h-4" />
-            <span>واگذاری کامل به کاربر دیگر</span>
+            <span>{isRtl ? 'واگذاری کامل به کاربر دیگر' : 'Reassign to Another User'}</span>
           </button>
         </div>
 
@@ -169,16 +171,16 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-300">
-                انتخاب همکاران جهت دسترسی و مشاهده وظیفه:
+                {isRtl ? 'انتخاب همکاران جهت دسترسی و مشاهده وظیفه:' : 'Select colleagues to view and access this task:'}
               </span>
               <span className="text-[11px] text-indigo-400 font-medium">
-                {selectedSharedUserIds.length} کاربر انتخاب شده
+                {selectedSharedUserIds.length} {isRtl ? 'کاربر انتخاب شده' : 'users selected'}
               </span>
             </div>
 
             <div className="max-h-60 overflow-y-auto space-y-1.5 p-1">
               {shareableUsers.length === 0 ? (
-                <p className="text-xs text-slate-500 text-center py-4">کاربر دیگری برای اشتراک‌گذاری موجود نیست.</p>
+                <p className="text-xs text-slate-500 text-center py-4">{isRtl ? 'کاربر دیگری برای اشتراک‌گذاری موجود نیست.' : 'No other users available for sharing.'}</p>
               ) : (
                 shareableUsers.map((u) => {
                   const isChecked = selectedSharedUserIds.includes(u.id);
@@ -206,7 +208,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
 
                       {isChecked && (
                         <span className="text-[10px] text-indigo-700 dark:text-indigo-400 font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-500/20">
-                          مشاهده و انجام
+                          {isRtl ? 'مشاهده و انجام' : 'View & Execute'}
                         </span>
                       )}
                     </label>
@@ -217,10 +219,10 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
               <Button variant="outline" size="sm" onClick={onClose}>
-                انصراف
+                {isRtl ? 'انصراف' : 'Cancel'}
               </Button>
               <Button variant="primary" size="sm" onClick={handleSaveShare} leftIcon={<Check className="w-4 h-4" />}>
-                ذخیره اشتراک‌گذاری
+                {isRtl ? 'ذخیره اشتراک‌گذاری' : 'Save Sharing'}
               </Button>
             </div>
           </div>
@@ -230,7 +232,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
         {activeTab === 'reassign' && (
           <div className="space-y-3">
             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-              با واگذاری کامل، مسئولیت اصلی این وظیفه به کاربر انتخابی منتقل می‌شود و در کارتابل ایشان قرار می‌گیرد:
+              {isRtl ? 'با واگذاری کامل، مسئولیت اصلی این وظیفه به کاربر انتخابی منتقل می‌شود و در کارتابل ایشان قرار می‌گیرد:' : 'Reassignment moves full responsibility to the selected user and places it in their task board:'}
             </p>
 
             <div className="space-y-1.5 max-h-60 overflow-y-auto p-1">
@@ -260,7 +262,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
                           <span>{u.name}</span>
                           {isCurrent && (
                             <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-normal">
-                              (مسئول فعلی)
+                              ({isRtl ? 'مسئول فعلی' : 'Current assignee'})
                             </span>
                           )}
                         </div>
@@ -278,7 +280,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
 
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
               <Button variant="outline" size="sm" onClick={onClose}>
-                انصراف
+                {isRtl ? 'انصراف' : 'Cancel'}
               </Button>
               <Button
                 variant="primary"
@@ -288,7 +290,7 @@ export const TaskShareModal: React.FC<TaskShareModalProps> = ({
                 leftIcon={<ArrowRightLeft className="w-4 h-4" />}
                 className="bg-amber-600 hover:bg-amber-500"
               >
-                تایید واگذاری وظیفه
+                {isRtl ? 'تایید واگذاری وظیفه' : 'Confirm Reassignment'}
               </Button>
             </div>
           </div>

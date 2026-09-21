@@ -90,7 +90,7 @@ export const CustomerTimeline: React.FC<CustomerTimelineProps> = ({ events, onEv
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                  <span>{isRtl ? 'ثبت توسط:' : 'Registered by:'} {evt.userName}</span>
+                  <span>{isRtl ? 'ثبت توسط:' : 'By:'} {evt.userName}</span>
                   <span>•</span>
                   <span>{getRelativeTimeFa(evt.timestamp)}</span>
                 </div>
@@ -101,7 +101,7 @@ export const CustomerTimeline: React.FC<CustomerTimelineProps> = ({ events, onEv
               </p>
 
               <div className="mt-2 text-[10px] text-slate-500">
-                {isRtl ? 'تاریخ دقیق:' : 'Exact date:'} {formatPersianDate(evt.timestamp, true)}
+                تاریخ دقیق: {formatPersianDate(evt.timestamp, true)}
               </div>
             </div>
           </div>

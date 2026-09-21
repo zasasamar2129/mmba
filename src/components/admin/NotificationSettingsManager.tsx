@@ -454,7 +454,7 @@ export const NotificationSettingsManager: React.FC = () => {
               {isRtl ? 'دستگاه‌های ثبت شده برای اعلان پوش' : 'Registered Push Devices'}
             </h4>
             <Badge variant="indigo" size="sm">
-              {devices.length} دستگاه
+              {devices.length} {isRtl ? 'دستگاه' : 'devices'}
             </Badge>
           </div>
           <span className="text-xs text-slate-500">
