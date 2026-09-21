@@ -6,6 +6,7 @@ import { User, ProblemReportPriority } from '../../types';
 import { storage } from '../../services/storage';
 import { logger } from '../../services/logger';
 import { useToast } from './Toast';
+import { useTranslation } from '../../lib/i18n';
 import {
   AlertTriangle, Camera, Send, X, RefreshCw, Sparkles, Check,
   Bug, Laptop, Sliders, FileQuestion, Image as ImageIcon, Trash2
@@ -23,6 +24,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   currentUser,
 }) => {
   const { success, error: toastError } = useToast();
+  const { isRtl } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<'BUG' | 'UI_ISSUE' | 'DATA_SYNC' | 'FEATURE_REQUEST' | 'OTHER'>('BUG');
@@ -45,7 +47,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      toastError('حجم تصویر نباید بیشتر از ۱۰ مگابایت باشد.');
+      toastError(isRtl ? 'حجم تصویر نباید بیشتر از ۱۰ مگابایت باشد.' : 'Image size must not exceed 10 MB.');
       return;
     }
 
@@ -60,11 +62,11 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
-      toastError('لطفاً عنوان گزارش مشکل را وارد فرمایید.');
+      toastError(isRtl ? 'لطفاً عنوان گزارش مشکل را وارد فرمایید.' : 'Please enter a title for the report.');
       return;
     }
     if (!description.trim()) {
-      toastError('لطفاً شرح و جزئیات مشکل پیش‌آمده را توضیح دهید.');
+      toastError(isRtl ? 'لطفاً شرح و جزئیات مشکل پیش‌آمده را توضیح دهید.' : 'Please describe the issue details.');
       return;
     }
 
@@ -93,11 +95,11 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
         priority,
       });
 
-      success('گزارش مشکل با موفقیت ثبت شد و برای مدیران سیستم ارسال گردید.');
+      success(isRtl ? 'گزارش مشکل با موفقیت ثبت شد و برای مدیران سیستم ارسال گردید.' : 'Report submitted successfully and sent to admins.');
       onClose();
     } catch (err: any) {
       console.error('Submit report error:', err);
-      toastError('خطا در ثبت گزارش مشکل. لطفاً دوباره تلاش کنید.');
+      toastError(isRtl ? 'خطا در ثبت گزارش مشکل. لطفاً دوباره تلاش کنید.' : 'Error saving the report. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -114,8 +116,8 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">ثبت گزارش خطا و اشکال در سامانه</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">ارسال مستقیم گزارش به همراه اسکرین‌شات و مشخصات فنی به مدیران</p>
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{isRtl ? 'ثبت گزارش خطا و اشکال در سامانه' : 'Report a System Issue'}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{isRtl ? 'ارسال مستقیم گزارش به همراه اسکرین‌شات و مشخصات فنی به مدیران' : 'Send the report with screenshot and technical details directly to admins'}</p>
           </div>
         </div>
       }
@@ -149,20 +151,20 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
               onChange={(e) => setPriority(e.target.value as any)}
               className="w-full h-10 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-200 focus:outline-none focus:border-indigo-500"
             >
-              <option value={ProblemReportPriority.LOW}>پایین (Low)</option>
-              <option value={ProblemReportPriority.NORMAL}>عادی (Normal)</option>
-              <option value={ProblemReportPriority.HIGH}>مهم و فوری (High)</option>
-              <option value={ProblemReportPriority.CRITICAL}>بحرانی و توقف عملیات (Critical)</option>
+              <option value={ProblemReportPriority.LOW}>{isRtl ? 'پایین' : 'Low'}</option>
+              <option value={ProblemReportPriority.NORMAL}>{isRtl ? 'عادی' : 'Normal'}</option>
+              <option value={ProblemReportPriority.HIGH}>{isRtl ? 'مهم و فوری' : 'High'}</option>
+              <option value={ProblemReportPriority.CRITICAL}>{isRtl ? 'بحرانی و توقف عملیات' : 'Critical'}</option>
             </select>
           </div>
         </div>
 
         {/* Title */}
         <Input
-          label="عنوان مختصر مشکل"
+          label={isRtl ? 'عنوان مختصر مشکل' : 'Brief Issue Title'}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="مثال: دکمه ثبت دریافت وجه در صفحه چک‌ها عمل نمی‌کند..."
+          placeholder={isRtl ? 'مثال: دکمه ثبت دریافت وجه در صفحه چک‌ها عمل نمی‌کند...' : 'e.g. The payment-save button on the checks page does not work...'}
           isRequired
         />
 
@@ -174,7 +176,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="دقیقاً چه عملیاتی انجام می‌دادید، چه پیامی مشاهده کردید و چه انتظاری داشتید..."
+            placeholder={isRtl ? 'دقیقاً چه عملیاتی انجام می‌دادید، چه پیامی مشاهده کردید و چه انتظاری داشتید...' : 'What exactly did you do, what message did you see, and what did you expect...'}
             rows={4}
             className="w-full p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 resize-none leading-relaxed"
             required
@@ -186,13 +188,13 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
               <Camera className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <span>تصویر و اسکرین‌شات از صفحه (ضمیمه خطا)</span>
+              <span>{isRtl ? 'تصویر و اسکرین‌شات از صفحه (ضمیمه خطا)' : 'Page Screenshot (issue attachment)'}</span>
             </span>
 
             <div className="flex items-center gap-2">
               <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors">
                 <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
-                <span>انتخاب و بارگذاری تصویر اسکرین‌شات</span>
+                <span>{isRtl ? 'انتخاب و بارگذاری تصویر اسکرین‌شات' : 'Select & Upload Screenshot'}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -207,14 +209,14 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
             <div className="relative mt-2 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-950 group">
               <img
                 src={screenshot}
-                alt="اسکرین‌شات ضمیمه"
+                alt={isRtl ? 'اسکرین‌شات ضمیمه' : 'Attached screenshot'}
                 className="w-full max-h-48 object-contain mx-auto"
               />
               <button
                 type="button"
                 onClick={() => setScreenshot(null)}
                 className="absolute top-2 end-2 p-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white shadow-md transition-transform active:scale-90"
-                title="حذف تصویر"
+                title={isRtl ? 'حذف تصویر' : 'Remove image'}
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -228,7 +230,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
 
         {/* User context footer */}
         <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-900 text-[11px] text-slate-600 dark:text-slate-400 flex items-center justify-between">
-          <span>ارسال‌کننده: <strong className="text-slate-900 dark:text-slate-200">{currentUser.name}</strong> ({currentUser.role})</span>
+          <span>{isRtl ? 'ارسال‌کننده:' : 'Sent by:'} <strong className="text-slate-900 dark:text-slate-200">{currentUser.name}</strong> ({currentUser.role})</span>
           <span className="font-mono text-slate-500">{currentUser.email || currentUser.mobile || `@${currentUser.username}`}</span>
         </div>
 
@@ -252,7 +254,7 @@ export const ReportIssueModal: React.FC<ReportIssueModalProps> = ({
             leftIcon={<Send className={`w-4 h-4 ${isSubmitting ? 'animate-spin' : ''}`} />}
             className="bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-500 hover:to-indigo-500 border-none"
           >
-            {isSubmitting ? 'در حال ثبت...' : 'ارسال گزارش مشکل به مدیریت'}
+            {isSubmitting ? (isRtl ? 'در حال ثبت...' : 'Submitting...') : (isRtl ? 'ارسال گزارش مشکل به مدیریت' : 'Send Report to Admin')}
           </Button>
         </div>
       </form>
