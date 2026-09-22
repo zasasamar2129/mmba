@@ -57,7 +57,7 @@ async function getAuthUser(req: Request): Promise<User | undefined> {
 // the private key never leaves webPushService.
 const ALLOWLIST_PATHS = new Set<string>([
   '/auth/login', '/auth/biometric-challenge', '/auth/biometric-login',
-  '/health',
+  '/health', '/healthz', '/readyz',
 ]);
 
 function requireAuth(req: Request, res: Response, next: any) {
@@ -106,6 +106,35 @@ apiRouter.get('/health', (req: Request, res: Response) => {
     lastUpdatedAt: rev.lastUpdatedAt,
     serverTime: new Date().toISOString(),
   });
+});
+
+// Step 9 §9: liveness — process is up. Deliberately light: no filesystem work,
+// no DB read beyond the in-memory revision, so uptime probes never pay the cost
+// of a background IO. /health is kept for backward compatibility.
+apiRouter.get('/healthz', (req: Request, res: Response) => {
+  res.json({ status: 'ok', serverTime: new Date().toISOString() });
+});
+
+// Step 9 §9: readiness — can this instance serve application traffic?
+// Checks only the storages the app genuinely cannot run without: the JSON DB
+// must be loadable and the current in-memory state must be flushable to disk.
+// Optional integrations (Web Push, AI) are deliberately NOT part of readiness —
+// a temporary VAPID/push failure must not gate the whole business panel.
+apiRouter.get('/readyz', (req: Request, res: Response) => {
+  try {
+    const dbPath = centralDb.getDbPath();
+    const state = centralDb.getState();
+    if (!state) {
+      return res.status(503).json({ status: 'not_ready', reason: 'database_uninitialized' });
+    }
+    return res.json({
+      status: 'ready',
+      database: { path: dbPath, revision: state.revision, users: state.users.length, customers: state.customers.length },
+      serverTime: new Date().toISOString(),
+    });
+  } catch (err) {
+    return res.status(503).json({ status: 'not_ready', reason: 'storage_unavailable' });
+  }
 });
 
 // ----------------------------------------------------

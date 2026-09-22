@@ -445,6 +445,11 @@ class CentralDatabase {
     return this.getState();
   }
 
+  /** Absolute path to the persisted database file (Step 9 readiness probe). */
+  public getDbPath(): string {
+    return this.dbPath;
+  }
+
   public getRevisionInfo(): { revision: number; lastUpdatedAt: string } {
     const state = this.getState();
     return {

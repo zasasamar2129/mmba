@@ -176,7 +176,9 @@ export const generalLimiter = makeLimiter({
 // exempt it from the general tier explicitly.
 export const healthExemptGeneral = (req: Request, res: Response, next: NextFunction) => {
   const p = req.originalUrl?.split('?')[0] || req.path;
-  if (p.endsWith('/health')) return next();
+  // Liveness + readiness probes are exempt so orchestration/uptime monitors
+  // (which hit frequently) never trip the general tier. (Step 9 §9, §21)
+  if (p.endsWith('/health') || p.endsWith('/healthz') || p.endsWith('/readyz')) return next();
   generalLimiter(req, res, next);
 };
 

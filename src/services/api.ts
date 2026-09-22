@@ -60,6 +60,18 @@ class ApiClient {
       } catch {
         // use default error message
       }
+
+      // Step 9 §33: a 401 on a non-auth endpoint means the session has expired
+      // or been revoked server-side. Broadcast a single cleanup event (see
+      // storage.subscribeToStorage / App). App-side handler performs logout
+      // without a redirect loop.
+      if (res.status === 401 && !endpoint.startsWith('/auth/')) {
+        try {
+          window.dispatchEvent(new CustomEvent('mmba-session-expired'));
+        } catch { /* ignore */ }
+        throw new Error('نشست شما منقضی شده است. لطفاً دوباره وارد شوید.');
+      }
+
       throw new Error(errorMessage);
     }
 

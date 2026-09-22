@@ -98,7 +98,7 @@ const AppContent: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User>(storage.getCurrentUser());
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(storage.isLoggedIn());
   const [isLocked, setIsLocked] = useState<boolean>(storage.isSessionLocked());
-  const [lockedUser, setLockedUser] = useState<User>(storage.getLockedUser());
+  const [lockedUser, setLockedUser] = useState<User | null>(storage.getLockedUser());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   // Modals Open State
@@ -183,11 +183,23 @@ const AppContent: React.FC = () => {
       setIsLocked(true);
       setLockedUser(storage.getLockedUser());
     };
+
+    // Step 9 §33: server-side session expiry (401 on a guarded endpoint).
+    // Log out cleanly and open login, never a redirect loop.
+    const handleSessionExpired = () => {
+      storage.logout();
+      setIsLoggedIn(false);
+      setIsLocked(false);
+      setLockedUser(null);
+      setIsLoginModalOpen(true);
+    };
     window.addEventListener('mmba-auto-lock', handleAutoLockTrigger);
+    window.addEventListener('mmba-session-expired', handleSessionExpired);
 
     return () => {
       unsubscribe();
       window.removeEventListener('mmba-auto-lock', handleAutoLockTrigger);
+      window.removeEventListener('mmba-session-expired', handleSessionExpired);
     };
   }, []);
 
