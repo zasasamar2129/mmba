@@ -108,7 +108,7 @@ export const LeadList: React.FC<LeadListProps> = ({
         source: quickSource.trim() || (isRtl ? 'تماس ورودی' : 'Incoming Call'),
         status: LeadStatus.NEW_LEAD,
       });
-      success(`سرنخ جدید با کد «${saved.leadCode}» ثبت شد.`);
+      success(isRtl ? `سرنخ جدید با کد «${saved.leadCode}» ثبت شد.` : `New lead saved with code "${saved.leadCode}".`);
       setIsQuickLeadModalOpen(false);
       setQuickMobile('');
       setQuickName('');
@@ -120,7 +120,7 @@ export const LeadList: React.FC<LeadListProps> = ({
   };
 
   const handleDeleteLead = (id: string, code: string) => {
-    if (window.confirm(`آیا از حذف سرنخ ${code} اطمینان دارید؟`)) {
+    if (window.confirm(isRtl ? `آیا از حذف سرنخ ${code} اطمینان دارید؟` : `Are you sure you want to delete lead ${code}?`)) {
       storage.deleteLead(id);
       success(isRtl ? 'سرنخ با موفقیت حذف گردید' : 'Lead deleted successfully');
       refreshLeads();

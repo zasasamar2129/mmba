@@ -231,7 +231,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
     setCreditLimit(String(existing.creditLimit || 0));
     setHasRestoredDraft(false);
 
-    warning(`فرم به پرونده مخاطب «${existing.name}» تغییر یافت.`);
+    warning(isRtl ? `فرم به پرونده مخاطب «${existing.name}» تغییر یافت.` : `Form changed to customer profile "${existing.name}".`);
   };
 
   const handleClearDraft = () => {
@@ -292,7 +292,7 @@ export const CustomerFormModal: React.FC<CustomerFormModalProps> = ({
 
     // UI Level duplicate validation check
     if (duplicateConflict) {
-      error(`این شماره (${duplicateConflict.number}) از قبل برای مخاطب «${duplicateConflict.existingContact.name}» ثبت شده است.`);
+      error(isRtl ? `این شماره (${duplicateConflict.number}) از قبل برای مخاطب «${duplicateConflict.existingContact.name}» ثبت شده است.` : `This number (${duplicateConflict.number}) is already registered for "${duplicateConflict.existingContact.name}".`);
       return;
     }
 

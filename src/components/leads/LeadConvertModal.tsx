@@ -75,7 +75,7 @@ export const LeadConvertModal: React.FC<LeadConvertModalProps> = ({
       };
 
       const result = await storage.convertLeadToCustomer(lead.id, customerData);
-      success(`سرنخ «${lead.leadCode}» با موفقیت به مشتری «${result.customer.name}» تبدیل گردید و پرونده دائمی ایجاد شد.`);
+      success(isRtl ? `سرنخ «${lead.leadCode}» با موفقیت به مشتری «${result.customer.name}» تبدیل گردید و پرونده دائمی ایجاد شد.` : `Lead "${lead.leadCode}" converted to customer "${result.customer.name}" and a permanent record created.`);
       onConverted(result.customer);
       onClose();
     } catch (err: any) {

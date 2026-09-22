@@ -256,7 +256,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
                         {t.title}
                       </p>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                        {t.customerName ? `مشتری: ${t.customerName} • ` : ''}مسئول: {t.assignedUserName}
+                        {t.customerName ? `${isRtl ? 'مشتری:' : 'Customer:'} ${t.customerName} • ` : ''}{isRtl ? 'مسئول:' : 'Assignee:'} {t.assignedUserName}
                       </p>
                     </div>
                   </div>

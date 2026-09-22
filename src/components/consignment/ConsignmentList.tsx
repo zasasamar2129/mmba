@@ -163,9 +163,9 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
         action: 'SELL_CONSIGNMENT',
         module: 'CONSIGNMENTS',
         entityType: 'CONSIGNMENT',
-        entityName: `سیم‌کارت ${sellCons.simPhoneNumber}`,
+        entityName: `${isRtl ? 'سیم‌کارت' : 'SIM'} ${sellCons.simPhoneNumber}`,
         targetId: sellCons.id,
-        details: `فروش امانی ${sellCons.simPhoneNumber} به مبلغ ${salePrice} - کمیسیون ${commission} - قابل پرداخت به مالک ${payable}`,
+        details: isRtl ? `فروش امانی ${sellCons.simPhoneNumber} به مبلغ ${salePrice} - کمیسیون ${commission} - قابل پرداخت به مالک ${payable}` : `Consignment sale of ${sellCons.simPhoneNumber} for ${salePrice} - commission ${commission} - owner payable ${payable}`,
       });
 
       success(t('consignment.sellSuccess'));
@@ -196,9 +196,9 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
         action: 'RETURN_CONSIGNMENT',
         module: 'CONSIGNMENTS',
         entityType: 'CONSIGNMENT',
-        entityName: `سیم‌کارت ${returnCons.simPhoneNumber}`,
+        entityName: `${isRtl ? 'سیم‌کارت' : 'SIM'} ${returnCons.simPhoneNumber}`,
         targetId: returnCons.id,
-        details: `عودت امانی ${returnCons.simPhoneNumber} - علت: ${returnReason.trim()}`,
+        details: isRtl ? `عودت امانی ${returnCons.simPhoneNumber} - علت: ${returnReason.trim()}` : `Consignment return of ${returnCons.simPhoneNumber} - reason: ${returnReason.trim()}`,
       });
       success(t('consignment.returnSuccess'));
       setReturnCons(null);
@@ -218,9 +218,9 @@ export const ConsignmentList: React.FC<ConsignmentListProps> = ({
         action: 'SETTLE_CONSIGNMENT',
         module: 'CONSIGNMENTS',
         entityType: 'CONSIGNMENT',
-        entityName: `سیم‌کارت ${c.simPhoneNumber}`,
+        entityName: `${isRtl ? 'سیم‌کارت' : 'SIM'} ${c.simPhoneNumber}`,
         targetId: c.id,
-        details: `تسویه کامل با مالک برای ${c.simPhoneNumber}`,
+        details: isRtl ? `تسویه کامل با مالک برای ${c.simPhoneNumber}` : `Full settlement with owner for ${c.simPhoneNumber}`,
       });
       success(t('consignment.settleSuccess'));
       onRefresh();

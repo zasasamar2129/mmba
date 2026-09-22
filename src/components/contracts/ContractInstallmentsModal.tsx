@@ -106,7 +106,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
         needsFinanceReview,
       });
 
-      success(`واریز مبلغ ${formatToman(amount)} با موفقیت ثبت گردید.`);
+      success(isRtl ? `واریز مبلغ ${formatToman(amount)} با موفقیت ثبت گردید.` : `Payment of ${formatToman(amount)} recorded successfully.`);
       setSelectedInstallment(null);
       loadData();
     } catch (err: any) {
@@ -134,7 +134,7 @@ export const ContractInstallmentsModal: React.FC<ContractInstallmentsModalProps>
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`جدول اقساط قرارداد: ${contract.contractNumber}`}
+      title={isRtl ? `جدول اقساط قرارداد: ${contract.contractNumber}` : `Installment Schedule: ${contract.contractNumber}`}
       size="xl"
     >
       <div className="space-y-5">

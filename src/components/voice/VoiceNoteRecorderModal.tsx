@@ -276,10 +276,10 @@ export const VoiceNoteRecorderModal: React.FC<VoiceNoteRecorderModalProps> = ({
     if (createFollowUpTask && selectedCust) {
       storage.saveTask({
         id: '',
-        title: `پیگیری یادداشت صوتی: ${title.trim()}`,
+        title: isRtl ? `پیگیری یادداشت صوتی: ${title.trim()}` : `Voice note follow-up: ${title.trim()}`,
         description: transcription.trim()
-          ? `متن یادداشت: ${transcription.trim()}`
-          : `دارای فایل صوتی ضمیمه در پرونده مشتری (${activeDuration} ثانیه)`,
+          ? (isRtl ? `متن یادداشت: ${transcription.trim()}` : `Note text: ${transcription.trim()}`)
+          : (isRtl ? `دارای فایل صوتی ضمیمه در پرونده مشتری (${activeDuration} ثانیه)` : `Has attached audio file in customer record (${activeDuration} sec)`),
         customerId: selectedCust.id,
         customerName: selectedCust.name,
         assignedUserId: storage.getCurrentUser().id,

@@ -96,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div
           onClick={() => onNavigate('dashboard')}
           className="flex items-center gap-2 sm:gap-3 cursor-pointer select-none group shrink-0"
-          title="MMBA PANEL - صفحه اصلی"
+          title={`MMBA PANEL - ${isRtl ? 'صفحه اصلی' : 'Home'}`}
         >
           <div className="flex items-center justify-center shrink-0">
             <img 

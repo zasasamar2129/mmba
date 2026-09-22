@@ -158,7 +158,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
         reason: cancellationReason || (isRtl ? 'انصراف مشتری' : 'Customer cancelled'),
         refundDeposit: refundRequired,
       });
-      success(`رزرو سیم‌کارت ${sim.phoneNumber} لغو گردید و به وضعیت موجود بازگشت.`);
+      success(isRtl ? `رزرو سیم‌کارت ${sim.phoneNumber} لغو گردید و به وضعیت موجود بازگشت.` : `Reservation for SIM ${sim.phoneNumber} cancelled and returned to available.`);
       onSuccess(updated);
       onClose();
     } catch (err: any) {
@@ -281,9 +281,9 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
         action: 'CREATE_CONSIGNMENT',
         module: 'CONSIGNMENTS',
         entityType: 'CONSIGNMENT',
-        entityName: `سیم‌کارت ${sim.phoneNumber}`,
+        entityName: `${isRtl ? 'سیم‌کارت' : 'SIM'} ${sim.phoneNumber}`,
         targetId: consignment.id,
-        details: `ثبت امانی سیم‌کارت ${sim.phoneNumber} از ${ownerCustomer?.name || ''} با قیمت پیشنهادی ${requestedPrice}`,
+        details: isRtl ? `ثبت امانی سیم‌کارت ${sim.phoneNumber} از ${ownerCustomer?.name || ''} با قیمت پیشنهادی ${requestedPrice}` : `Consignment of SIM ${sim.phoneNumber} from ${ownerCustomer?.name || ''} with requested price ${requestedPrice}`,
       });
 
       success(isRtl ? `سیم‌کارت ${sim.phoneNumber} به صورت امانی از ${ownerCustomer?.name || ''} ثبت شد.` : `SIM ${sim.phoneNumber} registered on consignment from ${ownerCustomer?.name || ''}.`);
@@ -540,7 +540,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
                 onChange={(e) => setConsOwnerCustomerId(e.target.value)}
                 isRequired
               >
-                <option value="">-- انتخاب مالک از مشتریان سیستم --</option>
+                <option value="">-- {isRtl ? 'انتخاب مالک از مشتریان سیستم' : 'Select owner from customers'} --</option>
                 {(customers || []).map((c) => (
                   <option key={c.id} value={c.id}>{c.name} ({c.phone || ''})</option>
                 ))}
@@ -610,7 +610,7 @@ export const SimLifecycleModal: React.FC<SimLifecycleModalProps> = ({
                 onChange={(e) => setConsResponsibleUserId(e.target.value)}
                 isRequired
               >
-                <option value="">-- انتخاب مسئول پیگیری --</option>
+                <option value="">-- {isRtl ? 'انتخاب مسئول پیگیری' : 'Select responsible user'} --</option>
                 {(allUsers && allUsers.length > 0 ? allUsers : [currentUser]).map((u) => (
                   <option key={u.id} value={u.id}>{u.name}</option>
                 ))}

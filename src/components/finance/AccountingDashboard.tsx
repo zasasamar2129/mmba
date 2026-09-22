@@ -261,26 +261,26 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       documentDate: entry.entry_date || entry.created_at,
       content: (
         <div className="space-y-4 text-xs">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900/60 p-3 rounded-lg border border-(--border-subtle)">
             <div>
-              <span className="text-slate-500">{isRtl ? 'شماره سند:' : 'Entry #'}</span>{' '}
-              <strong className="text-slate-900">{entry.entry_number || entry.id}</strong>
+              <span className="text-(--text-muted)">{isRtl ? 'شماره سند:' : 'Entry #'}</span>{' '}
+              <strong className="text-(--text-primary)">{entry.entry_number || entry.id}</strong>
             </div>
             <div>
-              <span className="text-slate-500">{isRtl ? 'تاریخ سند:' : 'Voucher Date:'}</span>{' '}
-              <strong className="text-slate-900">{formatPersianDate(entry.entry_date || entry.created_at)}</strong>
+              <span className="text-(--text-muted)">{isRtl ? 'تاریخ سند:' : 'Voucher Date:'}</span>{' '}
+              <strong className="text-(--text-primary)">{formatPersianDate(entry.entry_date || entry.created_at)}</strong>
             </div>
             <div>
-              <span className="text-slate-500">{isRtl ? 'نوع عطف:' : 'Ref Type:'}</span>{' '}
-              <strong className="text-slate-900">{entry.reference_type || (isRtl ? 'دستی' : 'Manual')}</strong>
+              <span className="text-(--text-muted)">{isRtl ? 'نوع عطف:' : 'Ref Type:'}</span>{' '}
+              <strong className="text-(--text-primary)">{entry.reference_type || (isRtl ? 'دستی' : 'Manual')}</strong>
             </div>
             <div>
-              <span className="text-slate-500">{isRtl ? 'تنظیم‌کننده:' : 'Prepared by:'}</span>{' '}
-              <strong className="text-slate-900">{entry.created_by_name || (isRtl ? 'کاربر سیستم' : 'System User')}</strong>
+              <span className="text-(--text-muted)">{isRtl ? 'تنظیم‌کننده:' : 'Prepared by:'}</span>{' '}
+              <strong className="text-(--text-primary)">{entry.created_by_name || (isRtl ? 'کاربر سیستم' : 'System User')}</strong>
             </div>
           </div>
 
-          <table className="w-full border-collapse border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+          <table className="w-full border-collapse border border-(--border-primary) dark:border-(--border-subtle) text-(--text-primary) dark:text-(--text-primary)">
             <thead>
               <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
                 <th className="border border-slate-300 dark:border-slate-700 p-2 text-center w-10">{isRtl ? 'ردیف' : '#'}</th>

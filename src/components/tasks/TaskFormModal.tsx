@@ -372,7 +372,7 @@ export const TaskFormModal: React.FC<TaskFormModalProps> = ({
       try {
         const savedVN = storage.saveVoiceNote({
           id: linkedVoiceNoteId || '',
-          title: `دستور صوتی وظیفه: ${title.trim()}`,
+          title: isRtl ? `دستور صوتی وظیفه: ${title.trim()}` : `Task voice instruction: ${title.trim()}`,
           audioDataUrl: voiceNoteAudioUrl,
           durationSeconds: voiceNoteDuration || 10,
           transcription: voiceNoteTranscript || description || undefined,
