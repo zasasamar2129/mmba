@@ -32,9 +32,9 @@ export const CustomerTimeline: React.FC<CustomerTimelineProps> = ({ events, onEv
       case 'SIM':
         return <Smartphone className="w-4 h-4 text-cyan-400" />;
       case 'ATTACHMENT':
-        return <Paperclip className="w-4 h-4 text-slate-300" />;
+        return <Paperclip className="w-4 h-4 text-(--text-muted)" />;
       default:
-        return <MessageSquare className="w-4 h-4 text-slate-400" />;
+        return <MessageSquare className="w-4 h-4 text-(--text-muted)" />;
     }
   };
 
@@ -55,10 +55,10 @@ export const CustomerTimeline: React.FC<CustomerTimelineProps> = ({ events, onEv
 
   if (events.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500 rounded-2xl liquid-glass-subtle p-6 border border-slate-800">
+      <div className="text-center py-12 text-(--text-muted) rounded-2xl liquid-glass-subtle p-6 border border-slate-800">
         <Clock className="w-8 h-8 mx-auto mb-2 opacity-40" />
         <p className="text-sm font-medium">{isRtl ? 'هنوز هیچ رویدادی برای این مشتری ثبت نشده است' : 'No events recorded for this customer yet'}</p>
-        <p className="text-xs text-slate-600 mt-1">{isRtl ? 'با ثبت اولین تماس یا وظیفه، تایم‌لاین کامل تشکیل خواهد شد.' : 'The full timeline will build up once the first call or task is logged.'}</p>
+        <p className="text-xs text-(--text-muted) mt-1">{isRtl ? 'با ثبت اولین تماس یا وظیفه، تایم‌لاین کامل تشکیل خواهد شد.' : 'The full timeline will build up once the first call or task is logged.'}</p>
       </div>
     );
   }
@@ -82,25 +82,25 @@ export const CustomerTimeline: React.FC<CustomerTimelineProps> = ({ events, onEv
             <div className="p-4 rounded-2xl liquid-glass-card border border-slate-800 hover:border-slate-700 transition-all group-hover:shadow-lg">
               <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-xs sm:text-sm font-bold text-slate-200 group-hover:text-indigo-300">
+                  <h4 className="text-xs sm:text-sm font-bold text-(--text-secondary) group-hover:text-indigo-300">
                     {evt.title}
                   </h4>
                   <Badge variant={badgeInfo.variant} size="sm">
                     {badgeInfo.text}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2 text-[11px] text-slate-500">
+                <div className="flex items-center gap-2 text-[11px] text-(--text-muted)">
                   <span>{isRtl ? 'ثبت توسط:' : 'Registered by:'} {evt.userName}</span>
                   <span>•</span>
                   <span>{getRelativeTimeFa(evt.timestamp)}</span>
                 </div>
               </div>
 
-              <p className="text-xs text-slate-300 leading-relaxed font-normal">
+              <p className="text-xs text-(--text-secondary) leading-relaxed font-normal">
                 {evt.description}
               </p>
 
-              <div className="mt-2 text-[10px] text-slate-500">
+              <div className="mt-2 text-[10px] text-(--text-muted)">
                 {isRtl ? 'تاریخ دقیق:' : 'Exact date:'} {formatPersianDate(evt.timestamp, true)}
               </div>
             </div>

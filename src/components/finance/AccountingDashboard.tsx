@@ -282,46 +282,46 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
 
           <table className="w-full border-collapse border border-(--border-primary) dark:border-(--border-subtle) text-(--text-primary) dark:text-(--text-primary)">
             <thead>
-              <tr className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
-                <th className="border border-slate-300 dark:border-slate-700 p-2 text-center w-10">{isRtl ? 'ردیف' : '#'}</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2 w-28 text-center">{isRtl ? 'کد حساب' : 'Acc. Code'}</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2">{isRtl ? 'نام حساب' : 'Account Name'}</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2">{isRtl ? 'شرح سطر' : 'Description'}</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2 text-start w-36">{isRtl ? 'بدهکار (ریال)' : 'Debit (Rial)'}</th>
-                <th className="border border-slate-300 dark:border-slate-700 p-2 text-start w-36">{isRtl ? 'بستانکار (ریال)' : 'Credit (Rial)'}</th>
+              <tr className="bg-(--bg-surface-subtle) text-(--text-secondary) font-bold">
+                <th className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-center w-10">{isRtl ? 'ردیف' : '#'}</th>
+                <th className="border border-(--border-primary) dark:border-(--border-subtle) p-2 w-28 text-center">{isRtl ? 'کد حساب' : 'Acc. Code'}</th>
+                <th className="border border-(--border-primary) dark:border-(--border-subtle) p-2">{isRtl ? 'نام حساب' : 'Account Name'}</th>
+                <th className="border border-(--border-primary) dark:border-(--border-subtle) p-2">{isRtl ? 'شرح سطر' : 'Description'}</th>
+                <th className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-start w-36">{isRtl ? 'بدهکار (ریال)' : 'Debit (Rial)'}</th>
+                <th className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-start w-36">{isRtl ? 'بستانکار (ریال)' : 'Credit (Rial)'}</th>
               </tr>
             </thead>
             <tbody>
               {(entry.lines || []).map((line, idx) => (
                 <tr key={line.id || idx}>
-                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-center font-mono">{idx + 1}</td>
-                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-center font-mono">{line.account_code || '—'}</td>
-                  <td className="border border-slate-300 dark:border-slate-700 p-2 font-medium">{line.account_name || '—'}</td>
-                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-slate-600 dark:text-slate-400">{line.description || entry.description}</td>
-                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono font-bold">
+                  <td className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-center font-mono">{idx + 1}</td>
+                  <td className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-center font-mono">{line.account_code || '—'}</td>
+                  <td className="border border-(--border-primary) dark:border-(--border-subtle) p-2 font-medium">{line.account_name || '—'}</td>
+                  <td className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-(--text-secondary) dark:text-(--text-muted)">{line.description || entry.description}</td>
+                  <td className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-start font-mono font-bold">
                     {line.debit > 0 ? Number(line.debit).toLocaleString() : '—'}
                   </td>
-                  <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono font-bold">
+                  <td className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-start font-mono font-bold">
                     {line.credit > 0 ? Number(line.credit).toLocaleString() : '—'}
                   </td>
                 </tr>
               ))}
-              <tr className="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-slate-100">
-                <td colSpan={4} className="border border-slate-300 dark:border-slate-700 p-2 text-end">{isRtl ? 'جمع کل سند (تراز):' : 'Total Entry (Balance):'}</td>
-                <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono text-emerald-700 dark:text-emerald-400">
+              <tr className="bg-(--bg-surface-subtle) font-bold text-(--text-primary)">
+                <td colSpan={4} className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-end">{isRtl ? 'جمع کل سند (تراز):' : 'Total Entry (Balance):'}</td>
+                <td className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-start font-mono text-emerald-700 dark:text-emerald-400">
                   {Number(entry.totalDebit || 0).toLocaleString()}
                 </td>
-                <td className="border border-slate-300 dark:border-slate-700 p-2 text-start font-mono text-indigo-700 dark:text-indigo-300">
+                <td className="border border-(--border-primary) dark:border-(--border-subtle) p-2 text-start font-mono text-indigo-700 dark:text-indigo-300">
                   {Number(entry.totalCredit || 0).toLocaleString()}
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <div className="grid grid-cols-3 gap-4 pt-10 text-center text-xs text-slate-600">
-            <div className="border-t border-slate-400 pt-1">{isRtl ? 'امضای تنظیم‌کننده' : "Preparer's Signature"}</div>
-            <div className="border-t border-slate-400 pt-1">{isRtl ? 'امضای حسابدار مسئول' : "Chief Accountant's Signature"}</div>
-            <div className="border-t border-slate-400 pt-1">{isRtl ? 'امضای مدیریت مالی' : "Finance Management's Signature"}</div>
+          <div className="grid grid-cols-3 gap-4 pt-10 text-center text-xs text-(--text-secondary)">
+            <div className="border-t border-(--border-primary) pt-1">{isRtl ? 'امضای تنظیم‌کننده' : "Preparer's Signature"}</div>
+            <div className="border-t border-(--border-primary) pt-1">{isRtl ? 'امضای حسابدار مسئول' : "Chief Accountant's Signature"}</div>
+            <div className="border-t border-(--border-primary) pt-1">{isRtl ? 'امضای مدیریت مالی' : "Finance Management's Signature"}</div>
           </div>
         </div>
       ),
@@ -348,8 +348,8 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             <Scale className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{isRtl ? 'پایه حسابداری' : 'Accounting Foundation'}</h2>
-            <p className="text-xs text-slate-500">{isRtl ? 'کدینگ حساب‌ها، دفتر روزنامه دوبل و دوره‌های مالی' : 'Chart of accounts, double-entry journal and fiscal periods'}</p>
+            <h2 className="text-lg font-bold text-(--text-primary)">{isRtl ? 'پایه حسابداری' : 'Accounting Foundation'}</h2>
+            <p className="text-xs text-(--text-muted)">{isRtl ? 'کدینگ حساب‌ها، دفتر روزنامه دوبل و دوره‌های مالی' : 'Chart of accounts, double-entry journal and fiscal periods'}</p>
           </div>
         </div>
 
@@ -388,7 +388,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+      <div className="flex items-center gap-2 border-b border-(--border-subtle) pb-2">
         <button
           type="button"
           onClick={() => setActiveTab('JOURNAL')}
@@ -432,9 +432,9 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       {/* TAB 1: JOURNAL BOOK */}
       {activeTab === 'JOURNAL' && (
         <div className="space-y-4">
-          <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+          <div className="border border-(--border-subtle) rounded-2xl overflow-hidden bg-(--bg-surface) shadow-xs">
             <table className="w-full text-end text-xs">
-              <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+              <thead className="bg-(--bg-surface-subtle) text-(--text-secondary) font-bold border-b border-(--border-subtle)">
                 <tr>
                   <th className="p-3 w-12 text-center">{isRtl ? 'شماره' : '#'}</th>
                   <th className="p-3 w-28">{isRtl ? 'تاریخ سند' : 'Date'}</th>
@@ -446,25 +446,25 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                   <th className="p-3 w-28 text-center">{isRtl ? 'عملیات' : 'Actions'}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              <tbody className="divide-y divide-(--border-subtle)">
                 {journalEntries.map((entry) => {
                   const isExpanded = expandedEntryId === entry.id;
                   return (
                     <React.Fragment key={entry.id}>
                       <tr className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                        <td className="p-3 text-center font-mono font-bold text-slate-800 dark:text-slate-200">
+                        <td className="p-3 text-center font-mono font-bold text-(--text-primary)">
                           {entry.entry_number || entry.id}
                         </td>
-                        <td className="p-3 text-slate-600 dark:text-slate-400">
+                        <td className="p-3 text-(--text-secondary) dark:text-(--text-muted)">
                           {formatPersianDate(entry.entry_date || entry.created_at)}
                         </td>
-                        <td className="p-3 font-semibold text-slate-900 dark:text-white">
+                        <td className="p-3 font-semibold text-(--text-primary)">
                           {entry.description}
                         </td>
                         <td className="p-3 text-center">
                           <Badge variant="indigo">{entry.reference_type || 'MANUAL'}</Badge>
                         </td>
-                        <td className="p-3 text-start font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                        <td className="p-3 text-start font-mono font-bold text-(--success)">
                           {Number(entry.totalDebit || 0).toLocaleString()}
                         </td>
                         <td className="p-3 text-start font-mono font-bold text-indigo-600 dark:text-indigo-400">
@@ -478,7 +478,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                             <button
                               type="button"
                               onClick={() => setExpandedEntryId(isExpanded ? null : entry.id)}
-                              className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-(--text-secondary) transition-colors"
                               title={isRtl ? 'مشاهده سطرهای سند' : 'View entry lines'}
                             >
                               {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -503,8 +503,8 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                               <h4 className="font-bold text-xs text-indigo-900 dark:text-indigo-300">
                                 {isRtl ? 'سطرهای آرتیکل سند' : 'Voucher Article Lines'} ({entry.lines?.length || 0} {isRtl ? 'سطر' : 'lines'}):
                               </h4>
-                              <table className="w-full text-xs text-end border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
-                                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
+                              <table className="w-full text-xs text-end border border-(--border-subtle) rounded-lg overflow-hidden bg-(--bg-surface)">
+                                <thead className="bg-(--bg-surface-subtle) text-(--text-secondary) font-semibold">
                                   <tr>
                                     <th className="p-2 w-10 text-center">#</th>
                                     <th className="p-2 w-28 text-center">{isRtl ? 'کد حساب' : 'Code'}</th>
@@ -514,14 +514,14 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                                     <th className="p-2 text-start w-32">{isRtl ? 'بستانکار (ریال)' : 'Credit (Rial)'}</th>
                                   </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                                <tbody className="divide-y divide-(--border-subtle)">
                                   {(entry.lines || []).map((line, idx) => (
                                     <tr key={line.id || idx}>
-                                      <td className="p-2 text-center text-slate-400 font-mono">{idx + 1}</td>
+                                      <td className="p-2 text-center text-(--text-muted) font-mono">{idx + 1}</td>
                                       <td className="p-2 text-center font-mono">{line.account_code || '—'}</td>
-                                      <td className="p-2 font-medium text-slate-800 dark:text-slate-200">{line.account_name || '—'}</td>
-                                      <td className="p-2 text-slate-500">{line.description}</td>
-                                      <td className="p-2 text-start font-mono text-emerald-600 font-bold">
+                                      <td className="p-2 font-medium text-(--text-primary)">{line.account_name || '—'}</td>
+                                      <td className="p-2 text-(--text-muted)">{line.description}</td>
+                                      <td className="p-2 text-start font-mono text-(--success) font-bold">
                                         {line.debit > 0 ? Number(line.debit).toLocaleString() : '—'}
                                       </td>
                                       <td className="p-2 text-start font-mono text-indigo-600 font-bold">
@@ -540,7 +540,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                 })}
                 {journalEntries.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="p-8 text-center text-slate-400">
+                    <td colSpan={8} className="p-8 text-center text-(--text-muted)">
                       {isRtl ? 'هنوز سندی در دفتر روزنامه ثبت نشده است. با دکمه «ثبت سند دوبل جدید» اولین سند را صادر کنید.' : 'No vouchers in the journal yet. Use "New Double-Entry Voucher" to issue the first one.'}
                     </td>
                   </tr>
@@ -555,15 +555,15 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       {activeTab === 'ACCOUNTS' && (
         <div className="space-y-6">
           {(Object.entries(groupedAccounts) as [string, Account[]][]).map(([typeKey, list]) => (
-            <div key={typeKey} className="border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
-              <div className="bg-slate-100 dark:bg-slate-800/80 px-4 py-3 flex items-center justify-between border-b border-slate-200 dark:border-slate-700">
-                <h3 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-2">
+            <div key={typeKey} className="border border-(--border-subtle) rounded-2xl bg-(--bg-surface) overflow-hidden shadow-xs">
+              <div className="bg-(--bg-surface-subtle) px-4 py-3 flex items-center justify-between border-b border-(--border-subtle)">
+                <h3 className="font-bold text-xs text-(--text-primary) flex items-center gap-2">
                   <span>{isRtl ? 'سرفصل' : 'Category'} {getAccountTypeName(typeKey as any)}</span>
                   <Badge variant="indigo">{list.length} {isRtl ? 'حساب' : 'accounts'}</Badge>
                 </h3>
               </div>
               <table className="w-full text-end text-xs">
-                <thead className="text-slate-500 font-semibold border-b border-slate-200 dark:border-slate-800">
+                <thead className="text-(--text-muted) font-semibold border-b border-(--border-subtle)">
                   <tr>
                     <th className="p-3 w-28 text-center">{isRtl ? 'کد حساب' : 'Code'}</th>
                     <th className="p-3">{isRtl ? 'نام حساب' : 'Name'}</th>
@@ -571,13 +571,13 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                     <th className="p-3 w-40">{isRtl ? 'تاریخ ایجاد' : 'Created'}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody className="divide-y divide-(--border-subtle)">
                   {list.map((acc) => (
                     <tr key={acc.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="p-3 text-center font-mono font-bold text-indigo-600 dark:text-indigo-400">
                         {acc.code}
                       </td>
-                      <td className="p-3 font-semibold text-slate-900 dark:text-white">
+                      <td className="p-3 font-semibold text-(--text-primary)">
                         {acc.name}
                       </td>
                       <td className="p-3 text-center">
@@ -585,14 +585,14 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                           {acc.is_active ? (isRtl ? 'فعال' : 'Active') : (isRtl ? 'غیرفعال' : 'Inactive')}
                         </Badge>
                       </td>
-                      <td className="p-3 text-slate-500">
+                      <td className="p-3 text-(--text-muted)">
                         {formatPersianDate(acc.created_at)}
                       </td>
                     </tr>
                   ))}
                   {list.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="p-4 text-center text-slate-400">
+                      <td colSpan={4} className="p-4 text-center text-(--text-muted)">
                         {isRtl ? 'حسابی در این گروه تعریف نشده است.' : 'No accounts defined in this group.'}
                       </td>
                     </tr>
@@ -611,13 +611,13 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             {periods.map((p) => (
               <div
                 key={p.id}
-                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between"
+                className="p-5 rounded-2xl bg-(--bg-surface) border border-(--border-subtle) flex items-center justify-between"
               >
                 <div>
-                  <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">
+                  <h4 className="text-base font-bold text-(--text-primary) mb-1">
                     {isRtl ? 'دوره مالی سال' : 'Fiscal Year'} {p.period}
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-(--text-muted)">
                     {isRtl ? 'از' : 'From'} {formatPersianDate(p.start_date)} {isRtl ? 'تا' : 'to'} {formatPersianDate(p.end_date)}
                   </p>
                 </div>
@@ -640,7 +640,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         <form onSubmit={handleSaveJournalEntry} className="space-y-4 text-end">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
                 {isRtl ? 'شرح سند حسابداری:' : 'Voucher Description:'}
               </label>
               <Input
@@ -651,7 +651,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
                 {isRtl ? 'تاریخ سند:' : 'Voucher Date:'}
               </label>
               <Input
@@ -666,7 +666,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           {/* Dynamic Lines Table */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              <span className="text-xs font-bold text-(--text-primary)">
                 {isRtl ? 'سطرهای سند حسابداری (حداقل دو سطر):' : 'Voucher Lines (minimum two):'}
               </span>
               <Button type="button" variant="outline" size="sm" onClick={handleAddLine} leftIcon={<Plus className="w-3.5 h-3.5" />}>
@@ -674,9 +674,9 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               </Button>
             </div>
 
-            <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <div className="border border-(--border-subtle) rounded-xl overflow-hidden">
               <table className="w-full text-end text-xs">
-                <thead className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                <thead className="bg-(--bg-surface-subtle) text-(--text-secondary) font-bold border-b border-(--border-subtle)">
                   <tr>
                     <th className="p-2 w-10 text-center">#</th>
                     <th className="p-2 w-64">{isRtl ? 'انتخاب حساب' : 'Account'}</th>
@@ -686,16 +686,16 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                     <th className="p-2 w-12 text-center">{isRtl ? 'حذف' : 'Del'}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                <tbody className="divide-y divide-(--border-subtle)">
                   {entryLines.map((line, idx) => (
                     <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                      <td className="p-2 text-center text-slate-400 font-mono">{idx + 1}</td>
+                      <td className="p-2 text-center text-(--text-muted) font-mono">{idx + 1}</td>
                       <td className="p-2">
                         <select
                           required
                           value={line.accountId}
                           onChange={(e) => handleLineChange(idx, 'accountId', e.target.value)}
-                          className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
+                          className="w-full p-1.5 rounded-lg border border-(--border-primary) dark:border-(--border-subtle) bg-(--bg-surface) text-xs font-medium"
                         >
                           <option value="">-- {isRtl ? 'انتخاب حساب' : 'Select account'} --</option>
                           {accounts.map((a) => (
@@ -761,8 +761,8 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           {/* Strict Balance Bar */}
           <div className={`p-4 rounded-2xl border text-xs flex flex-wrap items-center justify-between gap-3 ${
             isEntryBalanced
-              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
-              : 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200'
+              ? 'bg-(--success-bg) dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
+              : 'bg-(--danger-bg) dark:bg-rose-950/40 border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-200'
           }`}>
             <div className="flex items-center gap-2">
               {isEntryBalanced ? (
@@ -813,7 +813,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       >
         <form onSubmit={handleSaveAccount} className="space-y-4 text-end">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
               {isRtl ? 'کد حساب (عددی):' : 'Account Code (numeric):'}
             </label>
             <Input
@@ -825,7 +825,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
               {isRtl ? 'نام حساب:' : 'Account Name:'}
             </label>
             <Input
@@ -837,7 +837,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
               {isRtl ? 'سرفصل حساب:' : 'Account Type:'}
             </label>
             <Select
@@ -872,7 +872,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       >
         <form onSubmit={handleSavePeriod} className="space-y-4 text-end">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
               {isRtl ? 'سال دوره مالی:' : 'Fiscal Year:'}
             </label>
             <Input
@@ -883,7 +883,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
               {isRtl ? 'تاریخ شروع:' : 'Start Date:'}
             </label>
             <Input
@@ -894,7 +894,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-semibold text-(--text-secondary) mb-1">
               {isRtl ? 'تاریخ پایان:' : 'End Date:'}
             </label>
             <Input
