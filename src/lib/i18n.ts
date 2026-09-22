@@ -129,6 +129,8 @@ export const faTranslations: Translations = {
   "common.customer": "مخاطب",
   "common.more": "بیشتر",
   "common.menu": "منوی ناوبری",
+  "common.notifications": "اعلان‌ها",
+  "common.closeNotification": "بستن اعلان",
 
   // Relative Dates
   "today": "امروز",
@@ -1553,6 +1555,8 @@ export const enTranslations: Translations = {
   "common.customer": "Customer",
   "common.more": "More",
   "common.menu": "Navigation Menu",
+  "common.notifications": "Notifications",
+  "common.closeNotification": "Close notification",
   "today": "Today",
   "tomorrow": "Tomorrow",
   "nextWeek": "Next Week",

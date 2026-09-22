@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X, ChevronDown, ChevronUp, Sun, Moon, Lock, LogOut,
@@ -9,6 +9,7 @@ import { User } from '../../types';
 import { Badge } from '../ui/Badge';
 import { getInitialTheme, toggleTheme } from '../../lib/theme';
 import { useTranslation } from '../../lib/i18n';
+import { useFocusTrap } from '../../lib/useFocusTrap';
 
 export interface MobileDrawerProps {
   isOpen: boolean;
@@ -36,8 +37,11 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   onOpenReportIssue,
 }) => {
   const { language, setLanguage, t, isRtl, formatNumber } = useTranslation();
+  const drawerRef = useRef<HTMLElement>(null);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [isDark, setIsDark] = useState<boolean>(() => getInitialTheme() === 'dark');
+
+  useFocusTrap(drawerRef, isOpen);
 
   // Listen to theme change events
   useEffect(() => {
@@ -113,14 +117,18 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
           {/* Drawer container */}
           <motion.aside
+            id="mobile-navigation"
+            ref={drawerRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={isRtl ? 'منوی ناوبری' : 'Navigation menu'}
             initial={{ x: isRtl ? '100%' : '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: isRtl ? '100%' : '-100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className={`relative w-[300px] max-w-[85vw] h-full bg-white dark:bg-slate-950 ${
+            className={`relative w-[300px] max-w-[85vw] h-full bg-(--bg-surface) dark:bg-slate-950 ${
               isRtl ? 'border-l' : 'border-r'
-            } border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col z-10 select-none overflow-hidden`}
-            aria-label="Mobile Navigation"
+            } border-(--border-subtle) shadow-2xl flex flex-col z-10 select-none overflow-hidden focus:outline-none`}
           >
             {/* Header / Brand */}
             <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">

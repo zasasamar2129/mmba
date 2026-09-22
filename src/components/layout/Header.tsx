@@ -23,6 +23,7 @@ export interface HeaderProps {
   onOpenNewVoiceNote: (mode?: 'RECORD' | 'UPLOAD') => void;
   onNavigate: (tab: string) => void;
   onToggleMobileNav?: () => void;
+  isMobileMenuOpen?: boolean;
   onOpenProfile?: () => void;
 }
 
@@ -39,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNewVoiceNote,
   onNavigate,
   onToggleMobileNav,
+  isMobileMenuOpen = false,
   onOpenProfile,
 }) => {
   const { language, setLanguage, toggleLanguage, t, isRtl } = useTranslation();
@@ -86,7 +88,8 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             type="button"
             onClick={onToggleMobileNav}
-            aria-expanded="false"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-navigation"
             className="lg:hidden w-9 h-9 rounded-xl bg-(--surface-muted) hover:bg-(--bg-surface-elevated) text-(--text-secondary) border border-(--border-subtle) flex items-center justify-center transition-all shadow-xs active:scale-95 shrink-0"
             aria-label={t('common.menu')}
           >

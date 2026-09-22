@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle2, AlertTriangle, XCircle, Info, X } from 'lucide-react';
 import { cn } from './Button';
+import { useTranslation } from '../../lib/i18n';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -24,6 +25,7 @@ interface ToastContextValue {
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { t } = useTranslation();
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const removeToast = useCallback((id: string) => {
@@ -68,7 +70,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       <div
         className="fixed bottom-4 start-4 end-4 sm:end-auto sm:start-6 z-[200] flex flex-col gap-2.5 max-w-md pointer-events-none"
         role="region"
-        aria-label="Notifications"
+        aria-label={t('common.notifications')}
       >
         <div role="status" aria-live="polite" aria-atomic="false" className="flex flex-col gap-2.5">
         <AnimatePresence>
@@ -91,8 +93,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               <button
                 type="button"
                 onClick={() => removeToast(t.id)}
-                className="text-(--muted-foreground) hover:text-(--text-primary) p-1 rounded transition-colors min-h-[24px] min-w-[24px]"
-                aria-label={t.title}
+                className="text-(--muted-foreground) hover:text-(--text-primary) p-1 rounded transition-colors min-h-[28px] min-w-[28px]"
+                aria-label={t('common.closeNotification')}
               >
                 <X className="w-4 h-4" aria-hidden="true" />
               </button>

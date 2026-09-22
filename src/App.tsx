@@ -294,6 +294,7 @@ const AppContent: React.FC = () => {
         }}
         onNavigate={setActiveTab}
         onToggleMobileNav={() => setIsMobileNavOpen((prev) => !prev)}
+        isMobileMenuOpen={isMobileNavOpen}
       />
 
       {/* Main Layout: Sidebar on Left in LTR (English) and Right in RTL (Persian) */}
