@@ -130,7 +130,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
     }
 
     if (!isEntryBalanced) {
-      error(`سند تراز نیست! اختلاف بدهکار و بستانکار: ${balanceDifference.toLocaleString()} ریال`);
+      error(isRtl ? `سند تراز نیست! اختلاف بدهکار و بستانکار: ${balanceDifference.toLocaleString()} ریال` : `Entry not balanced! Debit/credit difference: ${balanceDifference.toLocaleString()} Rial`);
       return;
     }
 
@@ -138,11 +138,11 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
     for (let i = 0; i < entryLines.length; i++) {
       const line = entryLines[i];
       if (!line.accountId) {
-        error(`لطفاً حساب سطر شماره ${i + 1} را انتخاب کنید.`);
+        error(isRtl ? `لطفاً حساب سطر شماره ${i + 1} را انتخاب کنید.` : `Please select an account for line ${i + 1}.`);
         return;
       }
       if (line.debit === 0 && line.credit === 0) {
-        error(`سطر شماره ${i + 1} باید دارای مقدار بدهکار یا بستانکار باشد.`);
+        error(isRtl ? `سطر شماره ${i + 1} باید دارای مقدار بدهکار یا بستانکار باشد.` : `Line ${i + 1} must have a debit or credit amount.`);
         return;
       }
     }
@@ -193,7 +193,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         is_active: true,
       });
 
-      success(`حساب «${newAccountName}» با موفقیت ذخیره شد.`);
+      success(isRtl ? `حساب «${newAccountName}» با موفقیت ذخیره شد.` : `Account "${newAccountName}" saved successfully.`);
       setIsNewAccountModalOpen(false);
       setNewAccountCode('');
       setNewAccountName('');
@@ -215,7 +215,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         end_date: new Date(newPeriodEnd).toISOString(),
         status: AccountingPeriodStatus.OPEN,
       });
-      success(`دوره مالی ${newPeriodYear} ذخیره شد.`);
+      success(isRtl ? `دوره مالی ${newPeriodYear} ذخیره شد.` : `Fiscal period ${newPeriodYear} saved.`);
       setIsNewPeriodModalOpen(false);
       refreshData();
     } catch (err: any) {
@@ -255,8 +255,8 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
   const handlePrintEntry = (entry: JournalEntry) => {
     setPrintTarget({
       isOpen: true,
-      title: `سند حسابداری شماره ${entry.entry_number || entry.id}`,
-      subtitle: `شرح سند: ${entry.description}`,
+      title: isRtl ? `سند حسابداری شماره ${entry.entry_number || entry.id}` : `Accounting Voucher #${entry.entry_number || entry.id}`,
+      subtitle: isRtl ? `شرح سند: ${entry.description}` : `Voucher description: ${entry.description}`,
       documentNumber: String(entry.entry_number || entry.id),
       documentDate: entry.entry_date || entry.created_at,
       content: (
@@ -267,7 +267,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               <strong className="text-slate-900">{entry.entry_number || entry.id}</strong>
             </div>
             <div>
-              <span className="text-slate-500">{isRtl ? 'تاریخ سند:' : 'Entry Date:'}</span>{' '}
+              <span className="text-slate-500">{isRtl ? 'تاریخ سند:' : 'Voucher Date:'}</span>{' '}
               <strong className="text-slate-900">{formatPersianDate(entry.entry_date || entry.created_at)}</strong>
             </div>
             <div>
@@ -336,7 +336,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
         <div className="leading-relaxed">
           <strong className="font-bold">{isRtl ? 'پایه‌ریزی ساختار حسابداری دوبل' : 'Double-Entry Accounting Foundation'}:</strong>
           <p className="mt-0.5">
-            سامانه حسابداری هلو (Holo) همچنان مرجع اصلی امور مالی و صدور اسناد نهایی مجموعه است. این بخش زیرساخت حسابداری دوطرفه استاندارد MMBA شامل کدینگ حساب‌ها، دفتر روزنامه و کنترل تراز دقیق بدهکار/بستانکار را جهت آمادگی اتوماسیون آتی فراهم می‌سازد.
+            {isRtl ? 'سامانه حسابداری هلو (Holo) همچنان مرجع اصلی امور مالی و صدور اسناد نهایی مجموعه است. این بخش زیرساخت حسابداری دوطرفه استاندارد MMBA شامل کدینگ حساب‌ها، دفتر روزنامه و کنترل تراز دقیق بدهکار/بستانکار را جهت آمادگی اتوماسیون آتی فراهم می‌سازد.' : 'Holo accounting remains the main financial reference and source of final vouchers. This section provides the standard MMBA double-entry infrastructure — chart of accounts, journal, and precise debit/credit balance control — readying the system for future automation.'}
           </p>
         </div>
       </div>
@@ -361,7 +361,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               onClick={() => setIsNewEntryModalOpen(true)}
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              ثبت سند دوبل جدید
+              {isRtl ? 'ثبت سند دوبل جدید' : 'New Double-Entry Voucher'}
             </Button>
           )}
           {activeTab === 'ACCOUNTS' && (
@@ -371,7 +371,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               onClick={() => setIsNewAccountModalOpen(true)}
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              تعریف حساب جدید
+              {isRtl ? 'تعریف حساب جدید' : 'New Account'}
             </Button>
           )}
           {activeTab === 'PERIODS' && (
@@ -381,7 +381,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               onClick={() => setIsNewPeriodModalOpen(true)}
               leftIcon={<Plus className="w-4 h-4" />}
             >
-              تعریف دوره مالی
+              {isRtl ? 'تعریف دوره مالی' : 'New Fiscal Period'}
             </Button>
           )}
         </div>
@@ -501,7 +501,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                           <td colSpan={8} className="p-4 border-t border-b border-indigo-100 dark:border-indigo-900/40">
                             <div className="space-y-2">
                               <h4 className="font-bold text-xs text-indigo-900 dark:text-indigo-300">
-                                سطرهای آرتیکل سند ({entry.lines?.length || 0} سطر):
+                                {isRtl ? 'سطرهای آرتیکل سند' : 'Voucher Article Lines'} ({entry.lines?.length || 0} {isRtl ? 'سطر' : 'lines'}):
                               </h4>
                               <table className="w-full text-xs text-end border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-white dark:bg-slate-900">
                                 <thead className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold">
@@ -541,7 +541,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                 {journalEntries.length === 0 && (
                   <tr>
                     <td colSpan={8} className="p-8 text-center text-slate-400">
-                      هنوز سندی در دفتر روزنامه ثبت نشده است. با دکمه «ثبت سند دوبل جدید» اولین سند را صادر کنید.
+                      {isRtl ? 'هنوز سندی در دفتر روزنامه ثبت نشده است. با دکمه «ثبت سند دوبل جدید» اولین سند را صادر کنید.' : 'No vouchers in the journal yet. Use "New Double-Entry Voucher" to issue the first one.'}
                     </td>
                   </tr>
                 )}
@@ -593,7 +593,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                   {list.length === 0 && (
                     <tr>
                       <td colSpan={4} className="p-4 text-center text-slate-400">
-                        حسابی در این گروه تعریف نشده است.
+                        {isRtl ? 'حسابی در این گروه تعریف نشده است.' : 'No accounts defined in this group.'}
                       </td>
                     </tr>
                   )}
@@ -615,10 +615,10 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               >
                 <div>
                   <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">
-                    دوره مالی سال {p.period}
+                    {isRtl ? 'دوره مالی سال' : 'Fiscal Year'} {p.period}
                   </h4>
                   <p className="text-xs text-slate-500">
-                    از {formatPersianDate(p.start_date)} تا {formatPersianDate(p.end_date)}
+                    {isRtl ? 'از' : 'From'} {formatPersianDate(p.start_date)} {isRtl ? 'تا' : 'to'} {formatPersianDate(p.end_date)}
                   </p>
                 </div>
                 <Badge variant={p.status === AccountingPeriodStatus.OPEN ? 'success' : 'danger'}>
@@ -641,7 +641,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                شرح سند حسابداری:
+                {isRtl ? 'شرح سند حسابداری:' : 'Voucher Description:'}
               </label>
               <Input
                 required
@@ -652,7 +652,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                تاریخ سند:
+                {isRtl ? 'تاریخ سند:' : 'Voucher Date:'}
               </label>
               <Input
                 type="date"
@@ -667,10 +667,10 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                سطرهای سند حسابداری (حداقل دو سطر):
+                {isRtl ? 'سطرهای سند حسابداری (حداقل دو سطر):' : 'Voucher Lines (minimum two):'}
               </span>
               <Button type="button" variant="outline" size="sm" onClick={handleAddLine} leftIcon={<Plus className="w-3.5 h-3.5" />}>
-                افزودن سطر آرتیکل
+                {isRtl ? 'افزودن سطر آرتیکل' : 'Add Article Line'}
               </Button>
             </div>
 
@@ -697,7 +697,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                           onChange={(e) => handleLineChange(idx, 'accountId', e.target.value)}
                           className="w-full p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-medium"
                         >
-                          <option value="">-- انتخاب حساب --</option>
+                          <option value="">-- {isRtl ? 'انتخاب حساب' : 'Select account'} --</option>
                           {accounts.map((a) => (
                             <option key={a.id} value={a.id}>
                               {a.code} - {a.name} ({getAccountTypeName(a.account_type)})
@@ -776,7 +776,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
                 </strong>
                 {!isEntryBalanced && (
                   <p className="mt-0.5">
-                    اختلاف تراز: {balanceDifference.toLocaleString()} ریال. طبق اصول حسابداری دوبل، مجموع بدهکار و بستانکار باید دقیقاً برابر باشد.
+                    {isRtl ? `اختلاف تراز: ${balanceDifference.toLocaleString()} ریال. طبق اصول حسابداری دوبل، مجموع بدهکار و بستانکار باید دقیقاً برابر باشد.` : `Balance difference: ${balanceDifference.toLocaleString()} Rial. In double-entry accounting, total debit and credit must match exactly.`}
                   </p>
                 )}
               </div>
@@ -790,7 +790,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
 
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsNewEntryModalOpen(false)}>
-              انصراف
+              {isRtl ? 'انصراف' : 'Cancel'}
             </Button>
             <Button
               type="submit"
@@ -798,7 +798,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
               size="sm"
               disabled={!isEntryBalanced}
             >
-              ثبت قطعی سند حسابداری
+              {isRtl ? 'ثبت قطعی سند حسابداری' : 'Post Voucher'}
             </Button>
           </div>
         </form>
@@ -808,13 +808,13 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       <Modal
         isOpen={isNewAccountModalOpen}
         onClose={() => setIsNewAccountModalOpen(false)}
-        title={isRtl ? 'تعریف حساب جدید در کدینگ' : 'Add New Account'}
+        title={isRtl ? 'تعریف حساب جدید در کدینگ' : 'Add New Account to Chart of Accounts'}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSaveAccount} className="space-y-4 text-end">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              کد حساب (عددی):
+              {isRtl ? 'کد حساب (عددی):' : 'Account Code (numeric):'}
             </label>
             <Input
               required
@@ -826,7 +826,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              نام حساب:
+              {isRtl ? 'نام حساب:' : 'Account Name:'}
             </label>
             <Input
               required
@@ -838,7 +838,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              سرفصل حساب:
+              {isRtl ? 'سرفصل حساب:' : 'Account Type:'}
             </label>
             <Select
               value={newAccountType}
@@ -854,10 +854,10 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsNewAccountModalOpen(false)}>
-              انصراف
+              {isRtl ? 'انصراف' : 'Cancel'}
             </Button>
             <Button type="submit" variant="primary" size="sm">
-              ذخیره حساب
+              {isRtl ? 'ذخیره حساب' : 'Save Account'}
             </Button>
           </div>
         </form>
@@ -867,13 +867,13 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
       <Modal
         isOpen={isNewPeriodModalOpen}
         onClose={() => setIsNewPeriodModalOpen(false)}
-        title={isRtl ? 'تعریف دوره مالی جدید' : 'Add Fiscal Period'}
+        title={isRtl ? 'تعریف دوره مالی جدید' : 'Add New Fiscal Period'}
         maxWidth="max-w-md"
       >
         <form onSubmit={handleSavePeriod} className="space-y-4 text-end">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              سال دوره مالی:
+              {isRtl ? 'سال دوره مالی:' : 'Fiscal Year:'}
             </label>
             <Input
               required
@@ -884,7 +884,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              تاریخ شروع:
+              {isRtl ? 'تاریخ شروع:' : 'Start Date:'}
             </label>
             <Input
               type="date"
@@ -895,7 +895,7 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              تاریخ پایان:
+              {isRtl ? 'تاریخ پایان:' : 'End Date:'}
             </label>
             <Input
               type="date"
@@ -906,10 +906,10 @@ export const AccountingDashboard: React.FC<AccountingDashboardProps> = ({ curren
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" size="sm" onClick={() => setIsNewPeriodModalOpen(false)}>
-              انصراف
+              {isRtl ? 'انصراف' : 'Cancel'}
             </Button>
             <Button type="submit" variant="primary" size="sm">
-              ذخیره دوره مالی
+              {isRtl ? 'ذخیره دوره مالی' : 'Save Fiscal Period'}
             </Button>
           </div>
         </form>

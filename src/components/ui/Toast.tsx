@@ -56,10 +56,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const borders = {
-    success: 'border-emerald-200 dark:border-emerald-500/40 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-lg shadow-emerald-500/10',
-    error: 'border-rose-200 dark:border-rose-500/40 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-lg shadow-rose-500/10',
-    warning: 'border-amber-200 dark:border-amber-500/40 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-lg shadow-amber-500/10',
-    info: 'border-sky-200 dark:border-sky-500/40 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-lg shadow-sky-500/10',
+    success: 'border-(--success-border) bg-(--bg-surface) text-(--text-primary) shadow-lg shadow-emerald-500/10',
+    error: 'border-(--danger-border) bg-(--bg-surface) text-(--text-primary) shadow-lg shadow-rose-500/10',
+    warning: 'border-(--warning-border) bg-(--bg-surface) text-(--text-primary) shadow-lg shadow-amber-500/10',
+    info: 'border-(--info-border) bg-(--bg-surface) text-(--text-primary) shadow-lg shadow-sky-500/10',
   };
 
   return (

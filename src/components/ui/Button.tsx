@@ -35,19 +35,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/25 border border-indigo-400/30 focus:ring-indigo-500',
+        'bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white shadow-lg shadow-indigo-500/25 border border-indigo-400/30 focus:ring-(--border-focus)',
       secondary:
-        'bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700/60 shadow-xs focus:ring-slate-400',
+        'bg-(--bg-surface-subtle) hover:bg-slate-200 dark:hover:bg-slate-700 text-(--text-primary) border border-(--border-subtle) shadow-xs focus:ring-slate-400',
       outline:
-        'bg-white dark:bg-slate-900/60 border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 text-slate-800 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-xs focus:ring-slate-400',
+        'bg-(--bg-surface) border border-(--border-primary) hover:border-slate-400 dark:hover:border-slate-500 text-(--text-primary) hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-xs focus:ring-slate-400',
       ghost:
-        'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 focus:ring-slate-500',
+        'text-(--text-secondary) hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60 focus:ring-slate-500',
       danger:
-        'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20 border border-rose-500/30 focus:ring-rose-500',
+        'bg-(--danger) hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20 border border-rose-500/30 focus:ring-rose-500',
       success:
-        'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 border border-emerald-500/30 focus:ring-emerald-500',
+        'bg-(--success) hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 border border-emerald-500/30 focus:ring-emerald-500',
       glass:
-        'liquid-glass-subtle hover:bg-slate-200/50 dark:hover:bg-slate-700/40 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-md focus:ring-indigo-400',
+        'liquid-glass-subtle hover:bg-slate-200/50 dark:hover:bg-slate-700/40 text-(--text-primary) border border-(--border-subtle) dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 shadow-md focus:ring-(--border-focus)',
     };
 
     const sizes = {

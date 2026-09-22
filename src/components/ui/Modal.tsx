@@ -80,7 +80,7 @@ export const Modal: React.FC<ModalProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 app-modal-backdrop bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 app-modal-backdrop bg-(--overlay) backdrop-blur-sm"
           />
 
           {/* Modal Content */}
@@ -90,13 +90,13 @@ export const Modal: React.FC<ModalProps> = ({
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ type: 'spring', damping: 26, stiffness: 360 }}
             className={cn(
-              'relative w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden my-auto',
+              'relative w-full rounded-2xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden my-auto',
               maxWClasses[effectiveMaxWidth],
               className
             )}
           >
             {/* Header */}
-            <div className="flex items-start justify-between p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50">
+            <div className="flex items-start justify-between p-4 sm:p-5 border-b border-(--border-subtle) bg-slate-50/80 dark:bg-slate-900/50">
               <div className="space-y-0.5 text-start flex-1 pe-2">
                 {typeof title === 'string' ? (
                   <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h3>
@@ -126,7 +126,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             {/* Footer */}
             {footer && (
-              <div className="p-4 sm:px-6 sm:py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 flex items-center justify-end gap-2.5">
+              <div className="p-4 sm:px-6 sm:py-4 border-t border-(--border-subtle) bg-slate-50/80 dark:bg-slate-900/50 flex items-center justify-end gap-2.5">
                 {footer}
               </div>
             )}

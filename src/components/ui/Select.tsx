@@ -33,7 +33,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             id={selectId}
             ref={ref}
             className={cn(
-              'w-full appearance-none rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/80 text-slate-900 dark:text-slate-100 text-sm ps-3.5 pe-9 py-2.5 transition-all duration-200 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50',
+              'w-full appearance-none rounded-xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) text-sm ps-3.5 pe-9 py-2.5 transition-all duration-200 focus:outline-none focus:border-(--border-focus) focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50',
               error ? 'border-rose-500 focus:border-rose-500 focus:ring-rose-500/20' : '',
               className
             )}
@@ -41,7 +41,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           >
             {options
               ? options.map((opt) => (
-                  <option key={opt.value} value={opt.value} disabled={opt.disabled} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 py-2">
+                  <option key={opt.value} value={opt.value} disabled={opt.disabled} className="bg-(--bg-surface) text-(--text-primary) py-2">
                     {opt.label}
                   </option>
                 ))
