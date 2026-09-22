@@ -128,6 +128,7 @@ export const faTranslations: Translations = {
   "common.records": "مورد",
   "common.customer": "مخاطب",
   "common.more": "بیشتر",
+  "common.menu": "منوی ناوبری",
 
   // Relative Dates
   "today": "امروز",
@@ -1551,6 +1552,7 @@ export const enTranslations: Translations = {
   "common.records": "records",
   "common.customer": "Customer",
   "common.more": "More",
+  "common.menu": "Navigation Menu",
   "today": "Today",
   "tomorrow": "Tomorrow",
   "nextWeek": "Next Week",

@@ -107,9 +107,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <button
               type="button"
               onClick={onClose}
+              aria-label={isRtl ? 'بستن' : 'Close'}
               className="absolute start-4 top-4 p-2 rounded-xl bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
           <div className="flex items-center justify-center mb-3">
@@ -225,16 +226,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label htmlFor="login-password" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 {isRtl ? 'رمز عبور' : 'Password'} {selectedQuickUser && <span className="text-indigo-600 dark:text-indigo-400 font-normal">({selectedQuickUser.name})</span>}
               </label>
               <div className="relative">
                 <input
+                  id="login-password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder={isRtl ? 'رمز عبور خود را وارد کنید...' : 'Enter your password...'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoFocus={!!selectedQuickUser}
+                  autoComplete="current-password"
+                  aria-invalid={errorMsg ? 'true' : 'false'}
                   className="w-full h-11 px-3.5 pe-10 ps-10 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 font-mono transition-all text-end"
                 />
                 <div className="absolute end-3.5 top-3 text-slate-400 pointer-events-none">
@@ -243,6 +247,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={isRtl ? (showPassword ? 'پنهان کردن رمز عبور' : 'نمایش رمز عبور') : (showPassword ? 'Hide password' : 'Show password')}
                   className="absolute start-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -251,7 +256,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
 
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-100 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-300 text-xs flex items-center gap-2">
+              <div role="alert" className="p-3 rounded-xl bg-rose-100 dark:bg-rose-500/15 border border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-300 text-xs flex items-center gap-2">
                 <span className="font-bold">{isRtl ? 'خطا:' : 'Error:'}</span>
                 <span>{errorMsg}</span>
               </div>

@@ -49,23 +49,28 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const info = useCallback((title: string, message?: string) => showToast({ type: 'info', title, message }), [showToast]);
 
   const icons = {
-    success: <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />,
-    error: <XCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />,
-    warning: <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />,
-    info: <Info className="w-5 h-5 text-sky-600 dark:text-sky-400 shrink-0" />,
+    success: <CheckCircle2 className="w-5 h-5 text-(--success) shrink-0" aria-hidden="true" />,
+    error: <XCircle className="w-5 h-5 text-(--danger) shrink-0" aria-hidden="true" />,
+    warning: <AlertTriangle className="w-5 h-5 text-(--warning) shrink-0" aria-hidden="true" />,
+    info: <Info className="w-5 h-5 text-(--info) shrink-0" aria-hidden="true" />,
   };
 
   const borders = {
-    success: 'border-(--success-border) bg-(--bg-surface) text-(--text-primary) shadow-lg shadow-emerald-500/10',
-    error: 'border-(--danger-border) bg-(--bg-surface) text-(--text-primary) shadow-lg shadow-rose-500/10',
-    warning: 'border-(--warning-border) bg-(--bg-surface) text-(--text-primary) shadow-lg shadow-amber-500/10',
-    info: 'border-(--info-border) bg-(--bg-surface) text-(--text-primary) shadow-lg shadow-sky-500/10',
+    success: 'border-(--success-border) bg-(--bg-surface) text-(--text-primary) shadow-lg',
+    error: 'border-(--danger-border) bg-(--bg-surface) text-(--text-primary) shadow-lg',
+    warning: 'border-(--warning-border) bg-(--bg-surface) text-(--text-primary) shadow-lg',
+    info: 'border-(--info-border) bg-(--bg-surface) text-(--text-primary) shadow-lg',
   };
 
   return (
     <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
       {children}
-      <div className="fixed bottom-4 start-4 end-4 sm:right-auto sm:start-6 z-[200] flex flex-col gap-2.5 max-w-md pointer-events-none">
+      <div
+        className="fixed bottom-4 start-4 end-4 sm:end-auto sm:start-6 z-[200] flex flex-col gap-2.5 max-w-md pointer-events-none"
+        role="region"
+        aria-label="Notifications"
+      >
+        <div role="status" aria-live="polite" aria-atomic="false" className="flex flex-col gap-2.5">
         <AnimatePresence>
           {toasts.map((t) => (
             <motion.div
@@ -81,18 +86,20 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               {icons[t.type]}
               <div className="flex-1 text-end">
                 <h4 className="text-xs sm:text-sm font-semibold">{t.title}</h4>
-                {t.message && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t.message}</p>}
+                {t.message && <p className="text-xs text-(--muted-foreground) mt-0.5">{t.message}</p>}
               </div>
               <button
                 type="button"
                 onClick={() => removeToast(t.id)}
-                className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded transition-colors"
+                className="text-(--muted-foreground) hover:text-(--text-primary) p-1 rounded transition-colors min-h-[24px] min-w-[24px]"
+                aria-label={t.title}
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </motion.div>
           ))}
         </AnimatePresence>
+        </div>
       </div>
     </ToastContext.Provider>
   );

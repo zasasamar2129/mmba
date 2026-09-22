@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from './Button';
+import { useTranslation } from '../../lib/i18n';
+import { useFocusTrap } from '../../lib/useFocusTrap';
 
 export interface DrawerProps {
   isOpen: boolean;
@@ -24,6 +26,11 @@ export const Drawer: React.FC<DrawerProps> = ({
   position = 'right',
   className,
 }) => {
+  const { t } = useTranslation();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const subtitleId = useId();
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) onClose();
@@ -37,6 +44,8 @@ export const Drawer: React.FC<DrawerProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
+
+  useFocusTrap(dialogRef, isOpen);
 
   const slideVariants = {
     right: {
@@ -57,9 +66,9 @@ export const Drawer: React.FC<DrawerProps> = ({
   };
 
   const posClasses = {
-    right: 'inset-y-0 end-0 w-full max-w-md sm:max-w-lg border-l border-slate-200 dark:border-slate-800',
-    left: 'inset-y-0 start-0 w-full max-w-md sm:max-w-lg border-r border-slate-200 dark:border-slate-800',
-    bottom: 'inset-x-0 bottom-0 w-full max-h-[85vh] rounded-t-3xl border-t border-slate-200 dark:border-slate-800',
+    right: 'inset-y-0 end-0 w-full max-w-md sm:max-w-lg border-s border-(--border-subtle)',
+    left: 'inset-y-0 start-0 w-full max-w-md sm:max-w-lg border-e border-(--border-subtle)',
+    bottom: 'inset-x-0 bottom-0 w-full max-h-[85vh] rounded-t-3xl border-t border-(--border-subtle)',
   };
 
   return (
@@ -71,38 +80,45 @@ export const Drawer: React.FC<DrawerProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 app-modal-backdrop bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-sm"
+            className="fixed inset-0 app-modal-backdrop backdrop-blur-sm"
+            aria-hidden="true"
           />
 
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            aria-describedby={subtitle ? subtitleId : undefined}
+            tabIndex={-1}
             variants={slideVariants[position]}
             initial="initial"
             animate="animate"
             exit="exit"
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             className={cn(
-              'fixed bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 z-10 flex flex-col shadow-2xl',
+              'fixed bg-(--bg-surface) text-(--text-primary) z-10 flex flex-col shadow-2xl focus:outline-none',
               posClasses[position],
               className
             )}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50">
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-(--border-subtle) bg-(--bg-surface-subtle)">
               <div className="space-y-0.5 text-start flex-1 pe-2">
                 {typeof title === 'string' ? (
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h3>
+                  <h3 id={titleId} className="text-base sm:text-lg font-bold text-(--text-primary)">{title}</h3>
                 ) : (
                   title
                 )}
-                {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
+                {subtitle && <p id={subtitleId} className="text-xs text-(--muted-foreground)">{subtitle}</p>}
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-lg transition-colors ms-2"
-                aria-label="Close"
+                className="p-1.5 text-(--muted-foreground) hover:text-(--text-primary) hover:bg-(--bg-surface-elevated) rounded-lg transition-colors ms-2 shrink-0 min-h-[32px] min-w-[32px]"
+                aria-label={t('common.close')}
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -111,7 +127,7 @@ export const Drawer: React.FC<DrawerProps> = ({
 
             {/* Footer */}
             {footer && (
-              <div className="p-4 sm:px-6 sm:py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/50 flex items-center justify-end gap-2.5">
+              <div className="p-4 sm:px-6 sm:py-4 border-t border-(--border-subtle) bg-(--bg-surface-subtle) flex items-center justify-end gap-2.5">
                 {footer}
               </div>
             )}

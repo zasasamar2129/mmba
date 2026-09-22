@@ -25,24 +25,24 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const variants = {
     default: 'bg-(--bg-surface-subtle) text-(--text-secondary) border-(--border-subtle)',
-    success: 'bg-(--success-bg) text-emerald-700 dark:text-emerald-400 border-(--success-border)',
-    warning: 'bg-(--warning-bg) text-amber-800 dark:text-amber-300 border-(--warning-border)',
-    danger: 'bg-(--danger-bg) text-rose-700 dark:text-rose-400 border-(--danger-border)',
-    info: 'bg-(--info-bg) text-sky-700 dark:text-sky-400 border-(--info-border)',
-    purple: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-500/25',
-    amber: 'bg-(--warning-bg) text-amber-800 dark:text-amber-400 border-(--warning-border)',
-    outline: 'bg-transparent text-(--text-secondary) border-slate-300 dark:border-slate-600',
+    success: 'bg-(--success-bg) text-(--success) border-(--success-border)',
+    warning: 'bg-(--warning-bg) text-(--warning) border-(--warning-border)',
+    danger: 'bg-(--danger-bg) text-(--danger) border-(--danger-border)',
+    info: 'bg-(--info-bg) text-(--info) border-(--info-border)',
+    purple: 'bg-(--accent-light) text-(--primary) border-(--accent-primary)/30',
+    amber: 'bg-(--warning-bg) text-(--warning) border-(--warning-border)',
+    outline: 'bg-transparent text-(--text-secondary) border-(--border)',
   };
 
   const dotColors = {
-    default: 'bg-slate-400',
-    success: 'bg-emerald-500 animate-pulse',
-    warning: 'bg-amber-500',
-    danger: 'bg-rose-500 animate-pulse',
-    info: 'bg-sky-500',
-    purple: 'bg-indigo-500',
-    amber: 'bg-amber-500',
-    outline: 'bg-slate-400',
+    default: 'bg-(--muted-foreground)',
+    success: 'bg-(--success)',
+    warning: 'bg-(--warning)',
+    danger: 'bg-(--danger)',
+    info: 'bg-(--info)',
+    purple: 'bg-(--primary)',
+    amber: 'bg-(--warning)',
+    outline: 'bg-(--muted-foreground)',
   };
 
   const sizes = {

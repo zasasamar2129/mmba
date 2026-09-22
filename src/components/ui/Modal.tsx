@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from './Button';
 import { useTranslation } from '../../lib/i18n';
+import { useFocusTrap } from '../../lib/useFocusTrap';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -29,8 +30,11 @@ export const Modal: React.FC<ModalProps> = ({
   className,
 }) => {
   const [mounted, setMounted] = useState(false);
-  const { isRtl } = useTranslation();
+  const { isRtl, t } = useTranslation();
   const effectiveMaxWidth = size || maxWidth || 'lg';
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const subtitleId = useId();
 
   useEffect(() => {
     setMounted(true);
@@ -51,6 +55,8 @@ export const Modal: React.FC<ModalProps> = ({
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, onClose]);
+
+  useFocusTrap(dialogRef, isOpen && mounted);
 
   const maxWClasses = {
     sm: 'max-w-sm',
@@ -80,44 +86,53 @@ export const Modal: React.FC<ModalProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 app-modal-backdrop bg-(--overlay) backdrop-blur-sm"
+            className="fixed inset-0 app-modal-backdrop backdrop-blur-sm"
+            aria-hidden="true"
           />
 
           {/* Modal Content */}
           <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            aria-describedby={subtitle ? subtitleId : undefined}
+            tabIndex={-1}
             initial={{ opacity: 0, scale: 0.96, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 10 }}
             transition={{ type: 'spring', damping: 26, stiffness: 360 }}
             className={cn(
-              'relative w-full rounded-2xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden my-auto',
+              'relative w-full rounded-2xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden my-auto focus:outline-none',
               maxWClasses[effectiveMaxWidth],
               className
             )}
           >
             {/* Header */}
-            <div className="flex items-start justify-between p-4 sm:p-5 border-b border-(--border-subtle) bg-slate-50/80 dark:bg-slate-900/50">
+            <div className="flex items-start justify-between p-4 sm:p-5 border-b border-(--border-subtle) bg-(--bg-surface-subtle)">
               <div className="space-y-0.5 text-start flex-1 pe-2">
                 {typeof title === 'string' ? (
-                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h3>
+                  <h3 id={titleId} className="text-base sm:text-lg font-bold text-(--text-primary)">
+                    {title}
+                  </h3>
                 ) : (
                   title
                 )}
                 {subtitle && (
                   typeof subtitle === 'string' ? (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>
+                    <p id={subtitleId} className="text-xs text-(--muted-foreground)">{subtitle}</p>
                   ) : (
-                    <div className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</div>
+                    <div id={subtitleId} className="text-xs text-(--muted-foreground)">{subtitle}</div>
                   )
                 )}
               </div>
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-lg transition-colors ms-2"
-                aria-label="Close"
+                className="p-1.5 text-(--muted-foreground) hover:text-(--text-primary) hover:bg-(--bg-surface-elevated) rounded-lg transition-colors ms-2 shrink-0 min-h-[32px] min-w-[32px]"
+                aria-label={t('common.close')}
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -126,7 +141,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             {/* Footer */}
             {footer && (
-              <div className="p-4 sm:px-6 sm:py-4 border-t border-(--border-subtle) bg-slate-50/80 dark:bg-slate-900/50 flex items-center justify-end gap-2.5">
+              <div className="p-4 sm:px-6 sm:py-4 border-t border-(--border-subtle) bg-(--bg-surface-subtle) flex items-center justify-end gap-2.5">
                 {footer}
               </div>
             )}

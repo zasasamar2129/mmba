@@ -79,17 +79,18 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full bg-white/95 dark:bg-slate-950/95 border-b border-slate-200 dark:border-slate-800/80 backdrop-blur-xl px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-3 select-none transition-colors">
+    <header className="sticky top-0 z-30 w-full bg-(--bg-surface)/95 dark:bg-slate-950/95 border-b border-(--border-subtle) backdrop-blur-xl px-3 sm:px-4 lg:px-6 py-2 sm:py-2.5 flex items-center justify-between gap-3 select-none transition-colors max-w-full overflow-x-hidden">
       {/* Brand & Mobile Hamburger */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {onToggleMobileNav && (
           <button
             type="button"
             onClick={onToggleMobileNav}
-            className="lg:hidden w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 flex items-center justify-center transition-all shadow-xs active:scale-95 shrink-0"
-            aria-label="Navigation Menu"
+            aria-expanded="false"
+            className="lg:hidden w-9 h-9 rounded-xl bg-(--surface-muted) hover:bg-(--bg-surface-elevated) text-(--text-secondary) border border-(--border-subtle) flex items-center justify-center transition-all shadow-xs active:scale-95 shrink-0"
+            aria-label={t('common.menu')}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
         )}
 

@@ -90,8 +90,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* 3. Desktop Sidebar */}
       <aside
-        className="hidden lg:flex w-60 xl:w-64 bg-white dark:bg-slate-950 border-e border-slate-200 dark:border-slate-800 flex-col h-full min-h-0 overflow-hidden shrink-0 select-none transition-colors z-20"
-        aria-label={t('nav.group.main')}
+        className="hidden lg:flex w-60 xl:w-64 bg-(--bg-surface) dark:bg-slate-950 border-e border-(--border-subtle) flex-col h-full min-h-0 overflow-hidden shrink-0 select-none transition-colors z-20"
+        aria-label={isRtl ? 'ناوبری اصلی' : 'Main navigation'}
       >
         {/* Navigation Item List */}
         <div className="flex-1 overflow-y-auto p-3 space-y-3.5 scrollbar-thin">
@@ -107,12 +107,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   onClick={() => toggleGroup(section.id)}
-                  className="w-full flex items-center justify-between px-2.5 py-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 uppercase tracking-wider transition-colors rounded-lg group"
+                  aria-expanded={!isCollapsed}
+                  className="w-full flex items-center justify-between px-2.5 py-1 text-[11px] font-bold text-(--muted-foreground) hover:text-(--text-primary) uppercase tracking-wider transition-colors rounded-lg group"
                 >
-                  <span className={hasActiveItem ? 'text-indigo-600 dark:text-indigo-400 font-extrabold' : ''}>
+                  <span className={hasActiveItem ? 'text-(--primary) font-extrabold' : ''}>
                     {sectionTitle}
                   </span>
-                  <div className="text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-transform">
+                  <div className="opacity-60 group-hover:opacity-100 transition-transform">
                     {isCollapsed ? (
                       isRtl ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />
                     ) : (
@@ -136,15 +137,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           onClick={() => onTabChange(item.id)}
                           className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all group relative ${
                             isActive
-                              ? 'bg-indigo-600 text-white shadow-xs font-semibold'
-                              : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900'
+                              ? 'bg-(--primary) text-(--primary-foreground) shadow-xs font-semibold'
+                              : 'text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--surface-muted)'
                           }`}
                           aria-current={isActive ? 'page' : undefined}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <Icon
                               className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-105 ${
-                                isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                                isActive ? 'text-(--primary-foreground)' : 'text-(--muted-foreground) group-hover:text-(--primary)'
                               }`}
                             />
                             <span className="truncate">{itemTitle}</span>
@@ -198,20 +199,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   type="button"
                   onClick={onLockSession}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-                  title={t('profile.lockSession')}
+                  aria-label={t('profile.lockSession')}
+                  className="p-1.5 rounded-lg text-(--muted-foreground) hover:text-(--text-primary) hover:bg-(--surface-muted) transition-colors"
                 >
-                  <Lock className="w-3.5 h-3.5" />
+                  <Lock className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}
               {onLogout && (
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
-                  title={t('profile.logout')}
+                  aria-label={t('profile.logout')}
+                  className="p-1.5 rounded-lg text-(--danger) hover:bg-(--danger-bg) transition-colors"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               )}
             </div>
