@@ -68,17 +68,17 @@
 
   .dark {
     /* ── Semantic Design Tokens · Dark ───────────────────────────── */
-    --bg-page: #0b1220;
+    --bg-page: #0b0d14;
     --bg-surface: #111a2c;
     --bg-surface-subtle: #1a2438;
     --bg-surface-elevated: #1f2a40;
     --border-primary: #2b3a55;
     --border-subtle: #243149;
-    --border-focus: #818cf8;
+    --border-focus: #7c3aed;
     --text-primary: #f1f5f9;
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
-    --accent-primary: #6366f1;
+    --accent-primary: #8b5cf6;
     --accent-hover: #4f46e5;
     --accent-light: rgba(99, 102, 241, 0.15);
 
