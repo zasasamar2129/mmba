@@ -1381,6 +1381,7 @@ export enum ConversationPriority {
 
 export enum MessageStatus {
   SENT = 'SENT',
+  DELIVERED = 'DELIVERED',
   READ = 'READ',
 }
 

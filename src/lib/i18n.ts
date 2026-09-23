@@ -252,7 +252,9 @@ export const faTranslations: Translations = {
   "chat.newlineHint": "Shift+Enter برای خط جدید",
   "chat.noMessages": "هنوز پیامی رد و بدل نشده است.",
   "chat.sent": "ارسال",
+  "chat.delivered": "تحویل شد",
   "chat.read": "خوانده شد",
+  "chat.typing": "در حال نوشتن...",
 
   // Call Center & Interactions
   "calls.title": "مرکز مدیریت تعاملات و تماس‌ها (Call Center)",

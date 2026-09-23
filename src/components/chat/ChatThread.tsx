@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChatMessage, Attachment, User, ChatConversation, ConversationType } from '../../types';
+import { ChatMessage, Attachment, User, ChatConversation, ConversationType, MessageStatus } from '../../types';
 import { useTranslation } from '../../lib/i18n';
 import { formatPersianDate } from '../../lib/dateUtils';
 import { Badge } from '../ui/Badge';
@@ -271,7 +271,16 @@ export const ChatThread: React.FC<ChatThreadProps> = ({
                       <span className="font-medium">({isRtl ? 'ویرایش‌شده' : 'edited'})</span>
                     )}
                     {mine && !isDeleted && (
-                      <span>{String(m.status) === 'READ' ? (isRtl ? 'خوانده' : 'Read') : (isRtl ? 'ارسال' : 'Sent')}</span>
+                      <span className="inline-flex items-center gap-1">
+                        {String(m.status) === 'READ' ? (
+                          <Check className="w-3 h-3 text-cyan-400" />
+                        ) : String(m.status) === 'DELIVERED' ? (
+                          <Check className="w-3 h-3 text-slate-400" />
+                        ) : (
+                          <Clock className="w-3 h-3 text-slate-400" />
+                        )}
+                        {String(m.status) === 'READ' ? (isRtl ? 'خوانده' : 'Read') : String(m.status) === 'DELIVERED' ? (isRtl ? 'تحویل شد' : 'Delivered') : (isRtl ? 'ارسال' : 'Sent')}
+                      </span>
                     )}
                   </div>
                 </div>
