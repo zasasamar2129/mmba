@@ -21,13 +21,13 @@ export const TabletSidebar: React.FC<TabletSidebarProps> = ({
 
   return (
     <aside
-      className={`hidden md:flex lg:hidden bg-white dark:bg-slate-950 border-e border-slate-200 dark:border-slate-800 flex-col h-full min-h-0 overflow-hidden shrink-0 transition-all duration-300 z-20 select-none ${
+      className={`hidden md:flex lg:hidden bg-white dark:bg-[#0d0e17] border-e border-slate-200 dark:border-white/[0.08] flex-col h-full min-h-0 overflow-hidden shrink-0 transition-all duration-300 z-20 select-none ${
         isExpanded ? 'w-56' : 'w-[64px]'
       }`}
       aria-label={t('nav.group.main')}
     >
       {/* Items Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-3 scrollbar-none py-3">
+      <div className="flex-1 overflow-y-auto p-2 space-y-3 scrollbar-none no-scrollbar py-3">
         {(sections || []).map((section, sectionIdx) => {
           const sectionTitle = t(section.titleKey) || (language === 'fa' ? section.defaultTitleFa : section.defaultTitleEn);
           const sectionItems = section.items || [];
@@ -42,7 +42,7 @@ export const TabletSidebar: React.FC<TabletSidebarProps> = ({
               ) : (
                 sectionIdx > 0 && (
                   <div className="flex items-center justify-center my-1.5">
-                    <div className="w-5 h-[1px] bg-slate-200 dark:bg-slate-800" />
+                    <div className="w-5 h-[1px] bg-slate-200 dark:border-white/[0.06]" />
                   </div>
                 )
               )}
@@ -69,8 +69,8 @@ export const TabletSidebar: React.FC<TabletSidebarProps> = ({
                           isExpanded ? 'px-2.5 py-2 justify-between gap-2' : 'justify-center p-2'
                         } ${
                           isActive
-                            ? 'bg-indigo-600 text-white shadow-xs font-semibold'
-                            : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900'
+                            ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-600/25 font-semibold'
+                            : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.05]'
                         }`}
                         aria-current={isActive ? 'page' : undefined}
                       >
@@ -78,7 +78,7 @@ export const TabletSidebar: React.FC<TabletSidebarProps> = ({
                           <div className="relative flex items-center justify-center">
                             <Icon
                               className={`w-4 h-4 transition-transform group-hover:scale-110 shrink-0 ${
-                                isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'
+                                isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400 group-hover:text-violet-600 dark:group-hover:text-violet-400'
                               }`}
                             />
 

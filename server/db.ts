@@ -445,7 +445,6 @@ class CentralDatabase {
     return this.getState();
   }
 
-  /** Absolute path to the persisted database file (Step 9 readiness probe). */
   public getDbPath(): string {
     return this.dbPath;
   }
@@ -2253,11 +2252,18 @@ class CentralDatabase {
       const msgs = (db.chatMessages || []).filter((m) => m.conversation_id === conversationId || m.conversationId === conversationId);
       msgs.forEach((m) => {
         if (m.sender_user_id === userId) return;
-        const rb = m.read_by_user_ids || [];
+        const rb = Array.from(new Set([...(m.readBy || []), ...(m.read_by_user_ids || []), ...(m.readByUserIds || [])]));
         if (!rb.includes(userId)) rb.push(userId);
-        if (rb.length >= ((convo.member_ids || []).length - 1)) {
+        m.readBy = rb;
+        m.read_by = rb;
+        m.read_by_user_ids = rb;
+        m.readByUserIds = rb;
+        const memberCount = (convo.member_ids || []).length;
+        const allRead = memberCount <= 2 ? rb.length >= 1 : rb.length >= (memberCount - 1);
+        if (allRead) {
           m.status = MessageStatus.READ;
           m.read_at = new Date().toISOString();
+          m.readAt = new Date().toISOString();
         }
       });
       return convo;
@@ -2503,6 +2509,38 @@ class CentralDatabase {
       msg.editedAt = now;
       msg.updated_at = now;
       msg.updatedAt = now;
+      return msg;
+    });
+  }
+
+  public async toggleChatMessageReaction(
+    messageId: string,
+    userId: string,
+    userName: string,
+    emoji: string
+  ): Promise<ChatMessage | undefined> {
+    return this.mutate((db) => {
+      const msg = (db.chatMessages || []).find((m) => m.id === messageId);
+      if (!msg) return undefined;
+      const reactions = [...(msg.reactions || [])];
+      const existingIdx = reactions.findIndex(
+        (r) => r.emoji === emoji && (r.userId === userId || r.user_id === userId)
+      );
+      if (existingIdx >= 0) {
+        reactions.splice(existingIdx, 1);
+      } else {
+        reactions.push({
+          emoji,
+          userId,
+          user_id: userId,
+          userName,
+          user_name: userName,
+          createdAt: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+        });
+      }
+      msg.reactions = reactions;
+      msg.updated_at = new Date().toISOString();
       return msg;
     });
   }

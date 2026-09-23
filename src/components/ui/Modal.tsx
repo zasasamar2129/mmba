@@ -6,6 +6,18 @@ import { cn } from './Button';
 import { useTranslation } from '../../lib/i18n';
 import { useFocusTrap } from '../../lib/useFocusTrap';
 
+export type ModalSize =
+  | 'sm'
+  | 'md'
+  | 'lg'
+  | 'xl'
+  | '2xl'
+  | '3xl'
+  | '4xl'
+  | '5xl'
+  | 'full'
+  | string;
+
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -13,8 +25,8 @@ export interface ModalProps {
   subtitle?: React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | 'full';
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | 'full';
+  maxWidth?: ModalSize;
+  size?: ModalSize;
   className?: string;
 }
 
@@ -31,7 +43,8 @@ export const Modal: React.FC<ModalProps> = ({
 }) => {
   const [mounted, setMounted] = useState(false);
   const { isRtl, t } = useTranslation();
-  const effectiveMaxWidth = size || maxWidth || 'lg';
+  const rawSize = size || maxWidth || 'lg';
+  const normalizedSize = typeof rawSize === 'string' ? rawSize.replace(/^max-w-/, '') : rawSize;
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const subtitleId = useId();
@@ -58,15 +71,19 @@ export const Modal: React.FC<ModalProps> = ({
 
   useFocusTrap(dialogRef, isOpen && mounted);
 
-  const maxWClasses = {
+  const maxWClasses: Record<string, string> = {
     sm: 'max-w-sm',
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
     '2xl': 'max-w-2xl',
+    '3xl': 'max-w-3xl',
     '4xl': 'max-w-4xl',
+    '5xl': 'max-w-5xl',
     full: 'max-w-[95vw] sm:max-w-6xl',
   };
+
+  const resolvedMaxW = maxWClasses[normalizedSize] || (typeof rawSize === 'string' && rawSize.startsWith('max-w-') ? rawSize : 'max-w-lg');
 
   if (!mounted || typeof document === 'undefined') {
     return null;
@@ -104,7 +121,7 @@ export const Modal: React.FC<ModalProps> = ({
             transition={{ type: 'spring', damping: 26, stiffness: 360 }}
             className={cn(
               'relative w-full rounded-2xl bg-(--bg-surface) border border-(--border-subtle) text-(--text-primary) shadow-2xl z-10 flex flex-col max-h-[90vh] overflow-hidden my-auto focus:outline-none',
-              maxWClasses[effectiveMaxWidth],
+              resolvedMaxW,
               className
             )}
           >

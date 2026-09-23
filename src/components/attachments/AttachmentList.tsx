@@ -22,6 +22,7 @@ import { RenameDocumentModal } from './RenameDocumentModal';
 import { DocumentAuditLog } from './DocumentAuditLog';
 import { detectFileInfo, createThumbnail } from '../../lib/filePreviewUtils';
 import { ListViewControls } from '../ui/ListViewControls';
+import { uploadManager, UploadProgressItem } from '../../lib/uploadManager';
 
 export interface AttachmentListProps {
   attachments: Attachment[];
@@ -109,7 +110,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
     return { all: attachments.length, images, pdfs, docs };
   }, [attachments]);
 
-  const processAndSaveFile = (file: File, customerId?: string) => {
+  const processAndSaveFile = async (file: File, customerId?: string) => {
     const selectedCust = customerId ? customers.find((c) => c.id === customerId) : undefined;
     const key = `${customerId || 'general'}::${file.name}::${file.size}::${file.lastModified || 0}`;
 
@@ -118,109 +119,21 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
       return;
     }
 
-    setUploads((prev) => [...prev, { key, fileName: file.name, fileSize: file.size, phase: 'READING', progress: 0 }]);
-    const reader = new FileReader();
-    reader.onprogress = (e) => {
-      if (e.lengthComputable && e.total > 0) {
-        const pct = Math.round((e.loaded / e.total) * 100);
-        patchUpload(key, { progress: pct });
-      }
-    };
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
-      // Compute SHA-256 checksum for file integrity (Patch 04 - Security)
-      const sha256 = await computeSHA256(dataUrl);
+    setUploads((prev) => [...prev, { key, fileName: file.name, fileSize: file.size, phase: 'READING', progress: 10 }]);
 
-      // Duplicate detection by hash
-      const existing = (attachments || []).find((a) => a.sha256 && a.sha256 === sha256);
-      if (existing) {
-        patchUpload(key, { phase: 'ERROR', error: isRtl ? 'فایل تکراری' : 'Duplicate file' });
-        return;
-      }
-
-      // Determine correct MIME from extension - mobile browsers report
-      // wrong/empty types for PNG and HEIC (e.g. application/json, empty string)
-      const ext = file.name.split('.').pop()?.toLowerCase() || '';
-      const mimeMap: Record<string, string> = {
-        'heic': 'image/heic',
-        'heif': 'image/heif',
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'png': 'image/png',
-        'webp': 'image/webp',
-        'gif': 'image/gif',
-        'pdf': 'application/pdf',
-      };
-      const fileType = mimeMap[ext] || file.type || 'application/octet-stream';
-
-      // Rewrite the data URL header with the correct MIME so canvas/server
-      // decode it properly (browser may embed wrong type for mobile uploads)
-      let fixedDataUrl = dataUrl;
-      if (dataUrl.startsWith('data:')) {
-        const commaIdx = dataUrl.indexOf(',');
-        if (commaIdx > 5) {
-          const headerPart = dataUrl.substring(5, commaIdx);
-          const browserMime = headerPart.split(';')[0];
-          if (browserMime && browserMime !== fileType) {
-            fixedDataUrl = `data:${fileType}${headerPart.substring(browserMime.length)}${dataUrl.substring(commaIdx)}`;
-          }
-        }
-      }
-
-      const selectedCust = customerId ? customers.find((c) => c.id === customerId) : undefined;
-      const newAtt: Attachment = {
-        id: '',
-        fileName: file.name,
-        displayName: file.name,
-        originalName: file.name,
-        fileType: fileType,
-        mimeType: fileType,
-        fileSize: file.size,
-        dataUrl: fixedDataUrl,
-        sha256,
-        customerId: selectedCust?.id,
-        customerName: selectedCust?.name,
-        category: fileType.startsWith('image/')
-          ? (isRtl ? 'تصویر و مدرک شناسایی' : 'Identity / Image')
-          : (isRtl ? 'سند و قرارداد' : 'Document / Contract'),
-        uploadedByUserId: storage.getCurrentUser().id,
-        uploadedByUserName: storage.getCurrentUser().name,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        uploadStatus: 'RECEIVED',
-        idempotencyKey: key,
-      };
-
-      const saved = storage.saveAttachment(newAtt);
-      // Audit log: UPLOAD
-      storage.logDocumentAudit(
-        saved.id,
-        'UPLOAD',
-        storage.getCurrentUser().id,
-        storage.getCurrentUser().name,
-        isRtl
-          ? `بارگذاری سند «${file.name}»${selectedCust ? ` برای ${selectedCust.name}` : ' در بایگانی عمومی'}`
-          : `Uploaded document "${file.name}"${selectedCust ? ` for ${selectedCust.name}` : ' to the general archive'}`
-      );
-
-      patchUpload(key, { phase: 'UPLOADING' });
-      // Fire-and-forget: thumbnail generation + server sync
-      createThumbnail(fixedDataUrl)
-        .then((thumb) => storage.updateAttachmentThumbnail(saved.id, thumb))
-        .catch(() => {});
-      // ETag/ETag backfill already handled on server POST response
-
-      patchUpload(key, { phase: 'SUCCESS' });
-      success(isRtl ? 'سند با موفقیت دریافت شد' : 'Document received');
-      onRefresh();
-    };
-
-    reader.onerror = () => {
-      error(isRtl ? 'خطا در خواندن و بارگذاری فایل' : 'Error reading and uploading file');
-      patchUpload(key, { phase: 'ERROR', error: isRtl ? 'خطا در خواندن فایل' : 'Error reading file' });
-    };
-
-    reader.readAsDataURL(file);
+    await uploadManager.upload(file, {
+      customerId: selectedCust?.id,
+      customerName: selectedCust?.name,
+      onSuccess: (saved) => {
+        patchUpload(key, { phase: 'SUCCESS', progress: 100 });
+        success(isRtl ? 'سند با موفقیت دریافت و تأیید شد' : 'Document received and confirmed');
+        onRefresh();
+      },
+      onError: (err) => {
+        patchUpload(key, { phase: 'ERROR', error: err });
+        error(isRtl ? `خطا در بارگذاری فایل: ${err}` : `Upload error: ${err}`);
+      },
+    });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -10,7 +10,11 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
     | 'info'
     | 'purple'
     | 'amber'
-    | 'outline';
+    | 'outline'
+    | 'emerald'
+    | 'rose'
+    | 'indigo'
+    | 'primary';
   size?: 'sm' | 'md';
   dot?: boolean;
 }
@@ -32,6 +36,10 @@ export const Badge: React.FC<BadgeProps> = ({
     purple: 'bg-(--accent-light) text-(--primary) border-(--accent-primary)/30',
     amber: 'bg-(--warning-bg) text-(--warning) border-(--warning-border)',
     outline: 'bg-transparent text-(--text-secondary) border-(--border)',
+    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    rose: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    indigo: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    primary: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
   };
 
   const dotColors = {
@@ -43,6 +51,10 @@ export const Badge: React.FC<BadgeProps> = ({
     purple: 'bg-(--primary)',
     amber: 'bg-(--warning)',
     outline: 'bg-(--muted-foreground)',
+    emerald: 'bg-emerald-400',
+    rose: 'bg-rose-400',
+    indigo: 'bg-indigo-400',
+    primary: 'bg-violet-400',
   };
 
   const sizes = {

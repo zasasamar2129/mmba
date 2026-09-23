@@ -18,7 +18,14 @@ const API_BASE = '/api';
 class ApiClient {
   private getAuthToken(): string | null {
     try {
-      return localStorage.getItem('mmba_auth_token') || null;
+      const token = localStorage.getItem('mmba_auth_token');
+      if (token) return token;
+      const storedUser = localStorage.getItem('mmba_active_user');
+      if (storedUser) {
+        const u = JSON.parse(storedUser);
+        if (u && u.id) return `token-${u.id}`;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -60,18 +67,6 @@ class ApiClient {
       } catch {
         // use default error message
       }
-
-      // Step 9 §33: a 401 on a non-auth endpoint means the session has expired
-      // or been revoked server-side. Broadcast a single cleanup event (see
-      // storage.subscribeToStorage / App). App-side handler performs logout
-      // without a redirect loop.
-      if (res.status === 401 && !endpoint.startsWith('/auth/')) {
-        try {
-          window.dispatchEvent(new CustomEvent('mmba-session-expired'));
-        } catch { /* ignore */ }
-        throw new Error('نشست شما منقضی شده است. لطفاً دوباره وارد شوید.');
-      }
-
       throw new Error(errorMessage);
     }
 
@@ -852,6 +847,13 @@ class ApiClient {
     return this.request<{ success: boolean; message: ChatMessage }>(`/conversations/${conversationId}/messages/${messageId}`, {
       method: 'PUT',
       body: JSON.stringify({ body }),
+    });
+  }
+
+  public async toggleChatMessageReaction(conversationId: string, messageId: string, emoji: string) {
+    return this.request<{ success: boolean; message: ChatMessage }>(`/conversations/${conversationId}/messages/${messageId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ emoji }),
     });
   }
 

@@ -1380,14 +1380,25 @@ export enum ConversationPriority {
 }
 
 export enum MessageStatus {
+  SENDING = 'SENDING',
   SENT = 'SENT',
   DELIVERED = 'DELIVERED',
   READ = 'READ',
+  FAILED = 'FAILED',
+}
+
+export interface TypingIndicator {
+  userId: string;
+  userName: string;
+  conversationId: string;
+  timestamp: number;
 }
 
 export enum ChatMemberRole {
   MEMBER = 'MEMBER',
-  MANAGER = 'MANAGER', // رزرو شده برای آینده
+  ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  OWNER = 'OWNER',
 }
 
 export interface ConversationMember {
@@ -1400,6 +1411,7 @@ export interface ConversationMember {
   joinedAt?: string; // alias
   last_read_at?: string;
   lastReadAt?: string; // alias
+  left_at?: string;
 }
 
 export interface ChatConversation {
@@ -1410,6 +1422,8 @@ export interface ChatConversation {
   member_ids: string[];
   created_by: string;
   createdById?: string;
+  created_by_user_id?: string;
+  createdByUserId?: string;
   created_by_name: string;
   createdByName?: string;
   created_at: string;
@@ -1424,12 +1438,15 @@ export interface ChatConversation {
   lastMessageUserName?: string;
   is_archived_by?: string[];
   isArchivedBy?: string[];
+  archived_at?: string;
   updated_at?: string;
   updatedAt?: string;
   // Stage 1: Priority & Pin
   priority?: ConversationPriority | string;
   is_pinned?: boolean;
   pinnedByUserId?: string;
+  pinned_by_user_ids?: string[];
+  pinnedByUserIds?: string[];
   pinned_at?: string;
   message_count?: number;
   // Stage 2: Group fields
@@ -1439,14 +1456,18 @@ export interface ChatConversation {
 }
 
 export interface MessageAttachmentRef {
-  attachment_id: string;
+  attachment_id?: string;
   attachmentId?: string; // alias
-  attachment_name: string;
+  attachment_name?: string;
   attachmentName?: string; // alias
   attachment_file_size?: number;
   attachmentFileSize?: number;
   attachment_file_type?: string;
   attachmentFileType?: string;
+  document_id?: string;
+  documentId?: string;
+  data_url?: string;
+  thumbnail_data_url?: string;
 }
 
 // Stage 2: MessageAttachment - document_id reference to Document Engine
@@ -1471,6 +1492,22 @@ export interface MessageAttachment {
   documentFileSize?: number;
   documentUrl?: string;
   createdAt: string;
+}
+
+export interface ChatMessageReadReceipt {
+  userId: string;
+  userName?: string;
+  readAt: string;
+}
+
+export interface MessageReaction {
+  emoji: string;
+  userId: string;
+  user_id?: string;
+  userName?: string;
+  user_name?: string;
+  createdAt?: string;
+  created_at?: string;
 }
 
 // Stage 1: ChatMessage extension with deletion fields
@@ -1485,11 +1522,20 @@ export interface ChatMessage {
   body?: string;
   body_text?: string;
   attachments?: MessageAttachmentRef[];
+  message_attachments?: MessageAttachment[];
   status: MessageStatus | string;
+  delivered_at?: string;
+  deliveredAt?: string;
+  delivered_by_user_ids?: string[];
+  deliveredByUserIds?: string[];
   read_at?: string;
   readAt?: string;
   read_by_user_ids?: string[];
   readByUserIds?: string[];
+  readBy?: string[];
+  read_by?: string[];
+  readReceipts?: ChatMessageReadReceipt[];
+  reactions?: MessageReaction[];
   created_at: string;
   createdAt?: string;
   updated_at?: string;
@@ -1497,11 +1543,18 @@ export interface ChatMessage {
   client_message_id?: string;
   clientMessageId?: string;
   // Stage 1: Soft delete fields
+  is_deleted?: boolean;
+  isDeleted?: boolean;
   deleted_at?: string;
   deletedAt?: string;
   deleted_by_user_id?: string;
   deletedByUserId?: string;
+  deleted_by_user_name?: string;
+  deletedByUserName?: string;
+  deletion_reason?: string;
+  deletionReason?: string;
   is_edited?: boolean;
+  isEdited?: boolean;
   edited_at?: string;
   editedAt?: string;
 }
@@ -1518,6 +1571,11 @@ export interface Broadcast {
   id: string;
   sender_user_id: string;
   senderUserId?: string;
+  sender_user_name?: string;
+  senderUserName?: string;
+  title?: string;
+  target_type?: string;
+  targetType?: string;
   body: string;
   created_at: string;
   createdAt?: string;
@@ -1525,6 +1583,7 @@ export interface Broadcast {
   recipient_count?: number;
   read_count?: number;
   sent_count?: number;
+  delivered_count?: number;
   failed_count?: number;
 }
 
@@ -1568,6 +1627,9 @@ export interface ChatMessage {
   readAt?: string;
   read_by_user_ids?: string[];
   readByUserIds?: string[];
+  readBy?: string[];
+  read_by?: string[];
+  readReceipts?: ChatMessageReadReceipt[];
   created_at: string;
   createdAt?: string;
   updated_at?: string;

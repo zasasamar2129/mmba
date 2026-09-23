@@ -137,6 +137,14 @@ export const ChatApp: React.FC<ChatAppProps> = ({
     });
   };
 
+  const handleToggleReaction = (messageId: string, emoji: string) => {
+    if (!activeConversationId) return;
+    storage.toggleChatMessageReaction(activeConversationId, messageId, emoji).then(() => {
+      reloadThread();
+      onRefresh();
+    });
+  };
+
   const handleAddGroupMember = (userId: string) => {
     if (!activeConversationId) return;
     storage.addGroupMember(activeConversationId, userId).then(() => {
@@ -167,14 +175,14 @@ export const ChatApp: React.FC<ChatAppProps> = ({
   };
 
   return (
-    <div className="flex h-[calc(100vh-160px)] min-h-[440px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+    <div className="flex h-[calc(100vh-160px)] min-h-[440px] rounded-3xl overflow-hidden border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#10111d] shadow-sm">
       {/* Left: conversation list */}
-      <div className={`${activeConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 shrink-0 border-e border-slate-200 dark:border-slate-800`}>
+      <div className={`${activeConversation ? 'hidden md:flex' : 'flex'} w-full md:w-80 lg:w-96 shrink-0 border-e border-slate-200 dark:border-white/[0.08]`}>
         <div className="w-full flex flex-col min-h-0">
-          <div className="p-3.5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-3.5 border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between">
             <div>
               <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-indigo-500" />
+                <MessageCircle className="w-4 h-4 text-violet-500" />
                 <span>{t('nav.chat') || (isRtl ? 'سامانه گفتگو و پیام‌رسانی' : 'Chat & Broadcast')}</span>
               </h2>
               <p className="text-[10px] text-slate-400 mt-0.5">{isRtl ? 'ارتباط تیمی، گروه‌های کاری و اطلاعیه‌ها' : 'Team chat, groups & announcements'}</p>
@@ -184,7 +192,7 @@ export const ChatApp: React.FC<ChatAppProps> = ({
                 type="button"
                 onClick={() => setIsBroadcastOpen(true)}
                 title={isRtl ? 'ارسال پیام همگانی' : 'New Broadcast'}
-                className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors"
+                className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-xl bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-500/25 border border-violet-500/20 transition-colors"
               >
                 <Megaphone className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">{isRtl ? 'همگانی' : 'Broadcast'}</span>
@@ -209,12 +217,12 @@ export const ChatApp: React.FC<ChatAppProps> = ({
       </div>
 
       {/* Right: thread */}
-      <div className={`${activeConversation ? 'flex' : 'hidden md:flex'} flex-1 min-w-0`}>
+      <div className={`${activeConversation ? 'flex' : 'hidden md:flex'} flex-1 min-w-0 bg-slate-50/50 dark:bg-[#0c0d15]`}>
         {activeConversation ? (
           <div className="flex-1 flex flex-col min-h-0">
             {/* Mobile back */}
-            <div className="md:hidden p-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-              <button type="button" onClick={() => setActiveConversationId(null)} className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold">
+            <div className="md:hidden p-2 border-b border-slate-200 dark:border-white/[0.08] bg-white dark:bg-[#10111d]">
+              <button type="button" onClick={() => setActiveConversationId(null)} className="text-xs text-violet-600 dark:text-violet-400 font-semibold">
                 ← {isRtl ? 'بازگشت به لیست گفتگوها' : 'Back to conversations'}
               </button>
             </div>
@@ -229,6 +237,7 @@ export const ChatApp: React.FC<ChatAppProps> = ({
                 onEditMessage={handleEditMessage}
                 onDeleteMessage={handleDeleteMessage}
                 onAttachDocument={handleAttachDocument}
+                onToggleReaction={handleToggleReaction}
                 onMarkRead={() => storage.markChatConversationRead(activeConversation.id)}
                 onOpenGroupInfo={() => setIsGroupInfoOpen(true)}
                 onTogglePin={() => handleTogglePin(activeConversation.id)}
@@ -241,7 +250,7 @@ export const ChatApp: React.FC<ChatAppProps> = ({
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-300 dark:text-slate-600 space-y-3 p-8">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-violet-50 dark:bg-violet-500/15 text-violet-500 border border-violet-500/20 flex items-center justify-center">
               <MessageCircle className="w-8 h-8" />
             </div>
             <p className="text-xs text-slate-400 text-center max-w-xs">

@@ -63,6 +63,9 @@ export function subscribeToStorage(fn: ListenerCallback): () => void {
 }
 
 class CentralStorageService {
+  public subscribe(fn: ListenerCallback): () => void {
+    return subscribeToStorage(fn);
+  }
   // In-memory cache synchronized with central backend
   private users: User[] = SEED_USERS;
   private roles: Role[] = DEFAULT_ROLES;
@@ -204,6 +207,20 @@ class CentralStorageService {
       const drafts = localStorage.getItem('mmba_form_drafts');
       if (drafts) {
         this.drafts = JSON.parse(drafts);
+      }
+
+      // Cross-tab real-time listener for typing events
+      if (typeof window !== 'undefined') {
+        window.addEventListener('storage', (event) => {
+          if (event.key === 'mmba_chat_typing_event' && event.newValue) {
+            try {
+              const data = JSON.parse(event.newValue);
+              if (data && data.conversationId && data.userId) {
+                this.registerExternalTyping(data.conversationId, data.userId, data.userName, data.isTyping);
+              }
+            } catch {}
+          }
+        });
       }
     } catch (e) {
       console.warn('Could not load local snapshot cache:', e);
@@ -2405,8 +2422,108 @@ class CentralStorageService {
       .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   }
 
+  private typingMap: Map<string, Map<string, { userName: string; timestamp: number }>> = new Map();
+
+  public setTyping(conversationId: string, isTyping: boolean): void {
+    const me = this.currentUser;
+    if (!me || !conversationId) return;
+
+    if (!this.typingMap.has(conversationId)) {
+      this.typingMap.set(conversationId, new Map());
+    }
+
+    const convTyping = this.typingMap.get(conversationId)!;
+    if (isTyping) {
+      convTyping.set(me.id, { userName: me.name, timestamp: Date.now() });
+    } else {
+      convTyping.delete(me.id);
+    }
+
+    // Broadcast typing event across tabs/windows
+    try {
+      localStorage.setItem('mmba_chat_typing_event', JSON.stringify({
+        conversationId,
+        userId: me.id,
+        userName: me.name,
+        isTyping,
+        timestamp: Date.now()
+      }));
+    } catch {}
+
+    const typingUsers = this.getTypingUsers(conversationId);
+    emitChange({ key: 'CHAT_TYPING', action: 'UPDATE', payload: { conversationId, typingUsers } });
+  }
+
+  public getTypingUsers(conversationId: string): Array<{ userId: string; userName: string }> {
+    const me = this.currentUser;
+    const now = Date.now();
+    const convTyping = this.typingMap.get(conversationId);
+    if (!convTyping) return [];
+
+    const active: Array<{ userId: string; userName: string }> = [];
+    for (const [uid, info] of Array.from(convTyping.entries())) {
+      if (now - info.timestamp < 4000) {
+        if (uid !== me?.id) {
+          active.push({ userId: uid, userName: info.userName });
+        }
+      } else {
+        convTyping.delete(uid);
+      }
+    }
+    return active;
+  }
+
+  public registerExternalTyping(conversationId: string, userId: string, userName: string, isTyping: boolean): void {
+    if (!this.typingMap.has(conversationId)) {
+      this.typingMap.set(conversationId, new Map());
+    }
+    const convTyping = this.typingMap.get(conversationId)!;
+    if (isTyping) {
+      convTyping.set(userId, { userName, timestamp: Date.now() });
+    } else {
+      convTyping.delete(userId);
+    }
+    const typingUsers = this.getTypingUsers(conversationId);
+    emitChange({ key: 'CHAT_TYPING', action: 'UPDATE', payload: { conversationId, typingUsers } });
+  }
+
+  public async markChatConversationDelivered(conversationId: string): Promise<void> {
+    const me = this.currentUser;
+    if (!me || !conversationId) return;
+    const msgs = this.chatMessages || [];
+    let changed = false;
+
+    this.chatMessages = msgs.map((m) => {
+      if ((m.conversation_id || m.conversationId) !== conversationId || m.sender_user_id === me.id) return m;
+      const deliveredBy = Array.from(new Set([...(m.delivered_by_user_ids || []), ...(m.deliveredByUserIds || [])]));
+      if (!deliveredBy.includes(me.id)) {
+        deliveredBy.push(me.id);
+        changed = true;
+        const isAlreadyRead = m.status === MessageStatus.READ || (m.readBy && m.readBy.length > 0);
+        return {
+          ...m,
+          delivered_by_user_ids: deliveredBy,
+          deliveredByUserIds: deliveredBy,
+          delivered_at: m.delivered_at || new Date().toISOString(),
+          deliveredAt: m.deliveredAt || new Date().toISOString(),
+          status: isAlreadyRead ? MessageStatus.READ : MessageStatus.DELIVERED,
+        };
+      }
+      return m;
+    });
+
+    if (changed) {
+      this.saveLocalCacheSnapshot();
+      emitChange({ key: 'CHAT_MESSAGES', action: 'UPDATE', payload: { conversationId } });
+    }
+  }
+
   public getChatMessagesForConversation(conversationId: string): ChatMessage[] {
     return this.getChatMessages(conversationId);
+  }
+
+  public getAllChatMessages(): ChatMessage[] {
+    return this.chatMessages || [];
   }
 
   public async createConversation(recipientUserId: string, recipientUserName?: string): Promise<ChatConversation | null> {
@@ -2440,6 +2557,9 @@ class CentralStorageService {
       status: MessageStatus.SENT,
       read_by_user_ids: [],
       readByUserIds: [],
+      readBy: [],
+      read_by: [],
+      readReceipts: [],
       created_at: new Date().toISOString(),
       createdAt: new Date().toISOString(),
       client_message_id: msg.client_message_id || `cmid-${Date.now()}`,
@@ -2478,12 +2598,31 @@ class CentralStorageService {
     let changed = false;
     this.chatMessages = msgs.map((m) => {
       if ((m.conversation_id || m.conversationId) !== conversationId || m.sender_user_id === me.id) return m;
-      const readBy = m.read_by_user_ids || [];
+      const readBy = Array.from(new Set([...(m.readBy || []), ...(m.read_by_user_ids || []), ...(m.readByUserIds || [])]));
       if (readBy.includes(me.id)) return m;
       readBy.push(me.id);
-      const allRead = readBy.length >= ((convs[ci].member_ids || []).length - 1);
+      const readReceipts = [...(m.readReceipts || [])];
+      if (!readReceipts.some((r) => r.userId === me.id)) {
+        readReceipts.push({
+          userId: me.id,
+          userName: me.name,
+          readAt: new Date().toISOString(),
+        });
+      }
+      const memberCount = (convs[ci].member_ids || []).length;
+      const allRead = memberCount <= 2 ? readBy.length >= 1 : readBy.length >= (memberCount - 1);
       changed = true;
-      return { ...m, read_by_user_ids: readBy, readByUserIds: readBy, status: allRead ? MessageStatus.READ : m.status, read_at: allRead ? new Date().toISOString() : m.read_at };
+      return {
+        ...m,
+        readBy,
+        read_by: readBy,
+        read_by_user_ids: readBy,
+        readByUserIds: readBy,
+        readReceipts,
+        status: allRead ? MessageStatus.READ : m.status,
+        read_at: allRead ? new Date().toISOString() : m.read_at,
+        readAt: allRead ? new Date().toISOString() : m.readAt,
+      };
     });
     if (changed) emitChange({ key: 'CHAT_MESSAGES', action: 'READ', payload: { conversationId } });
     this.saveLocalCacheSnapshot();
@@ -2595,6 +2734,50 @@ class CentralStorageService {
       emitChange({ key: 'CHAT_MESSAGES', action: 'UPDATE', payload: msgs[idx] });
     }
     try { await api.editChatMessage(conversationId, messageId, body); return true; } catch { return false; }
+  }
+
+  public async toggleChatMessageReaction(conversationId: string, messageId: string, emoji: string): Promise<ChatMessage | null> {
+    const me = this.currentUser;
+    const msgs = this.chatMessages || [];
+    const idx = msgs.findIndex((m) => m.id === messageId);
+    if (idx < 0) return null;
+
+    const currentReactions = [...(msgs[idx].reactions || [])];
+    const existingIndex = currentReactions.findIndex(
+      (r) => r.emoji === emoji && (r.userId === me.id || r.user_id === me.id)
+    );
+
+    if (existingIndex >= 0) {
+      // Toggle off
+      currentReactions.splice(existingIndex, 1);
+    } else {
+      // Toggle on
+      currentReactions.push({
+        emoji,
+        userId: me.id,
+        user_id: me.id,
+        userName: me.name,
+        user_name: me.name,
+        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
+    }
+
+    msgs[idx] = {
+      ...msgs[idx],
+      reactions: currentReactions,
+    };
+
+    this.saveLocalCacheSnapshot();
+    emitChange({ key: 'CHAT_MESSAGES', action: 'UPDATE', payload: msgs[idx] });
+
+    try {
+      await api.toggleChatMessageReaction(conversationId, messageId, emoji);
+    } catch (err) {
+      console.warn('Backend reaction sync skipped or failed:', err);
+    }
+
+    return msgs[idx];
   }
 
   public async attachDocumentToChatMessage(conversationId: string, messageId: string, documentId: string): Promise<boolean> {

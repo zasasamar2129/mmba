@@ -7,38 +7,35 @@
     --font-vazir: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-sans: 'Plus Jakarta Sans', var(--font-vazir), sans-serif;
 
-    /* ── Semantic Design Tokens · Light ─────────────────────────────
-       Canonical names live here. The `--background` / `--surface` /
-       `--primary` … family below is an alias layer so both naming
-       conventions resolve to one source of truth (no second system). */
+    /* ── Semantic Design Tokens · Light ───────────────────────────── */
     --bg-page: #f8fafc;
     --bg-surface: #ffffff;
     --bg-surface-subtle: #f1f5f9;
     --bg-surface-elevated: #ffffff;
     --border-primary: #cbd5e1;
     --border-subtle: #e2e8f0;
-    --border-focus: #4f46e5;
+    --border-focus: #7c3aed;
     --text-primary: #0f172a;
     --text-secondary: #334155;
     --text-muted: #475569;
-    --accent-primary: #4338ca;
-    --accent-hover: #3730a3;
-    --accent-light: #eef2ff;
+    --accent-primary: #7c3aed;
+    --accent-hover: #6d28d9;
+    --accent-light: #f5f3ff;
 
     /* Semantic status tokens · Light */
-    --success: #047857;
+    --success: #059669;
     --success-bg: #ecfdf5;
     --success-border: #a7f3d0;
-    --warning: #b45309;
+    --warning: #d97706;
     --warning-bg: #fffbeb;
     --warning-border: #fde68a;
-    --danger: #b91c1c;
+    --danger: #dc2626;
     --danger-bg: #fef2f2;
     --danger-border: #fecaca;
-    --info: #1d4ed8;
-    --info-bg: #eff6ff;
-    --info-border: #bfdbfe;
-    --overlay: rgba(15, 23, 42, 0.6);
+    --info: #0284c7;
+    --info-bg: #f0f9ff;
+    --info-border: #bae6fd;
+    --overlay: rgba(15, 23, 42, 0.65);
 
     /* Spec-required alias layer (single source of truth, see above) */
     --background: var(--bg-page);
@@ -56,55 +53,98 @@
     --muted-foreground: var(--text-muted);
     --focus: var(--border-focus);
 
-    /* Elevation — reuses Tailwind's own `shadow-*` names so nothing
-       competes; light values match the framework defaults exactly. */
+    /* Elevation */
     --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.08);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.08);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.2);
   }
 
   .dark {
-    /* ── Semantic Design Tokens · Dark ───────────────────────────── */
+    /* ── Semantic Design Tokens · Cyber Security Obsidian Dark SaaS ───────────────────────────── */
     --bg-page: #0b0d14;
-    --bg-surface: #111a2c;
-    --bg-surface-subtle: #1a2438;
-    --bg-surface-elevated: #1f2a40;
-    --border-primary: #2b3a55;
-    --border-subtle: #243149;
-    --border-focus: #7c3aed;
-    --text-primary: #f1f5f9;
+    --bg-surface: #131622;
+    --bg-surface-subtle: #181b2a;
+    --bg-surface-elevated: #1f2338;
+    --border-primary: rgba(255, 255, 255, 0.08);
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-focus: #8b5cf6;
+    --text-primary: #f8fafc;
     --text-secondary: #cbd5e1;
     --text-muted: #94a3b8;
     --accent-primary: #8b5cf6;
-    --accent-hover: #4f46e5;
-    --accent-light: rgba(99, 102, 241, 0.15);
+    --accent-hover: #7c3aed;
+    --accent-light: rgba(139, 92, 246, 0.18);
 
-    /* Semantic status tokens · Dark */
-    --success: #34d399;
-    --success-bg: rgba(16, 185, 129, 0.12);
-    --success-border: rgba(16, 185, 129, 0.35);
-    --warning: #fbbf24;
-    --warning-bg: rgba(245, 158, 11, 0.12);
-    --warning-border: rgba(245, 158, 11, 0.35);
-    --danger: #f87171;
-    --danger-bg: rgba(239, 68, 68, 0.12);
-    --danger-border: rgba(239, 68, 68, 0.35);
-    --info: #60a5fa;
-    --info-bg: rgba(59, 130, 246, 0.12);
-    --info-border: rgba(59, 130, 246, 0.35);
-    --overlay: rgba(2, 6, 23, 0.85);
+    /* Semantic status tokens · Cyber / Neon Dark */
+    --success: #10b981;
+    --success-bg: rgba(16, 185, 129, 0.14);
+    --success-border: rgba(16, 185, 129, 0.3);
+    --warning: #f59e0b;
+    --warning-bg: rgba(245, 158, 11, 0.14);
+    --warning-border: rgba(245, 158, 11, 0.3);
+    --danger: #f43f5e;
+    --danger-bg: rgba(244, 63, 94, 0.14);
+    --danger-border: rgba(244, 63, 94, 0.3);
+    --info: #06b6d4;
+    --info-bg: rgba(6, 182, 212, 0.14);
+    --info-border: rgba(6, 182, 212, 0.3);
+    --overlay: rgba(7, 9, 15, 0.88);
 
-    /* Dark surfaces are layered, so shadows need to read as depth
-       against near-black rather than as the light-mode default. */
-    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.5);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.55), 0 4px 6px -4px rgb(0 0 0 / 0.55);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.6);
-    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.75);
+    /* Dark surfaces depth shadows */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.6), 0 1px 2px -1px rgb(0 0 0 / 0.6);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.6);
+    --shadow-lg: 0 10px 18px -3px rgb(0 0 0 / 0.65), 0 4px 6px -4px rgb(0 0 0 / 0.65);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.7), 0 8px 10px -6px rgb(0 0 0 / 0.7);
+    --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.85);
+  }
+
+  /* Universal Dark Theme Surface Consistency across all sections */
+  .dark .bg-white {
+    background-color: #131622 !important;
+  }
+  .dark .bg-slate-50 {
+    background-color: #0b0d14 !important;
+  }
+  .dark .bg-slate-100 {
+    background-color: #181b2a !important;
+  }
+  .dark .bg-slate-800 {
+    background-color: #181b2a !important;
+  }
+  .dark .bg-slate-900 {
+    background-color: #131622 !important;
+  }
+  .dark .bg-slate-950 {
+    background-color: #0b0d14 !important;
+  }
+  .dark .border-slate-200,
+  .dark .border-slate-300,
+  .dark .border-slate-700,
+  .dark .border-slate-800 {
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+  .dark .divide-slate-100,
+  .dark .divide-slate-200,
+  .dark .divide-slate-700,
+  .dark .divide-slate-800 {
+    border-color: rgba(255, 255, 255, 0.06) !important;
+  }
+  .dark input:not([type="checkbox"]):not([type="radio"]),
+  .dark select,
+  .dark textarea {
+    background-color: #181b2a;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+  }
+  .dark input:focus,
+  .dark select:focus,
+  .dark textarea:focus {
+    border-color: #8b5cf6;
+    outline: none;
   }
 
   html {
@@ -198,11 +238,11 @@ html[dir="rtl"] .rtl-flip {
 }
 
 .dark .liquid-glass-card {
-  background-color: rgba(17, 26, 44, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background-color: rgba(18, 19, 30, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-xl), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .liquid-glass-subtle {
@@ -211,10 +251,48 @@ html[dir="rtl"] .rtl-flip {
 }
 
 .dark .liquid-glass-subtle {
-  background-color: rgba(26, 36, 56, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: rgba(24, 25, 40, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Premium Dark SaaS Aesthetic Utilities */
+.dark .glow-card {
+  position: relative;
+  overflow: hidden;
+}
+.dark .glow-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.35), transparent);
+  pointer-events: none;
+}
+
+.dark .glow-violet {
+  box-shadow: 0 0 25px -5px rgba(124, 58, 237, 0.28);
+}
+
+.dark .glow-cyan {
+  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.25);
+}
+
+.gradient-brand-btn {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.gradient-brand-btn:hover {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  box-shadow: 0 6px 20px -4px rgba(124, 58, 237, 0.4);
+  transform: translateY(-1px);
+}
+.gradient-brand-btn:active {
+  transform: translateY(0);
 }
 
 /* Modal Backdrops */
@@ -298,6 +376,24 @@ html[dir="rtl"] .rtl-flip {
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
+}
+
+/* Hide scrollbar utilities (Preserves full scrolling functionality across all devices & browsers) */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar,
+aside ::-webkit-scrollbar,
+aside::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar,
+.scrollbar-none,
+aside,
+aside * {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
 }
 
 /* Speech Recording Pulse */
@@ -419,6 +515,60 @@ input[type="checkbox"]:disabled {
 .dark .text-slate-300 { color: #e2e8f0 !important; }
 .dark .placeholder-slate-500 { color: #94a3b8 !important; }
 .dark .placeholder-slate-400 { color: #cbd5e1 !important; }
+
+/* ── Light-mode slate-text floor (mirror of the dark floor above) ───
+   Obsidian-dark refactor hardcoded slate text on always-on dark surfaces;
+   convert those surfaces to token vars and floor the legacy slate text
+   utilities to the light palette. These only apply structurally where the
+   stone floor comment in the dark block applies — identical reasoning.
+   ponytail: floor (not migration) — remove once utilities move to tokens. */
+.light .text-slate-100 { color: #0f172a !important; }
+.light .text-slate-200 { color: #1e293b !important; }
+.light .text-slate-300 { color: #334155 !important; }
+.light .text-slate-400 { color: #475569 !important; }
+.light .text-slate-500 { color: #64748b !important; }
+.light .placeholder-slate-500 { color: #64748b !important; }
+.light .placeholder-slate-400 { color: #475569 !important; }
+
+/* ── Light-mode floor for Obsidian-token arbitrary values ────────
+   The Obsidian dark refactor (fc94de0) hardcoded `bg-[#131622]`,
+   `bg-[#181b2a]`, `border-white/[0.08]` (etc.) in JSX with no `light:`
+   escape hatch — so those sections render black-on-light in light mode.
+   Floor them to the semantic light palette via attribute-contains so we
+   don't re-escape arbitrary-value class names by hand. Dark is untouched
+   (the `.light` scope + `.dark` specificity keeps original hexes).
+   Also floors the paired slate text utilities to light ink.
+   ponytail: floor (not migration) — remove once these surfaces move to
+   token classes (var(--bg-surface) etc.) in the components. */
+.light [class*="bg-[#131622]"] { background-color: var(--bg-surface) !important; }
+.light [class*="bg-[#131622]"] .text-white { color: var(--text-primary) !important; }
+.light [class*="bg-[#131622]"] .text-slate-400 { color: var(--text-muted) !important; }
+.light [class*="bg-[#131622]"] .text-slate-300 { color: var(--text-secondary) !important; }
+.light [class*="bg-[#131622]"] .text-slate-200 { color: var(--text-secondary) !important; }
+.light [class*="bg-[#131622]"] .text-slate-100 { color: var(--text-primary) !important; }
+.light [class*="bg-[#181b2a]"] { background-color: var(--bg-surface-subtle) !important; }
+.light [class*="bg-[#181b2a]"] .text-white { color: var(--text-primary) !important; }
+.light [class*="bg-[#1f2438]"] { background-color: #e2e8f0 !important; }
+.light [class*="bg-[#181b2a]"] .text-slate-500 { color: var(--text-muted) !important; }
+.light [class*="bg-[#181b2a]"] .text-slate-400 { color: var(--text-muted) !important; }
+.light [class*="bg-[#181b2a]"] .text-slate-300 { color: var(--text-secondary) !important; }
+.light [class*="bg-[#1f2338]"] { background-color: var(--bg-surface-subtle) !important; }
+.light [class*="bg-[#151824]"] { background-color: var(--bg-surface-subtle) !important; }
+.light [class*="bg-[#161928]"] { background-color: var(--bg-surface-subtle) !important; }
+.light [class*="bg-[#191c2c]"] { background-color: #e2e8f0 !important; }
+.light [class*="bg-[#181b2c]"] { background-color: #e2e8f0 !important; }
+.light [class*="bg-[#0b0d14]"] { background-color: var(--bg-page) !important; }
+.light [class*="bg-[#0e1017]"] { background-color: var(--bg-surface) !important; }
+.light [class*="bg-[#0e1017]"] .text-white,
+.light [class*="bg-[#0e1017]"] .text-slate-200 { color: var(--text-primary) !important; }
+.light [class*="bg-[#0e1017]"] .text-slate-400 { color: var(--text-muted) !important; }
+.light [class*="bg-[#0e1017]"] { background-color: var(--bg-surface) !important; }
+.light [class*="bg-[#0c0d15]"] { background-color: var(--bg-surface) !important; }
+.light [class*="from-[#181a29]"] { background-color: var(--bg-surface-subtle) !important; }
+.light [class*="to-[#121422]"] { background-color: var(--bg-surface-subtle) !important; }
+.light [class*="border-white/"] { border-color: var(--border-primary) !important; }
+.light [class*="divide-white/"] { border-color: var(--border-subtle) !important; }
+.light [class*="ring-[#0b0d14]"] { --tw-ring-color: var(--bg-page) !important; }
 
 /* ── Forced colors / high contrast ────────────────────────────────
    Never communicate status by colour alone in a system that strips it. */

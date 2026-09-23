@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X, ChevronDown, ChevronUp, Sun, Moon, Lock, LogOut,
@@ -9,7 +9,6 @@ import { User } from '../../types';
 import { Badge } from '../ui/Badge';
 import { getInitialTheme, toggleTheme } from '../../lib/theme';
 import { useTranslation } from '../../lib/i18n';
-import { useFocusTrap } from '../../lib/useFocusTrap';
 
 export interface MobileDrawerProps {
   isOpen: boolean;
@@ -37,11 +36,8 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   onOpenReportIssue,
 }) => {
   const { language, setLanguage, t, isRtl, formatNumber } = useTranslation();
-  const drawerRef = useRef<HTMLElement>(null);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [isDark, setIsDark] = useState<boolean>(() => getInitialTheme() === 'dark');
-
-  useFocusTrap(drawerRef, isOpen);
 
   // Listen to theme change events
   useEffect(() => {
@@ -117,21 +113,17 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
           {/* Drawer container */}
           <motion.aside
-            id="mobile-navigation"
-            ref={drawerRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label={isRtl ? 'منوی ناوبری' : 'Navigation menu'}
             initial={{ x: isRtl ? '100%' : '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: isRtl ? '100%' : '-100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-            className={`relative w-[300px] max-w-[85vw] h-full bg-(--bg-surface) dark:bg-slate-950 ${
+            className={`relative w-[300px] max-w-[85vw] h-full bg-white dark:bg-[#0c0d15] ${
               isRtl ? 'border-l' : 'border-r'
-            } border-(--border-subtle) shadow-2xl flex flex-col z-10 select-none overflow-hidden focus:outline-none`}
+            } border-slate-200 dark:border-white/[0.08] shadow-2xl flex flex-col z-10 select-none overflow-hidden`}
+            aria-label="Mobile Navigation"
           >
             {/* Header / Brand */}
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2">
+            <div className="p-4 border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between gap-2">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center shrink-0">
                   <img 
@@ -149,7 +141,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
                 aria-label={t('common.close')}
               >
                 <X className="w-4 h-4" />
@@ -157,14 +149,14 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
             </div>
 
             {/* Language & Theme Switcher Bar */}
-            <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 text-xs">
+            <div className="px-4 py-2.5 bg-slate-50 dark:bg-[#131422] border-b border-slate-200 dark:border-white/[0.08] flex items-center justify-between gap-2 text-xs">
               {/* Language Switch */}
-              <div className="flex items-center rounded-lg bg-slate-200 dark:bg-slate-800 p-0.5 font-bold text-[11px]">
+              <div className="flex items-center rounded-lg bg-slate-200 dark:bg-[#1a1c2f] p-0.5 font-bold text-[11px]">
                 <button
                   type="button"
                   onClick={() => setLanguage('fa')}
                   className={`px-2 py-1 rounded-md transition-all ${
-                    language === 'fa' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
+                    language === 'fa' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   فارسی
@@ -173,7 +165,7 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                   type="button"
                   onClick={() => setLanguage('en')}
                   className={`px-2 py-1 rounded-md transition-all ${
-                    language === 'en' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
+                    language === 'en' ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   EN
@@ -184,15 +176,15 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
               <button
                 type="button"
                 onClick={handleToggleTheme}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors font-medium text-[11px]"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.06] transition-colors font-medium text-[11px]"
               >
-                {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-indigo-600" />}
+                {isDark ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5 text-violet-400" />}
                 <span>{isDark ? t('header.themeLight') : t('header.themeDark')}</span>
               </button>
             </div>
 
             {/* Navigation Sections */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto p-3 space-y-3 scrollbar-none no-scrollbar">
               {(sections || []).map((section) => {
                 const isCollapsed = !!collapsedSections[section.id];
                 const sectionTitle = t(section.titleKey) || (language === 'fa' ? section.defaultTitleFa : section.defaultTitleEn);
@@ -223,8 +215,8 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
                               onClick={() => handleItemClick(item.id)}
                               className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-all ${
                                 isActive
-                                  ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-                                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900'
+                                  ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold shadow-md shadow-violet-600/25'
+                                  : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.04]'
                               }`}
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
@@ -253,13 +245,13 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
 
             {/* User Profile Footer */}
             {currentUser && (
-              <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 flex items-center justify-between gap-2">
+              <div className="p-3 border-t border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-[#12131e] flex items-center justify-between gap-2">
                 <button
                   type="button"
                   onClick={handleOpenProfileModal}
                   className="flex items-center gap-2.5 min-w-0 text-start hover:opacity-80 transition-opacity"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 flex items-center justify-center font-bold text-xs border border-indigo-200 dark:border-indigo-800 shrink-0 overflow-hidden">
+                  <div className="w-8 h-8 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 flex items-center justify-center font-bold text-xs border border-violet-200 dark:border-violet-800/60 shrink-0 overflow-hidden shadow-xs">
                     {currentUser.avatar ? (
                       <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
                     ) : (

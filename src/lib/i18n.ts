@@ -129,8 +129,6 @@ export const faTranslations: Translations = {
   "common.customer": "مخاطب",
   "common.more": "بیشتر",
   "common.menu": "منوی ناوبری",
-  "common.notifications": "اعلان‌ها",
-  "common.closeNotification": "بستن اعلان",
 
   // Relative Dates
   "today": "امروز",
@@ -252,9 +250,7 @@ export const faTranslations: Translations = {
   "chat.newlineHint": "Shift+Enter برای خط جدید",
   "chat.noMessages": "هنوز پیامی رد و بدل نشده است.",
   "chat.sent": "ارسال",
-  "chat.delivered": "تحویل شد",
   "chat.read": "خوانده شد",
-  "chat.typing": "در حال نوشتن...",
 
   // Call Center & Interactions
   "calls.title": "مرکز مدیریت تعاملات و تماس‌ها (Call Center)",
@@ -1557,8 +1553,6 @@ export const enTranslations: Translations = {
   "common.customer": "Customer",
   "common.more": "More",
   "common.menu": "Navigation Menu",
-  "common.notifications": "Notifications",
-  "common.closeNotification": "Close notification",
   "today": "Today",
   "tomorrow": "Tomorrow",
   "nextWeek": "Next Week",

@@ -3,7 +3,7 @@ export type ThemeMode = 'dark' | 'light';
 const THEME_STORAGE_KEY = 'mmba_theme';
 
 export function getInitialTheme(): ThemeMode {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') return 'dark';
   try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY) as ThemeMode | null;
     if (saved === 'dark' || saved === 'light') {
@@ -12,7 +12,7 @@ export function getInitialTheme(): ThemeMode {
   } catch (e) {
     // ignore
   }
-  return 'light';
+  return 'dark'; // Cyber Security Obsidian Dark is default
 }
 
 export function updateThemeColorMeta(color: string): void {

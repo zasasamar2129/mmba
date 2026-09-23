@@ -35,19 +35,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-(--primary) hover:bg-(--accent-hover) text-(--primary-foreground) shadow-sm border border-transparent focus-visible:ring-(--focus)',
+        'bg-gradient-to-r from-violet-600 via-indigo-600 to-indigo-700 hover:from-violet-500 hover:via-indigo-500 hover:to-indigo-600 text-white shadow-sm dark:shadow-md dark:shadow-violet-600/20 border border-violet-500/20 focus-visible:ring-(--focus)',
       secondary:
-        'bg-(--secondary) hover:bg-(--bg-surface-elevated) text-(--secondary-foreground) border border-(--border-muted) shadow-xs focus-visible:ring-(--focus)',
+        'bg-(--bg-surface-subtle) hover:bg-(--bg-surface-elevated) text-(--text-primary) border border-(--border-subtle) shadow-xs focus-visible:ring-(--focus)',
       outline:
-        'bg-(--bg-surface) border border-(--border) hover:border-(--muted-foreground) text-(--text-primary) hover:bg-(--surface-muted) shadow-xs focus-visible:ring-(--focus)',
+        'bg-(--bg-surface)/80 backdrop-blur-xs border border-(--border-primary) hover:border-(--border-focus) text-(--text-primary) hover:bg-(--surface-muted) shadow-xs focus-visible:ring-(--focus)',
       ghost:
         'text-(--text-secondary) hover:text-(--text-primary) hover:bg-(--surface-muted) focus-visible:ring-(--focus)',
       danger:
-        'bg-(--danger) hover:brightness-90 text-(--primary-foreground) shadow-sm border border-transparent focus-visible:ring-(--danger)',
+        'bg-gradient-to-r from-rose-600 to-red-700 hover:from-rose-500 hover:to-red-600 text-white shadow-sm dark:shadow-rose-600/20 border border-rose-500/20 focus-visible:ring-(--danger)',
       success:
-        'bg-(--success) hover:brightness-90 text-(--primary-foreground) shadow-sm border border-transparent focus-visible:ring-(--success)',
+        'bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white shadow-sm dark:shadow-emerald-600/20 border border-emerald-500/20 focus-visible:ring-(--success)',
       glass:
-        'liquid-glass-subtle hover:bg-(--surface-muted) text-(--text-primary) border border-(--border-muted) shadow-md focus-visible:ring-(--focus)',
+        'liquid-glass-subtle hover:bg-(--surface-muted) text-(--text-primary) border border-(--border-subtle) shadow-md focus-visible:ring-(--focus)',
     };
 
     const sizes = {

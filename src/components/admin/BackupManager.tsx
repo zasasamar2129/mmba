@@ -70,17 +70,30 @@ export const BackupManager: React.FC<BackupManagerProps> = ({ currentUser, onRef
   const loadBackupData = async (silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const [backupsRes, healthRes, scheduleRes] = await Promise.all([
+      const results = await Promise.allSettled([
         api.getBackups(),
         api.getBackupHealth(),
         api.getBackupSchedule(),
       ]);
 
-      if (backupsRes.success) setBackups(backupsRes.backups || []);
-      if (healthRes.success) setHealth(healthRes.health);
-      if (scheduleRes.success && scheduleRes.schedule) {
-        setSchedule(scheduleRes.schedule);
-        setScheduleForm(scheduleRes.schedule);
+      const [backupsRes, healthRes, scheduleRes] = results;
+
+      if (backupsRes.status === 'fulfilled' && backupsRes.value?.success) {
+        setBackups(backupsRes.value.backups || []);
+      }
+      if (healthRes.status === 'fulfilled' && healthRes.value?.success) {
+        setHealth(healthRes.value.health);
+      }
+      if (scheduleRes.status === 'fulfilled' && scheduleRes.value?.success && scheduleRes.value.schedule) {
+        setSchedule(scheduleRes.value.schedule);
+        setScheduleForm(scheduleRes.value.schedule);
+      }
+
+      // Check if all failed
+      const allFailed = results.every((r) => r.status === 'rejected');
+      if (allFailed && !silent) {
+        const firstErr = results.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+        console.warn('Failed to load backup data:', firstErr?.reason);
       }
     } catch (err: any) {
       console.error('Failed to load backup data:', err);

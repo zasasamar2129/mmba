@@ -26,50 +26,55 @@ export function detectFileInfo(
 
   // Detect extension first - used for fallback and display
   const extMatch = fileName.match(/\.([a-zA-Z0-9]+)$/);
-  const extension = (extMatch ? extMatch[1] : '').toLowerCase();
+  let extension = (extMatch ? extMatch[1] : '').toLowerCase();
+
+  // Sniff magic bytes FIRST from base64 if available - this is the ground truth
+  let sniffedMime: string | null = null;
+  if (dataUrl.startsWith('data:')) {
+    const b64Data = dataUrl.substring(dataUrl.indexOf(',') + 1, dataUrl.indexOf(',') + 48);
+    if (b64Data.startsWith('iVBORw0KGgo')) {
+      sniffedMime = 'image/png';
+    } else if (b64Data.startsWith('/9j/')) {
+      sniffedMime = 'image/jpeg';
+    } else if (b64Data.startsWith('R0lGOD')) {
+      sniffedMime = 'image/gif';
+    } else if (b64Data.startsWith('UklGR')) {
+      sniffedMime = 'image/webp';
+    } else if (b64Data.startsWith('JVBERi')) {
+      sniffedMime = 'application/pdf';
+    } else if (b64Data.startsWith('PHN2Zy') || b64Data.startsWith('PD94bWw')) {
+      sniffedMime = 'image/svg+xml';
+    } else if (
+      b64Data.startsWith('AAAAOGk') ||
+      b64Data.startsWith('AAAAGGk') ||
+      b64Data.startsWith('AAAAUGk') ||
+      b64Data.startsWith('AAAA') && (b64Data.includes('ZnR5cA') || b64Data.includes('aGVp'))
+    ) {
+      sniffedMime = 'image/heic';
+    }
+  }
 
   // Extract MIME from dataUrl header if present and valid
-  let mimeType = rawMime;
-  if (dataUrl.startsWith('data:')) {
+  let mimeType = sniffedMime || rawMime;
+  if (!sniffedMime && dataUrl.startsWith('data:')) {
     const commaIdx = dataUrl.indexOf(',');
     if (commaIdx > 5) {
       const headerPart = dataUrl.substring(5, commaIdx);
       const extracted = headerPart.split(';')[0];
-      // Only use header MIME if it's a valid image type (not application/json from buggy browsers)
-      if (extracted && extracted.startsWith('image/') && extracted !== 'application/octet-stream') {
-        mimeType = extracted.toLowerCase();
-      } else if (extracted && extracted === 'application/json' && extension === 'png') {
-        // Safari/other browsers sometimes report PNG as application/json - fix it
-        mimeType = 'image/png';
-      } else if (extracted && extracted !== 'application/octet-stream') {
-        mimeType = extracted.toLowerCase();
+      // Only accept non-generic MIME
+      if (extracted && extracted !== 'application/octet-stream') {
+        // Buggy mobile browsers send application/json for photos!
+        if (extracted === 'application/json' && extension !== 'json') {
+          // Ignore buggy json header for non-json extensions
+        } else {
+          mimeType = extracted.toLowerCase();
+        }
       }
     }
   }
 
-  // Sniff magic bytes from base64 if MIME is still generic or octet-stream
-  if (!mimeType || mimeType === 'application/octet-stream' || mimeType === 'application/json') {
-    const b64Data = dataUrl.startsWith('data:') ? dataUrl.substring(dataUrl.indexOf(',') + 1, dataUrl.indexOf(',') + 32) : '';
-    if (b64Data.startsWith('iVBORw0KGgo')) {
-      mimeType = 'image/png';
-    } else if (b64Data.startsWith('/9j/')) {
-      mimeType = 'image/jpeg';
-    } else if (b64Data.startsWith('R0lGOD')) {
-      mimeType = 'image/gif';
-    } else if (b64Data.startsWith('UklGR')) {
-      mimeType = 'image/webp';
-    } else if (b64Data.startsWith('JVBERi')) {
-      mimeType = 'application/pdf';
-    } else if (b64Data.startsWith('PHN2Zy') || b64Data.startsWith('PD94bWw')) {
-      mimeType = 'image/svg+xml';
-    } else if (b64Data.startsWith('AAAAOGk') || b64Data.startsWith('AAAAGGk') || b64Data.startsWith('AAAAUGk')) {
-      // HEIC/HEIF: start with 'ftyp' box containing 'heic', 'heix', or 'mif1'
-      mimeType = 'image/heic';
-    }
-  }
-
-  // Fallback to extension if MIME is still unknown
-  if (!mimeType || mimeType === 'application/octet-stream') {
+  // If mimeType is still unknown or generic or buggy json
+  if (!mimeType || mimeType === 'application/octet-stream' || (mimeType === 'application/json' && extension !== 'json')) {
     switch (extension) {
       case 'jpg':
       case 'jpeg':
@@ -89,6 +94,10 @@ export function detectFileInfo(
         break;
       case 'bmp':
         mimeType = 'image/bmp';
+        break;
+      case 'heic':
+      case 'heif':
+        mimeType = 'image/heic';
         break;
       case 'pdf':
         mimeType = 'application/pdf';
@@ -121,10 +130,6 @@ export function detectFileInfo(
       case 'rar':
         mimeType = 'application/x-rar-compressed';
         break;
-      case 'heic':
-      case 'heif':
-        mimeType = 'image/heic';
-        break;
       case 'mp4':
       case 'mov':
       case 'avi':
@@ -138,16 +143,25 @@ export function detectFileInfo(
         mimeType = 'audio/' + extension;
         break;
       default:
-        mimeType = 'application/octet-stream';
+        // If sniffed as image, default to image/jpeg
+        mimeType = sniffedMime || 'application/octet-stream';
     }
   }
 
-  const isImage = mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'avif', 'heic', 'heif'].includes(extension);
-  const isPdf = mimeType === 'application/pdf' || extension === 'pdf';
-  const isText = mimeType.startsWith('text/') || mimeType === 'application/json' || ['txt', 'csv', 'log', 'json', 'md', 'xml'].includes(extension);
-  const isSpreadsheet = ['xls', 'xlsx', 'csv', 'ods'].includes(extension) || mimeType.includes('spreadsheet') || mimeType.includes('excel');
-  const isDocument = ['doc', 'docx', 'rtf', 'odt', 'pages'].includes(extension) || mimeType.includes('wordprocessing');
-  const isArchive = ['zip', 'rar', '7z', 'tar', 'gz'].includes(extension) || mimeType.includes('zip') || mimeType.includes('compressed');
+  // If extension is empty but MIME is known image, backfill extension
+  if (!extension && mimeType.startsWith('image/')) {
+    if (mimeType === 'image/jpeg') extension = 'jpg';
+    else if (mimeType === 'image/png') extension = 'png';
+    else if (mimeType === 'image/webp') extension = 'webp';
+    else if (mimeType === 'image/heic') extension = 'heic';
+  }
+
+  const isImage = mimeType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp', 'avif', 'heic', 'heif'].includes(extension) || !!sniffedMime?.startsWith('image/');
+  const isPdf = mimeType === 'application/pdf' || extension === 'pdf' || sniffedMime === 'application/pdf';
+  const isText = !isImage && !isPdf && (mimeType.startsWith('text/') || (mimeType === 'application/json' && extension === 'json') || ['txt', 'csv', 'log', 'md', 'xml'].includes(extension));
+  const isSpreadsheet = !isImage && (['xls', 'xlsx', 'csv', 'ods'].includes(extension) || mimeType.includes('spreadsheet') || mimeType.includes('excel'));
+  const isDocument = !isImage && (['doc', 'docx', 'rtf', 'odt', 'pages'].includes(extension) || mimeType.includes('wordprocessing'));
+  const isArchive = !isImage && (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension) || mimeType.includes('zip') || mimeType.includes('compressed'));
 
   let displayType = extension.toUpperCase() || 'FILE';
   if (isImage) {
@@ -243,11 +257,33 @@ export function getAttachmentSrc(
  * Triggers safe client download of an attachment with exact original filename.
  */
 export function downloadAttachment(att: Partial<Attachment> & { fileName?: string; dataUrl?: string; id?: string }) {
-  const fileName = att.fileName || (att as any).filename || 'download';
-  
-  if (att.dataUrl) {
+  let fileName = att.fileName || (att as any).filename || 'download';
+  const info = detectFileInfo(att);
+
+  // If the file is an image, make sure it downloads as an image, not as a .json file!
+  if (info.isImage) {
+    if (fileName.toLowerCase().endsWith('.json')) {
+      fileName = fileName.replace(/\.json$/i, '.jpg');
+    } else if (!/\.(jpg|jpeg|png|webp|gif|svg|heic|heif)$/i.test(fileName)) {
+      const ext = info.extension && info.extension !== 'json' ? info.extension : 'jpg';
+      fileName = `${fileName}.${ext}`;
+    }
+  }
+
+  // Ensure dataUrl has the correct image MIME type instead of application/json
+  let finalDataUrl = att.dataUrl;
+  if (info.isImage && finalDataUrl && finalDataUrl.startsWith('data:')) {
+    if (finalDataUrl.startsWith('data:application/json') || finalDataUrl.startsWith('data:application/octet-stream')) {
+      const commaIdx = finalDataUrl.indexOf(',');
+      if (commaIdx !== -1) {
+        finalDataUrl = `data:${info.mimeType || 'image/jpeg'}${finalDataUrl.substring(commaIdx)}`;
+      }
+    }
+  }
+
+  if (finalDataUrl) {
     const link = document.createElement('a');
-    link.href = att.dataUrl;
+    link.href = finalDataUrl;
     link.download = fileName;
     document.body.appendChild(link);
     link.click();

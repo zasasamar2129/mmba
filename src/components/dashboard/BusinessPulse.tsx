@@ -59,28 +59,30 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
   return (
     <div className="space-y-6 animate-blur-fade-up">
       {/* Top Banner / Welcome with Role Context */}
-      <div className="p-4 sm:p-6 rounded-3xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/20 text-end flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-1">
+      <div className="p-4 sm:p-6 rounded-3xl bg-white dark:bg-[#10111d] border border-slate-200 dark:border-white/[0.08] text-end flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative overflow-hidden shadow-xs">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="space-y-1 relative z-10">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100">
+            <h1 className="text-lg sm:text-2xl font-extrabold text-slate-900 dark:text-white">
               سلام، {currentUser.name}
             </h1>
             <Badge variant="purple" size="sm">
               {currentUser.department}
             </Badge>
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
             سیستم عامل MMBA — تمرکز امروز شما بر مشتری، تسریع پیگیری‌ها و انضباط مالی است.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto relative z-10">
           <Button
             variant="primary"
             size="sm"
             onClick={() => onOpenQuickAction('CALL')}
             leftIcon={<PhoneCall className="w-4 h-4" />}
-            className="flex-1 sm:flex-none"
+            className="flex-1 sm:flex-none shadow-md shadow-violet-600/20"
           >
             ثبت تماس سریع
           </Button>
@@ -118,8 +120,8 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
             onClick={() => onNavigate('TASKS')}
             className={`p-4 rounded-2xl border transition-all cursor-pointer text-end group ${
               overdueTasks.length > 0
-                ? 'border-rose-300 dark:border-rose-500/30 hover:border-rose-400 dark:hover:border-rose-500/60 bg-rose-50/50 dark:bg-rose-950/10'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                ? 'border-rose-300 dark:border-rose-500/30 hover:border-rose-400 dark:hover:border-rose-500/60 bg-rose-50/50 dark:bg-rose-950/20'
+                : 'bg-white dark:bg-[#10111d] border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.15] shadow-xs'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -152,8 +154,8 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
             onClick={() => onNavigate('PAYMENTS')}
             className={`p-4 rounded-2xl border transition-all cursor-pointer text-end group ${
               pendingPayments.length > 0
-                ? 'border-amber-300 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-500/60 bg-amber-50/50 dark:bg-amber-950/10'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                ? 'border-amber-300 dark:border-amber-500/30 hover:border-amber-400 dark:hover:border-amber-500/60 bg-amber-50/50 dark:bg-amber-950/20'
+                : 'bg-white dark:bg-[#10111d] border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.15] shadow-xs'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -186,8 +188,8 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
             onClick={() => onNavigate('REPAIRS')}
             className={`p-4 rounded-2xl border transition-all cursor-pointer text-end group ${
               urgentRepairs.length > 0
-                ? 'border-indigo-300 dark:border-indigo-500/30 hover:border-indigo-400 dark:hover:border-indigo-500/60 bg-indigo-50/50 dark:bg-indigo-950/10'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs'
+                ? 'border-indigo-300 dark:border-indigo-500/30 hover:border-indigo-400 dark:hover:border-indigo-500/60 bg-indigo-50/50 dark:bg-indigo-950/20'
+                : 'bg-white dark:bg-[#10111d] border-slate-200 dark:border-white/[0.08] hover:border-slate-300 dark:hover:border-white/[0.15] shadow-xs'
             }`}
           >
             <div className="flex items-center justify-between">
@@ -235,7 +237,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
             </Button>
           </div>
 
-          <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs p-3 divide-y divide-slate-100 dark:divide-slate-800/60">
+          <div className="rounded-2xl bg-white dark:bg-[#10111d] border border-slate-200 dark:border-white/[0.08] shadow-xs p-3 divide-y divide-slate-100 dark:divide-white/[0.06]">
             {todayTasks.length === 0 ? (
               <div className="text-center py-8 text-slate-500 dark:text-slate-400 space-y-1">
                 <CheckCircle2 className="w-8 h-8 mx-auto text-emerald-500/60 dark:text-emerald-400/60 mb-2" />
@@ -247,7 +249,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
                 <div
                   key={t.id}
                   onClick={() => onNavigate('TASKS', t.id)}
-                  className="py-3 px-2 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-xl transition-colors cursor-pointer text-end"
+                  className="py-3 px-2 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-xl transition-colors cursor-pointer text-end"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <CheckSquare className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -273,7 +275,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <TrendingUp className="w-4 h-4 text-violet-600 dark:text-violet-400" />
               <span>{isRtl ? 'خلاصه عملیات کسب‌وکار' : 'Business Operations Summary'}</span>
             </h3>
           </div>
@@ -281,10 +283,10 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
           <div className="space-y-2.5">
             <div
               onClick={() => onNavigate('CUSTOMERS')}
-              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs cursor-pointer flex items-center justify-between text-end transition-all"
+              className="p-3.5 rounded-2xl bg-white dark:bg-[#10111d] border border-slate-200 dark:border-white/[0.08] hover:border-violet-500/40 glow-card shadow-xs cursor-pointer flex items-center justify-between text-end transition-all"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">
+                <div className="p-2.5 rounded-xl bg-violet-50 dark:bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/20">
                   <Users className="w-4 h-4" />
                 </div>
                 <div>
@@ -297,10 +299,10 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
 
             <div
               onClick={() => onNavigate('PAYMENTS')}
-              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs cursor-pointer flex items-center justify-between text-end transition-all"
+              className="p-3.5 rounded-2xl bg-white dark:bg-[#10111d] border border-slate-200 dark:border-white/[0.08] hover:border-emerald-500/40 glow-card shadow-xs cursor-pointer flex items-center justify-between text-end transition-all"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   <CreditCard className="w-4 h-4" />
                 </div>
                 <div>
@@ -313,10 +315,10 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
 
             <div
               onClick={() => onNavigate('REPAIRS')}
-              className="p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs cursor-pointer flex items-center justify-between text-end transition-all"
+              className="p-3.5 rounded-2xl bg-white dark:bg-[#10111d] border border-slate-200 dark:border-white/[0.08] hover:border-amber-500/40 glow-card shadow-xs cursor-pointer flex items-center justify-between text-end transition-all"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
                   <Wrench className="w-4 h-4" />
                 </div>
                 <div>
@@ -334,7 +336,7 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400" />
             <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
               آخرین رویدادها و تماس‌های ثبت شده
             </h3>
@@ -344,15 +346,15 @@ export const BusinessPulse: React.FC<BusinessPulseProps> = ({
           </Button>
         </div>
 
-        <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden divide-y divide-slate-100 dark:divide-slate-800/60">
+        <div className="rounded-2xl bg-white dark:bg-[#10111d] border border-slate-200 dark:border-white/[0.08] shadow-xs overflow-hidden divide-y divide-slate-100 dark:divide-white/[0.06]">
           {calls.slice(0, 5).map((cl) => (
             <div
               key={cl.id}
               onClick={() => onNavigate('CUSTOMERS', cl.customerId)}
-              className="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors cursor-pointer text-end flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+              className="p-3.5 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors cursor-pointer text-end flex flex-col sm:flex-row sm:items-center justify-between gap-2"
             >
               <div className="flex items-start gap-3 min-w-0">
-                <div className="p-2 rounded-xl bg-sky-50 dark:bg-slate-800 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5">
+                <div className="p-2 rounded-xl bg-sky-50 dark:bg-slate-800/80 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5">
                   <PhoneCall className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">

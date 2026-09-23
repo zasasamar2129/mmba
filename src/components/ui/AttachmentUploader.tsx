@@ -10,6 +10,7 @@ import { useToast } from './Toast';
 import { FilePreviewModal } from './FilePreviewModal';
 import { formatPersianDate } from '../../lib/dateUtils';
 import { useTranslation } from '../../lib/i18n';
+import { prepareMobileUpload } from '../../lib/heicConverter';
 
 export interface AttachmentUploaderProps {
   attachments: Attachment[];
@@ -56,7 +57,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   const resolvedTitle = title ?? (isRtl ? 'ضمیمه و پیوست اسناد / فیش واریزی' : 'Document Attachments / Deposit Receipts');
   const resolvedSubtitle = subtitle ?? (isRtl ? 'پشتیبانی از عکس فیش (JPG, PNG, WebP, HEIC/HEIF) و اسناد متنی/PDF تا سقف ۱۰ مگابایت' : 'Supports receipt photos (JPG, PNG, WebP, HEIC/HEIF) and text/PDF docs up to 10MB');
 
-  const { success, error, warning } = useToast();
+  const { success, error, warning, info } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -69,94 +70,66 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const validateAndProcessFile = (file: File): Promise<Attachment | null> => {
-    return new Promise((resolve) => {
-      // 1. Extension check
-      const ext = file.name.split('.').pop()?.toLowerCase() || '';
-      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+  const validateAndProcessFile = async (file: File): Promise<Attachment | null> => {
+    try {
+      // 1. Process mobile uploads (HEIC conversion to JPG, downscaling oversized phone camera photos, MIME fix)
+      const prepared = await prepareMobileUpload(file, {
+        maxDimension: 2560,
+        quality: 0.88,
+        onConversionNotice: (msg) => {
+          info(msg);
+        },
+      });
+
+      const finalFile = prepared.file;
+      const ext = (prepared.fileName.split('.').pop() || '').toLowerCase();
+
+      // 2. Extension check
+      if (!ALLOWED_EXTENSIONS.includes(ext) && !['jpg', 'jpeg', 'png', 'webp', 'pdf'].includes(ext)) {
         error(isRtl ? `پسوند .${ext} پشتیبانی نمی‌شود. فقط فرمت‌های تصویر (JPG, PNG, WebP, HEIC/HEIF) و اسناد (PDF, Word, Excel, Text) مجاز هستند.` : `Extension .${ext} is not supported. Only image formats (JPG, PNG, WebP, HEIC/HEIF) and documents (PDF, Word, Excel, Text) are allowed.`);
-        resolve(null);
-        return;
+        return null;
       }
 
-      // 2. Size check
+      // 3. Size check
       const maxBytes = maxSizeMB * 1024 * 1024;
-      if (file.size > maxBytes) {
-        error(isRtl ? `حجم فایل "${file.name}" (${formatFileSize(file.size)}) بیش از سقف مجاز ${maxSizeMB} مگابایت است.` : `File size "${file.name}" (${formatFileSize(file.size)}) exceeds maximum limit of ${maxSizeMB}MB.`);
-        resolve(null);
-        return;
+      if (prepared.fileSize > maxBytes) {
+        error(isRtl ? `حجم فایل "${prepared.fileName}" (${formatFileSize(prepared.fileSize)}) بیش از سقف مجاز ${maxSizeMB} مگابایت است.` : `File size "${prepared.fileName}" (${formatFileSize(prepared.fileSize)}) exceeds maximum limit of ${maxSizeMB}MB.`);
+        return null;
       }
 
-      // 3. Read data URL
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
+      const fileType = prepared.mimeType || (prepared.isImage ? 'image/jpeg' : 'application/octet-stream');
 
-        // Determine correct MIME type - mobile browsers often report empty or wrong types for HEIC/HEIF
-        // ALWAYS override based on extension for known image formats
-        const mimeMap: Record<string, string> = {
-          'heic': 'image/heic',
-          'heif': 'image/heif',
-          'jpg': 'image/jpeg',
-          'jpeg': 'image/jpeg',
-          'png': 'image/png',
-          'webp': 'image/webp',
-          'pdf': 'application/pdf',
-          'txt': 'text/plain',
-          'doc': 'application/msword',
-          'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          'xls': 'application/vnd.ms-excel',
-          'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'csv': 'text/csv',
-        };
-        // Use extension-based MIME for images/docs, fall back to file.type only for unknown
-        const fileType = mimeMap[ext] || file.type || `application/${ext}`;
-
-        // Fix the data URL header to use the correct MIME type
-        // Browser's FileReader may embed wrong MIME (e.g. application/json for HEIC)
-        let fixedDataUrl = dataUrl;
-        if (dataUrl.startsWith('data:')) {
-          const commaIdx = dataUrl.indexOf(',');
-          if (commaIdx > 5) {
-            const headerPart = dataUrl.substring(5, commaIdx);
-            const browserMime = headerPart.split(';')[0];
-            if (browserMime && browserMime !== fileType) {
-              fixedDataUrl = `data:${fileType}${headerPart.substring(browserMime.length)}${dataUrl.substring(commaIdx)}`;
-            }
-          }
-        }
-
-        const newAttachment: Attachment = {
-          id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-          fileName: file.name,
-          filename: file.name,
-          fileType: fileType,
-          mimeType: fileType,
-          fileSize: file.size,
-          sizeBytes: file.size,
-          dataUrl: fixedDataUrl,
-          category: fileType.startsWith('image/')
-            ? (isRtl ? 'تصویر فیش واریزی' : 'Receipt Image')
-            : (isRtl ? 'سند و مدرک مالی' : 'Financial Document'),
-          customerId: customerId || '',
-          customerName: customerName || '',
-          relatedEntityType,
-          relatedEntityId: relatedEntityId || '',
-          uploadedByUserId: uploaderId,
-          uploadedByUserName: resolvedUploaderName,
-          uploadedAt: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        };
-        resolve(newAttachment);
+      const newAttachment: Attachment = {
+        id: `att-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        fileName: prepared.fileName,
+        filename: prepared.fileName,
+        fileType: fileType,
+        mimeType: fileType,
+        fileSize: prepared.fileSize,
+        sizeBytes: prepared.fileSize,
+        dataUrl: prepared.dataUrl,
+        category: prepared.isImage
+          ? (isRtl ? 'تصویر فیش واریزی' : 'Receipt Image')
+          : (isRtl ? 'سند و مدرک مالی' : 'Financial Document'),
+        customerId: customerId || '',
+        customerName: customerName || '',
+        relatedEntityType,
+        relatedEntityId: relatedEntityId || '',
+        uploadedByUserId: uploaderId,
+        uploadedByUserName: resolvedUploaderName,
+        uploadedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
       };
 
-      reader.onerror = () => {
-        error(isRtl ? `خطا در پردازش فایل "${file.name}"` : `Error processing file "${file.name}"`);
-        resolve(null);
-      };
+      if (prepared.isConvertedHeic) {
+        success(isRtl ? `تصویر HEIC آیفون («${file.name}») با موفقیت تبدیل به عکس استاندارد JPG شد.` : `iPhone HEIC image converted to standard JPG.`);
+      }
 
-      reader.readAsDataURL(file);
-    });
+      return newAttachment;
+    } catch (err: any) {
+      error(isRtl ? `خطا در پردازش فایل "${file.name}": ${err?.message || ''}` : `Error processing file "${file.name}"`);
+      return null;
+    }
   };
 
   const handleFiles = async (files: FileList | null) => {
