@@ -578,8 +578,8 @@ model JournalEntryLine {
 
   journalEntryId String
   accountId      String
-  debit          Float @default(0)
-  credit         Float @default(0)
+  debit          Float             @default(0)
+  credit         Float             @default(0)
   description    String?
   createdAt      TimestamptzString @default(now())
 
@@ -701,4 +701,326 @@ model AuditLog {
 
   @@index([tenantId, timestamp])
   @@index([tenantId, module])
+}
+
+// ---------------------------------------------------------------------------
+// Step 12 cont. — auxiliary tenant-owned entities discovered in src/types
+// ---------------------------------------------------------------------------
+model Interaction {
+  id                String                     @id @default(uuid())
+  tenantId          String
+  tenant            Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  customerId        String?
+  leadId            String?
+  leadCode          String?
+  customerName      String?
+  customerMobile    String?
+  userId            String?
+  userName          String?
+  interactionType   String                     @default("incoming_call")
+  startedAt         TimestamptzString
+  durationSeconds   Int                        @default(0)
+  subject           String?
+  customerRequest   String?
+  outcome           String?
+  note              String?
+  voiceTranscript   String?
+  followUpRequired  Boolean                    @default(false)
+  followUpAt        TimestamptzString?
+  followUpUserId    String?
+  followUpTaskId    String?
+  followUpCompleted Boolean                    @default(false)
+  createdAt         TimestamptzString          @default(now())
+  updatedAt         temporal.updatedAtString()
+
+  @@index([tenantId, customerId])
+  @@index([tenantId, leadId])
+  @@index([tenantId, startedAt])
+}
+
+model VoiceNote {
+  id                String                     @id @default(uuid())
+  tenantId          String
+  tenant            Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  title             String
+  noteType          String                     @default("VOICE") // VOICE | TEXT
+  body              String?
+  customerId        String?
+  customerName      String?
+  storageKey        String?
+  mimeType          String?
+  fileName          String?
+  durationSeconds   Int                        @default(0)
+  transcription     String?
+  category          String                     @default("GENERAL")
+  tags              Json?
+  createdById       String
+  createdByName     String
+  updatedById       String?
+  updatedByName     String?
+  editedAt          TimestamptzString?
+  relatedEntityType String?
+  relatedEntityId   String?
+  isPinned          Boolean                    @default(false)
+  createdAt         TimestamptzString          @default(now())
+  updatedAt         temporal.updatedAtString()
+
+  @@index([tenantId, customerId])
+  @@index([tenantId, relatedEntityId])
+}
+
+model Broadcast {
+  id          String                     @id @default(uuid())
+  tenantId    String
+  tenant      Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  title       String
+  body        String
+  status      String                     @default("DRAFT")
+  createdById String
+  createdAt   TimestamptzString          @default(now())
+  updatedAt   temporal.updatedAtString()
+
+  @@index([tenantId, status])
+}
+
+model BroadcastRecipient {
+  id          String             @id @default(uuid())
+  tenantId    String
+  tenant      Tenant             @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  broadcastId String
+  userId      String
+  status      String             @default("PENDING")
+  sentAt      TimestamptzString?
+  deliveredAt TimestamptzString?
+  createdAt   TimestamptzString  @default(now())
+
+  @@unique([broadcastId, userId])
+  @@index([tenantId, userId])
+}
+
+model MessageReaction {
+  id        String            @id @default(uuid())
+  tenantId  String
+  tenant    Tenant            @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  messageId String
+  userId    String
+  emoji     String
+  createdAt TimestamptzString @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@index([tenantId, messageId])
+}
+
+model ChatMessageReadReceipt {
+  id        String            @id @default(uuid())
+  tenantId  String
+  tenant    Tenant            @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  messageId String
+  userId    String
+  readAt    TimestamptzString @default(now())
+
+  @@unique([messageId, userId])
+  @@index([tenantId, userId])
+}
+
+model Consignment {
+  id                  String                     @id @default(uuid())
+  tenantId            String
+  tenant              Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  simId               String
+  ownerCustomerId     String
+  ownerCustomerName   String
+  receivedAt          TimestamptzString
+  requestedPrice      Float
+  commissionType      String                     @default("PERCENTAGE")
+  commissionValue     Float
+  agreedTerms         String
+  responsibleUserId   String
+  responsibleUserName String
+  expiryAt            TimestamptzString?
+  status              String                     @default("CONSIGNMENT")
+  soldAt              TimestamptzString?
+  soldPrice           Float?
+  actualCommission    Float?
+  ownerPayableAmount  Float?
+  settlementStatus    String?
+  settledAt           TimestamptzString?
+  buyerCustomerId     String?
+  buyerCustomerName   String?
+  returnReason        String?
+  returnedAt          TimestamptzString?
+  notes               String?
+  contactHistory      Json?
+  documents           Json?
+  createdAt           TimestamptzString          @default(now())
+  updatedAt           temporal.updatedAtString()
+
+  @@index([tenantId, simId])
+  @@index([tenantId, status])
+}
+
+model RegisteredHolder {
+  id                 String                     @id @default(uuid())
+  tenantId           String
+  tenant             Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  fullName           String
+  nationalId         String
+  mobile             String
+  shebaNumber        String?
+  activeSimCount     Int?
+  maxCapacity        Int?
+  remainingCapacity  Int?
+  isAtCapacity       Boolean                    @default(false)
+  birthDate          TimestamptzString?
+  address            String?
+  notes              String?
+  isActive           Boolean                    @default(true)
+  nationalIdImageUrl String?
+  createdAt          TimestamptzString          @default(now())
+  updatedAt          temporal.updatedAtString()
+  isDeleted          Boolean                    @default(false)
+  deletedAt          TimestamptzString?
+
+  @@index([tenantId, nationalId])
+  @@index([tenantId, mobile])
+}
+
+model ContractInstallment {
+  id                 String                     @id @default(uuid())
+  tenantId           String
+  tenant             Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  contractId         String
+  simCardId          String?
+  simNumber          String?
+  customerId         String
+  customerName       String?
+  installmentNumber  Int
+  dueDate            TimestamptzString
+  principalAmount    Float
+  commissionAmount   Float
+  totalDue           Float
+  totalAmount        Float?
+  paidAmount         Float                      @default(0)
+  remainingAmount    Float
+  status             String                     @default("PENDING")
+  notes              String?
+  repaymentMethod    String?
+  checkNumber        String?
+  bankName           String?
+  destinationAccount String?
+  createdAt          TimestamptzString          @default(now())
+  updatedAt          temporal.updatedAtString()
+
+  @@unique([tenantId, contractId, installmentNumber])
+  @@index([tenantId, customerId])
+}
+
+model DateSuggestion {
+  id               String             @id @default(uuid())
+  tenantId         String
+  tenant           Tenant             @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  customerId       String
+  jalaliDate       String
+  operatorId       String
+  operatorName     String
+  activityType     String
+  result           String?
+  nextFollowUpDate TimestamptzString?
+  taskId           String?
+  metadata         Json?
+  createdAt        TimestamptzString  @default(now())
+
+  @@index([tenantId, customerId])
+}
+
+model ShareableLink {
+  id                String            @id @default(uuid())
+  tenantId          String
+  tenant            Tenant            @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  token             String            @unique
+  relatedEntityId   String
+  relatedEntityType String
+  accessCount       Int               @default(0)
+  isRevoked         Boolean           @default(false)
+  createdById       String
+  createdAt         TimestamptzString @default(now())
+
+  @@index([tenantId, relatedEntityId])
+}
+
+model ProblemReport {
+  id                 String                     @id @default(uuid())
+  tenantId           String
+  tenant             Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  title              String
+  description        String
+  category           String?
+  priority           String                     @default("NORMAL")
+  status             String                     @default("PENDING")
+  screenshotUrl      String?
+  url                String?
+  userAgent          String?
+  userId             String
+  userName           String
+  userRole           String?
+  userEmail          String?
+  userMobile         String?
+  adminNotes         String?
+  resolvedAt         TimestamptzString?
+  resolvedByUserId   String?
+  resolvedByUserName String?
+  createdAt          TimestamptzString          @default(now())
+  updatedAt          temporal.updatedAtString()
+
+  @@index([tenantId, status])
+}
+
+model DocumentShare {
+  id           String                     @id @default(uuid())
+  tenantId     String
+  tenant       Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  documentId   String
+  documentType String
+  sharedWith   Json
+  status       String                     @default("PENDING")
+  createdById  String
+  createdAt    TimestamptzString          @default(now())
+  updatedAt    temporal.updatedAtString()
+
+  @@index([tenantId, documentId])
+}
+
+model LeadActivity {
+  id               String             @id @default(uuid())
+  tenantId         String
+  tenant           Tenant             @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  leadId           String
+  type             String
+  result           String
+  operatorId       String
+  operatorName     String
+  jalaliDate       String?
+  nextFollowUpDate TimestamptzString?
+  activityType2    String?            @map("activity2ndType")
+  taskId           String?
+  metadata         Json?
+  createdAt        TimestamptzString  @default(now())
+
+  @@index([tenantId, leadId])
+}
+
+model NotificationDelivery {
+  id             String             @id @default(uuid())
+  tenantId       String?
+  notificationId String
+  userId         String
+  channel        String
+  status         String             @default("PENDING")
+  sentAt         TimestamptzString?
+  deliveredAt    TimestamptzString?
+  failedAt       TimestamptzString?
+  errorMessage   String?
+  createdAt      TimestamptzString  @default(now())
+
+  @@index([tenantId, userId])
 }

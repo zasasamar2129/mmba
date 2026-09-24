@@ -3,7 +3,8 @@ import { customerRepository } from '../server/customerRepository';
 import { pool } from '../server/pg';
 
 async function main() {
-  const c = await customerRepository.create('ten-seed-a', { name: 'Ali A', mobile: '09120000001', code: 'CUST-A-1' });
+  const code = `CUST-A-${Date.now()}`;
+  const c = await customerRepository.create('ten-seed-a', { name: 'Ali A', mobile: '0912' + String(Date.now()).slice(-8), code });
   console.log('1 create:', c.id, c.name, 'tenant:', c.tenantId);
 
   const leak = await customerRepository.getById('ten-seed-b', c.id);
