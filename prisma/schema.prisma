@@ -1,0 +1,245 @@
+// use prisma-8
+// MMBA — Prisma schema (Step 11: PostgreSQL + Tenant Foundation)
+
+//
+// Establishes the platform + tenant core structure:
+//   Platform: User, Role, BusinessCategory, Plan, Entitlement, PlatformSettings, PlatformAdmin
+//   Tenant:   Tenant, Membership, TenantDomain, License, TenantSettings
+//   Per-user: Session, PushDevice
+//
+// Tenant-owned MMBA business entities (Customer, Lead, Payment, Chat, ...) are
+// migrated incrementally in Step 12 and will hang off Tenant via tenantId.
+model User {
+  id           String                     @id @default(uuid())
+  username     String                     @unique
+  email        String?                    @unique
+  mobile       String?                    @unique
+  name         String
+  passwordHash String
+  role         String                     @default("READ_ONLY") // platform role catalog key; per-tenant role in Membership
+  department   String?
+  status       String                     @default("ACTIVE") // ACTIVE | INACTIVE | SUSPENDED
+  avatar       String?
+  tokenVersion Int                        @default(0)
+
+  memberships  Membership[]
+  sessions     Session[]
+  pushDevices  PushDevice[]
+
+  createdAt    TimestamptzString          @default(now())
+  updatedAt    temporal.updatedAtString()
+  lastLoginAt  TimestamptzString?
+
+  @@index([username])
+  @@index([email])
+  @@index([mobile])
+}
+
+model Role {
+  id            String                     @id @default(uuid())
+  name          String                     @unique
+  titleFa       String
+  titleEn       String?
+  descriptionFa String?
+  descriptionEn String?
+  permissions   Json // Array<{module, actions}> — matches src/types Permission[]
+
+  createdAt     TimestamptzString          @default(now())
+  updatedAt     temporal.updatedAtString()
+}
+
+model BusinessCategory {
+  id          String                     @id @default(uuid())
+  key         String                     @unique // GENERAL | RETAIL | RESTAURANT | SALON | SERVICE | WHOLESALE | OTHER
+  name        String
+  description String?
+  isActive    Boolean                    @default(true)
+  sortOrder   Int                        @default(0)
+
+  tenants     Tenant[]
+
+  createdAt   TimestamptzString          @default(now())
+  updatedAt   temporal.updatedAtString()
+}
+
+model Plan {
+  id           String                     @id @default(uuid())
+  key          String                     @unique // FREE | PRO | ENTERPRISE | GROWTH ...
+  name         String
+  description  String?
+  isActive     Boolean                    @default(true)
+  sortOrder    Int                        @default(0)
+
+  entitlements Entitlement[]
+  licenses     License[]
+
+  createdAt    TimestamptzString          @default(now())
+  updatedAt    temporal.updatedAtString()
+}
+
+model Entitlement {
+  id         String                     @id @default(uuid())
+  planId     String
+  plan       Plan                       @relation(fields:[planId], references:[id], onDelete: Cascade)
+  module     String
+  action     String
+  limitType  String                     @default("FEATURE") // FEATURE | NUMERIC | QUOTA | MODULE_ACCESS
+  limitValue Decimal?
+  isEnabled  Boolean                    @default(true)
+
+  @@unique([planId, module, action])
+  createdAt  TimestamptzString          @default(now())
+  updatedAt  temporal.updatedAtString()
+}
+
+model PlatformSettings {
+  id               String                     @id @default("platform")
+  systemName       String                     @default("MMBA")
+  organizationName String                     @default("MMBA Platform")
+  currency         String                     @default("تومان")
+  maintenanceMode  Boolean                    @default(false)
+
+  updatedAt        temporal.updatedAtString()
+}
+
+// Platform administrator: controls the platform control plane. Distinct from
+// tenant membership. A User may hold both PlatformAdmin AND tenant Memberships.
+model PlatformAdmin {
+  id        String            @id @default(uuid())
+  userId    String            @unique
+  user      User              @relation(fields:[userId], references:[id], onDelete: Cascade)
+  createdAt TimestamptzString @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Tenant core
+// ---------------------------------------------------------------------------
+model Tenant {
+  id                 String                     @id @default(uuid())
+  name               String
+  slug               String                     @unique // normalized, hostname-safe, reserved names blocked
+  status             String                     @default("PROVISIONING") // PROVISIONING | ACTIVE | SUSPENDED | TRIAL | CANCELLED
+  businessCategoryId String?
+  planId             String?
+
+  businessCategory   BusinessCategory?          @relation(fields:[businessCategoryId], references:[id])
+  plan               Plan?                      @relation(fields:[planId], references:[id])
+
+  memberships        Membership[]
+  domains            TenantDomain[]
+  licenses           License[]
+  settings           TenantSettings?
+
+  createdAt          TimestamptzString          @default(now())
+  updatedAt          temporal.updatedAtString()
+
+  @@index([slug])
+  @@index([status])
+}
+
+// A user's role/permissions INSIDE one tenant. A user may hold many memberships
+// across tenants; role is per-membership, never inherited between tenants.
+model Membership {
+  id        String                     @id @default(uuid())
+  tenantId  String
+  tenant    Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  userId    String
+  user      User                       @relation(fields:[userId], references:[id], onDelete: Cascade)
+  role      String                     @default("READ_ONLY") // per-tenant role name
+  status    String                     @default("ACTIVE") // ACTIVE | INVITED | REMOVED | SUSPENDED
+
+  joinedAt  TimestamptzString          @default(now())
+  removedAt TimestamptzString?
+  createdAt TimestamptzString          @default(now())
+  updatedAt temporal.updatedAtString()
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@index([tenantId, status])
+}
+
+model TenantDomain {
+  id         String                     @id @default(uuid())
+  tenantId   String
+  tenant     Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  hostname   String                     @unique // normalized lowercase, e.g. business-a.mmba.example
+  type       String                     @default("SUBDOMAIN") // SUBDOMAIN | CUSTOM_DOMAIN
+  isPrimary  Boolean                    @default(false)
+  status     String                     @default("PENDING") // PENDING | VERIFIED | ACTIVE | DISABLED
+  verifiedAt TimestamptzString?
+
+  createdAt  TimestamptzString          @default(now())
+  updatedAt  temporal.updatedAtString()
+
+  @@index([tenantId, type])
+}
+
+model License {
+  id             String                     @id @default(uuid())
+  tenantId       String
+  tenant         Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  planId         String
+  plan           Plan                       @relation(fields:[planId], references:[id])
+  licenseKeyHash String? // SHA-256 of license key; never plaintext
+  status         String                     @default("TRIAL") // TRIAL | ACTIVE | SUSPENDED | EXPIRED | REVOKED
+  issuedAt       TimestamptzString          @default(now())
+  startsAt       TimestamptzString          @default(now())
+  expiresAt      TimestamptzString?
+  suspendedAt    TimestamptzString?
+  revokedAt      TimestamptzString?
+
+  createdAt      TimestamptzString          @default(now())
+  updatedAt      temporal.updatedAtString()
+
+  @@unique([tenantId]) // one current active license per tenant
+  @@index([status])
+}
+
+model TenantSettings {
+  id               String                     @id @default(uuid())
+  tenantId         String                     @unique
+  tenant           Tenant                     @relation(fields:[tenantId], references:[id], onDelete: Cascade)
+  systemName       String
+  organizationName String
+  currency         String                     @default("تومان")
+  autoLockMinutes  Int                        @default(15)
+  requireTwoFactor Boolean                    @default(false)
+  maintenanceMode  Boolean                    @default(false)
+
+  createdAt        TimestamptzString          @default(now())
+  updatedAt        temporal.updatedAtString()
+}
+
+// ---------------------------------------------------------------------------
+// Session / push device (user + tenant aware)
+// ---------------------------------------------------------------------------
+model Session {
+  id           String             @id @default(uuid())
+  userId       String
+  user         User               @relation(fields:[userId], references:[id], onDelete: Cascade)
+  tenantId     String? // tenant context the session is bound to (null = no tenant/global)
+  tokenVersion Int                @default(0)
+  expiresAt    TimestamptzString
+  createdAt    TimestamptzString  @default(now())
+  revokedAt    TimestamptzString?
+
+  @@index([userId])
+  @@index([tenantId])
+}
+
+model PushDevice {
+  id           String                     @id @default(uuid())
+  userId       String
+  user         User                       @relation(fields:[userId], references:[id], onDelete: Cascade)
+  tenantId     String?
+  pushEndpoint String                     @unique
+  deviceName   String
+  browser      String?
+  platform     String?
+  enabled      Boolean                    @default(true)
+  lastSeenAt   TimestamptzString?
+  createdAt    TimestamptzString          @default(now())
+  updatedAt    temporal.updatedAtString()
+
+  @@index([userId, tenantId])
+}

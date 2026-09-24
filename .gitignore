@@ -16,3 +16,9 @@ litellm-config.yaml
 apply_*.cjs
 server/apply_*.cjs
 *.config.yaml
+.env
+# Step 11 local dev PostgreSQL cluster (WSL-free Windows initdb)
+
+.pgdata/
+.pg18data/
+.pgdev/
