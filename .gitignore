@@ -16,3 +16,15 @@ litellm-config.yaml
 apply_*.cjs
 server/apply_*.cjs
 *.config.yaml
+.env
+# Step 11 local dev PostgreSQL cluster (WSL-free Windows initdb)
+
+.pgdata/
+.pg18data/
+.pgdev/
+# Prisma generated artifacts (regenerated via 'prisma contract emit' / 'prisma generate')
+prisma/schema.d.ts
+prisma/schema.json
+prisma/contract.d.ts
+migrations/snapshots/*/contract.d.ts
+migrations/snapshots/*/contract.json

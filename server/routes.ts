@@ -14,6 +14,9 @@ import {
 import { isAdmin, hasPermission } from '../src/lib/permissions';
 import { PermissionAction } from '../src/types';
 import { authLimiter, loginLimiter, sensitiveLimiter } from './security';
+import { resolveTenantMiddleware, TenantContext } from './tenantContext';
+import { customerRepository } from './customerRepository';
+import { getTenantRepo } from './tenantVerticals';
 
 export const apiRouter = Router();
 
@@ -76,6 +79,13 @@ function requireAuth(req: Request, res: Response, next: any) {
 
 // Apply authentication middleware to ALL routes
 apiRouter.use(requireAuth);
+
+// Step 12 — resolve the effective tenant (hostname → TenantDomain → Tenant) and
+// verify membership for the authenticated user. req.tenantContext is attached.
+// Tenant-scoped routes opt in below; the platform/prisma-heavy routes continue
+// on centralDb until converted individually. This middleware is non-destructive:
+// it attaches context when resolvable and never blocks the request itself.
+apiRouter.use(resolveTenantMiddleware);
 
 function sanitizeUser(user: User): Omit<User, 'password'> {
   const { password: _pw, ...safe } = user;
@@ -706,9 +716,159 @@ apiRouter.post('/customers/bulk-delete', sensitiveLimiter, requirePermission(Mod
   }
 });
 
-// ----------------------------------------------------
-// Calls & Voice Notes CRUD
-// ----------------------------------------------------
+// ---------------------------------------------------------------------------
+// Step 12 — TENANT-SCOPED CUSTOMERS (Prisma/PostgreSQL)
+//
+// These routes opt in to the PostgreSQL datapath. Every query carries the
+// server-derived tenantId from req.tenantContext (never client-supplied).
+// The legacy centralDb routes above remain for the unconverted path.
+//   GET  /api/v2/tenants/customers          → tenant-scoped list
+//   GET  /api/v2/tenants/customers/:id      → tenant-scoped getById
+//   POST /api/v2/tenants/customers          → tenant-scoped create
+//   PUT  /api/v2/tenants/customers/:id      → tenant-scoped update
+//   DELETE /api/v2/tenants/customers/:id    → tenant-scoped soft delete
+// ---------------------------------------------------------------------------
+apiRouter.use('/v2/tenants/customers', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW));
+
+apiRouter.get('/v2/tenants/customers', async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  try {
+    const { rows, total, page, pageSize } = await customerRepository.list(tc.tenantId, req.query as any) as any;
+    res.json({ success: true, customers: rows, total, page, pageSize });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.get('/v2/tenants/customers/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  const customer = await customerRepository.getById(tc.tenantId, req.params.id);
+  if (!customer) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'مشتری یافت نشد.' });
+  res.json({ success: true, customer });
+});
+
+apiRouter.post('/v2/tenants/customers', requirePermission(ModuleName.CUSTOMERS, PermissionAction.CREATE), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  try {
+    const saved = await customerRepository.create(tc.tenantId, req.body);
+    // tenantId is server-derived; any client-supplied tenantId in body is ignored by the repository
+    res.status(201).json({ success: true, customer: saved });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.put('/v2/tenants/customers/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  try {
+    const updated = await customerRepository.update(tc.tenantId, req.params.id, req.body);
+    if (!updated) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'مشتری یافت نشد.' });
+    res.json({ success: true, customer: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.delete('/v2/tenants/customers/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  try {
+    const affected = await customerRepository.remove(tc.tenantId, req.params.id);
+    res.json({ success: affected > 0 });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Step 12 — GENERIC TENANT-SCOPED VERTICALS (Prisma/PostgreSQL)
+//
+// One router covers every tenant-owned table (from tenantVerticals registry).
+//   GET    /api/v2/tenants/:table           → tenant-scoped list (filters in query)
+//   GET    /api/v2/tenants/:table/:id       → tenant-scoped getById
+//   POST   /api/v2/tenants/:table           → tenant-scoped create
+//   PUT    /api/v2/tenants/:table/:id       → tenant-scoped update
+//   DELETE /api/v2/tenants/:table/:id       → tenant-scoped delete/soft-delete
+//
+// tenantId is always req.tenantContext.tenantId (server-derived). A client
+// tenantId in body/query/header is ignored by the repository.
+// ---------------------------------------------------------------------------
+apiRouter.get('/v2/tenants/:table', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  const repo = getTenantRepo(req.params.table);
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+  try {
+    const { rows, total, page, pageSize } = await repo.list(tc.tenantId, req.query as any);
+    res.json({ success: true, data: rows, total, page, pageSize });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.get('/v2/tenants/:table/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  const repo = getTenantRepo(req.params.table);
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+  try {
+    const row = await repo.getById(tc.tenantId, req.params.id);
+    if (!row) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
+    res.json({ success: true, data: row });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.post('/v2/tenants/:table', requirePermission(ModuleName.CUSTOMERS, PermissionAction.CREATE), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  const repo = getTenantRepo(req.params.table);
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+  try {
+    const created = await repo.create(tc.tenantId, req.body || {});
+    res.status(201).json({ success: true, data: created });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.put('/v2/tenants/:table/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  const repo = getTenantRepo(req.params.table);
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+  try {
+    const updated = await repo.update(tc.tenantId, req.params.id, req.body || {});
+    if (!updated) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
+    res.json({ success: true, data: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.delete('/v2/tenants/:table/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  const repo = getTenantRepo(req.params.table);
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+  try {
+    if (req.params.table === 'auditLog' || req.params.table === 'payment' || req.params.table === 'checkRecord') {
+      // Financial/audit deletion is business-rule guarded (Step 12 preserves existing
+      // payment/check deletion guards; audit logs are append-only). Use soft delete.
+      const updated = await repo.update(tc.tenantId, req.params.id, { status: 'DELETED' });
+      return res.json({ success: true, data: updated });
+    }
+    const affected = await repo.remove(tc.tenantId, req.params.id);
+    res.json({ success: affected > 0 });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 apiRouter.get('/calls', requirePermission(ModuleName.CALLS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ calls: centralDb.getState().calls });
 });

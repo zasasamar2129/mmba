@@ -9,10 +9,13 @@
     "start": "node dist/server.cjs",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "contract:emit": "prisma contract emit"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@prisma/client": "^7.10.0",
+    "@prisma/orm-postgres": "^8.0.0-rc.11",
     "@tailwindcss/vite": "^4.1.14",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
@@ -21,7 +24,7 @@
     "archiver": "^8.0.0",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.4.2",
     "express": "^4.21.2",
     "heic2any": "^0.0.4",
     "html-to-image": "^1.11.13",
@@ -30,6 +33,7 @@
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
+    "pg": "^8.23.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "tailwind-merge": "^3.6.0",
@@ -44,9 +48,10 @@
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
     "esbuild": "^0.25.0",
+    "prisma": "^8.0.0-rc.15",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
-    "typescript": "~5.8.2",
+    "typescript": "^5.9.3",
     "vite": "^6.2.3"
   }
 }
