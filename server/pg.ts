@@ -8,11 +8,24 @@
 // and tenant scoping impossible to forget (see repositories).
 // ---------------------------------------------------------------------------
 import { Pool } from 'pg';
+import { assertRequiredEnv } from './config';
 
-const url = process.env.DATABASE_URL || 'postgresql://postgres:mmba_dev_pg@127.0.0.1:5432/mmba';
+function getDatabaseUrl(): string {
+  // Require DATABASE_URL in production; no silent fallback to hardcoded credentials.
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    const missing = assertRequiredEnv(['DATABASE_URL']);
+    if (missing.length > 0) {
+      throw new Error(`Missing required environment variables: ${missing.join(', ')}. Set DATABASE_URL in .env or environment.`);
+    }
+    // Only reached in development if assertRequiredEnv is not enforced there
+    throw new Error('DATABASE_URL is required. Configure it in .env or environment variables.');
+  }
+  return url;
+}
 
 export const pool = new Pool({
-  connectionString: url,
+  connectionString: getDatabaseUrl(),
   max: Number(process.env.PG_POOL_MAX || 10),
   idleTimeoutMillis: 30000,
 });

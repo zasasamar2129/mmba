@@ -10,7 +10,14 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "db:dev": "docker compose up -d postgres && docker compose exec postgres psql -U postgres -d mmba -c \"\\dt\"",
+    "db:studio": "npx prisma studio --schema=./prisma/schema.prisma",
+    "db:seed": "npx tsx scripts/migrate-json-to-pg.ts",
+    "db:reset": "docker compose down -v && docker compose up -d postgres",
+    "test:isolation": "npx tsx test/step12-isolation.ts",
+    "test:context": "npx tsx test/step12-tenant-context.ts",
+    "test:verticals": "npx tsx test/step12-verticals.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

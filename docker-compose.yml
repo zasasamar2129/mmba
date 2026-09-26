@@ -1,0 +1,35 @@
+# MMBA — local development PostgreSQL (Step 11B)
+#
+# Reproducible dev database. No production secrets: every value below is a local
+# development default that is overridden by .env when present.
+#
+#   docker compose up -d          start
+#   docker compose down           stop (keeps the volume)
+#   docker compose down -v        stop and DELETE the volume (fresh DB)
+#
+# The application reads DATABASE_URL; keep it in sync with POSTGRES_DB/USER/PASSWORD
+# below, or export DATABASE_URL in .env.
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: mmba-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mmba}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mmba_dev_pg}
+    ports:
+      # Host port is overridable so a local PostgreSQL install can coexist.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - mmba-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-mmba}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  mmba-pgdata:
+    name: mmba-pgdata
