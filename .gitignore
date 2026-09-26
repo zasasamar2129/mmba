@@ -22,3 +22,9 @@ server/apply_*.cjs
 .pgdata/
 .pg18data/
 .pgdev/
+# Prisma generated artifacts (regenerated via 'prisma contract emit' / 'prisma generate')
+prisma/schema.d.ts
+prisma/schema.json
+prisma/contract.d.ts
+migrations/snapshots/*/contract.d.ts
+migrations/snapshots/*/contract.json

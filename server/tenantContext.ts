@@ -152,14 +152,19 @@ export async function resolveTenantContext(req: Request, userId?: string): Promi
   };
 }
 
-/** Express middleware: attach req.tenantContext from authenticated user (if any). */
+/** Express middleware: attach req.tenantContext from authenticated user (if any).
+ *
+ * NON-DESTRUCTIVE: this middleware never blocks the request on its own.
+ * When no tenant can be resolved, it leaves req.tenantContext undefined and
+ * calls next() — the decision of whether a tenant is required lives in the
+ * individual tenant-scoped route handlers (e.g. /v2/tenants/*).
+ */
 export function resolveTenantMiddleware(req: Request, res: Response, next: NextFunction) {
   const authUser: any = (req as any).authUser;
   const userId = authUser?.id;
   resolveTenantContext(req, userId).then(({ ctx, status }) => {
     if (ctx) { (req as any).tenantContext = ctx; return next(); }
-    if (status === 404) return res.status(404).json({ success: false, message: 'Not found.' });
-    if (status === 403) return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز به این کسبوکار.' });
-    next();
+    // Non-destructive: never block. Tenant-required routes enforce themselves.
+    return next();
   }).catch((err) => next(err));
 }
