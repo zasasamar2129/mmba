@@ -96,7 +96,10 @@ console.log('\n=== 1. TABLE → MODULE MAP INTEGRITY ===');
     orphan.length === 0,
     `orphans: ${orphan.join(', ')}`,
   );
-  check('customer is not exposed through the generic vertical registry', !tenantTables.includes('customer'));
+  // customer is now registered in the generic vertical registry (Step 12)
+// so /v2/tenants/customer works too — in addition to the dedicated
+// /v2/tenants/customers route. Both paths are tenant-scoped.
+check('customer is registered in the generic vertical registry', tenantTables.includes('customer'));
 
   // Prototype keys must never resolve to a module.
   check('"constructor" does not resolve', getTenantTableModule('constructor') === null);

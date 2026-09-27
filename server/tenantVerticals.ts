@@ -4,6 +4,7 @@
 import { createTenantRepository } from './tenantRepository';
 
 const COLUMNS: Record<string, string[]> = {
+  customer: ['id', 'tenantId', 'code', 'name', 'phone', 'mobile', 'nationalId', 'nationalCode', 'email', 'company', 'companyName', 'type', 'source', 'city', 'address', 'category', 'leadStage', 'status', 'tags', 'notes', 'creditLimit', 'assignedUserId', 'assignedUserName', 'leadId', 'leadCode', 'registrationReason', 'registrationReasonOther', 'jobTitle', 'createdAt', 'updatedAt', 'deletedAt'],
   lead: ['id', 'tenantId', 'leadCode', 'mobile', 'name', 'company', 'status', 'source', 'notes', 'assignedUserId', 'assignedUserName', 'convertedCustomerId', 'convertedCustomerName', 'convertedAt', 'lastContactAt', 'interactionCount', 'lastFollowUp', 'activities', 'nextFollowUpAt', 'nextFollowUpTaskId', 'createdAt', 'updatedAt', 'deletedAt'],
   interaction: ['id', 'tenantId', 'customerId', 'leadId', 'leadCode', 'customerName', 'customerMobile', 'userId', 'userName', 'interactionType', 'startedAt', 'durationSeconds', 'subject', 'customerRequest', 'outcome', 'note', 'voiceTranscript', 'followUpRequired', 'followUpAt', 'followUpUserId', 'followUpTaskId', 'followUpCompleted', 'createdAt', 'updatedAt'],
   voiceNote: ['id', 'tenantId', 'title', 'noteType', 'body', 'customerId', 'customerName', 'storageKey', 'mimeType', 'fileName', 'durationSeconds', 'transcription', 'category', 'tags', 'createdById', 'createdByName', 'updatedById', 'updatedByName', 'editedAt', 'relatedEntityType', 'relatedEntityId', 'isPinned', 'createdAt', 'updatedAt'],

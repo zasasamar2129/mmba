@@ -22,6 +22,8 @@ import {
   protectedStatusesFor,
   APPEND_ONLY_TABLES,
 } from './tenantTableModules';
+import { platformRouter } from './platformRoutes';
+import { tenantAdminRouter } from './tenantAdminRoutes';
 
 export const apiRouter = Router();
 
@@ -86,11 +88,24 @@ function requireAuth(req: Request, res: Response, next: any) {
 apiRouter.use(requireAuth);
 
 // Step 12 — resolve the effective tenant (hostname → TenantDomain → Tenant) and
-// verify membership for the authenticated user. req.tenantContext is attached.
-// Tenant-scoped routes opt in below; the platform/prisma-heavy routes continue
-// on centralDb until converted individually. This middleware is non-destructive:
-// it attaches context when resolvable and never blocks the request itself.
+// verify membership for the authenticated user. req.tenantContext is attached
+// for every subsequent route so that tenant-scoped routes (below) can derive
+// the tenant without ever trusting a client-supplied value. Platform routes
+// (/v2/platform/*) ignore this context and enforce platform-admin checks
+// themselves; tenant routes below use it as the sole authority.
 apiRouter.use(resolveTenantMiddleware);
+
+// Step 12 — Platform control plane. Mounted after requireAuth + resolveTenant.
+// These paths never collide with the /v2/tenants/:table catch-all, and each
+// route inside enforces its own platform-admin check via the PlatformAdmin
+// database row — tenant admins cannot invoke them merely by knowing a tenant ID.
+apiRouter.use('/v2/platform', platformRouter);
+
+// Step 12 — Tenant-scoped membership administration for the CURRENT tenant
+// (resolved via hostname). No tenantId parameter: the tenant is always
+// req.tenantContext from the server-resolved hostname. Cross-tenant
+// membership operations must use /v2/platform/tenants/:id/members.
+apiRouter.use('/v2/tenant', tenantAdminRouter);
 
 function sanitizeUser(user: User): Omit<User, 'password'> {
   const { password: _pw, ...safe } = user;
@@ -925,6 +940,11 @@ apiRouter.delete('/v2/tenants/:table/:id', requireTenantTablePermission(Permissi
       const updated = await repo.update(tc.tenantId, req.params.id, { status: 'DELETED' });
       return res.json({ success: true, data: updated });
     }
+    // Ensure the record exists in THIS tenant before reporting "deleted".
+    // If not found, return 404 — this prevents cross-tenant ID guessing from
+    // learning which tenant owns the record.
+    const exists = await repo.getById(tc.tenantId, req.params.id);
+    if (!exists) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
     const affected = await repo.remove(tc.tenantId, req.params.id);
     res.json({ success: affected > 0 });
   } catch (err: any) {
