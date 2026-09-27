@@ -311,19 +311,35 @@ actually executed.
 ## 40.10 Clean Checkout Results
 
 **Procedure (Option A, §22 of the task):** fresh `git clone --depth 1 --branch
-step10-audit` into a new directory, with no inherited `node_modules` and no
-`prisma/schema.d.ts` / `prisma/schema.json`.
+step10-audit` into a new directory (`C:\mmba-verify\repo`), with no inherited
+`node_modules` and no `prisma/schema.d.ts` / `prisma/schema.json`.
 
 - Branch: `step10-audit`
-- Commit: `e81f26e`
-- Node: v24.11.1
-- npm: 11.19.1
+- Commit: `7c9fb3c` (report commit; fix commit `e81f26e`)
+- Node: v24.11.1, npm: 11.19.1
+- `npm ci` → 485 packages, `prisma` binary present
 - Pre-install `ls prisma/`: `db.ts`, `schema.prisma` only — generated artifacts absent, as required
 - `git status --short`: clean
 
-**Result:** see §40.12 for the one environment issue encountered. The lifecycle itself
-is verified — `npm run typecheck` regenerates the contract and drops the clean-checkout
-error count from 16 to 14, with `prisma/db.ts` clean.
+**Results:**
+
+| Step | Result |
+|---|---|
+| `npx tsc --noEmit` (bare, no generation) | **16 errors** — the defect, reproduced |
+| `npm run typecheck` (`prisma contract emit && tsc --noEmit`) | **14 errors**, `prisma/db.ts` clean |
+| `npm run build` | **PASS** — `dist/server.cjs` 398.1kb |
+| `git status --short` after generation | **empty** — artifacts correctly ignored |
+| `prisma/` after typecheck | `db.ts`, `schema.prisma`, `schema.d.ts`, `schema.json` — generated |
+| `npx tsx test/step11bfix-authorization.ts` | **PASS** — 86/86 |
+| `npx tsx test/step11bfix-generic-routes-http.ts` | **PASS** — 83/83 |
+
+The clean-checkout property holds: a developer can go from `git clone` to a successful
+typecheck and build without inheriting generated files from any other machine.
+
+*Note:* the first two install attempts in `%TEMP%` failed with a Windows
+`ENOTEMPTY` file-lock error inside `@prisma/composer-cli`. That is an npm/Windows
+file-handling issue, not a project defect; `npm ci` in a non-`%TEMP%` path completed
+cleanly and produced the results above.
 
 ---
 
@@ -344,13 +360,11 @@ clean.
 
 ## 40.12 Known Limitations
 
-1. **Clean-clone `npm install` hit a Windows file-lock error** (`ENOTEMPTY` in
-   `@prisma/composer-cli/node_modules/alchemy/lib/AWS`) on the first attempt in
-   `%TEMP%`. This is an npm/Windows file-handling issue, not a project defect — the
-   same `package-lock.json` installs cleanly in the working tree. A `npm ci` retry was
-   in progress at the time of writing. The lifecycle fix itself is verified: the
-   clean-checkout error count dropped 16 → 14 with `prisma/db.ts` clean, and
-   `contract:emit` is deterministic and correctly ignored by git.
+1. **`npm ci` failed twice in `%TEMP%`** with a Windows `ENOTEMPTY` file-lock error
+   inside `@prisma/composer-cli`. This is an npm/Windows file-handling issue, not a
+   project defect. Cloning to a non-`%TEMP%` path and running `npm ci` there
+   completed cleanly and the full clean-checkout verification passed (§40.10). No
+   repository change is warranted.
 
 2. **`account` / `journalEntry` / `journalEntryLine` map to `PAYMENTS`,** because
    `ModuleName` has no `ACCOUNTING` member. Correct for the current role model (the
