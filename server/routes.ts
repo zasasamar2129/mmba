@@ -17,6 +17,11 @@ import { authLimiter, loginLimiter, sensitiveLimiter } from './security';
 import { resolveTenantMiddleware, TenantContext } from './tenantContext';
 import { customerRepository } from './customerRepository';
 import { getTenantRepo } from './tenantVerticals';
+import {
+  getTenantTableModule,
+  protectedStatusesFor,
+  APPEND_ONLY_TABLES,
+} from './tenantTableModules';
 
 export const apiRouter = Router();
 
@@ -796,12 +801,53 @@ apiRouter.delete('/v2/tenants/customers/:id', requirePermission(ModuleName.CUSTO
 //
 // tenantId is always req.tenantContext.tenantId (server-derived). A client
 // tenantId in body/query/header is ignored by the repository.
+//
+// Step 11B-FIX — authorization is per-vertical, not per-route. The module is
+// derived from the server-owned TENANT_TABLE_MODULES map via
+// requireTenantTablePermission(); it is NEVER hardcoded to CUSTOMERS and never
+// accepted from the client. An unknown table fails closed.
 // ---------------------------------------------------------------------------
-apiRouter.get('/v2/tenants/:table', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
+
+/**
+ * Dynamic authorization for the generic tenant routes: the required module is
+ * resolved from the URL's :table via the server-owned map. An unrecognised
+ * table is rejected with 404 before any permission decision is made, so it can
+ * never inherit a default module.
+ */
+function requireTenantTablePermission(action: PermissionAction) {
+  return (req: Request, res: Response, next: any) => {
+    const table = req.params.table;
+    const module = getTenantTableModule(table);
+    if (!module) {
+      return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+    }
+    const user = (req as any).authUser as User;
+    if (!hasPermission(user, module, action)) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز: نقش شما مجوز این عملیات را ندارد.' });
+    }
+    next();
+  };
+}
+
+/** Shared handler preamble: tenant context + registered repository, or error out. */
+function resolveGenericTarget(req: Request, res: Response): { tc: TenantContext; repo: NonNullable<ReturnType<typeof getTenantRepo>> } | null {
   const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) {
+    res.status(403).json({ success: false, message: 'Tenant context required.' });
+    return null;
+  }
   const repo = getTenantRepo(req.params.table);
-  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
-  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+  if (!repo) {
+    res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+    return null;
+  }
+  return { tc, repo };
+}
+
+apiRouter.get('/v2/tenants/:table', requireTenantTablePermission(PermissionAction.VIEW), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
   try {
     const { rows, total, page, pageSize } = await repo.list(tc.tenantId, req.query as any);
     res.json({ success: true, data: rows, total, page, pageSize });
@@ -810,11 +856,10 @@ apiRouter.get('/v2/tenants/:table', requirePermission(ModuleName.CUSTOMERS, Perm
   }
 });
 
-apiRouter.get('/v2/tenants/:table/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
-  const tc = (req as any).tenantContext as TenantContext | undefined;
-  const repo = getTenantRepo(req.params.table);
-  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
-  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+apiRouter.get('/v2/tenants/:table/:id', requireTenantTablePermission(PermissionAction.VIEW), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
   try {
     const row = await repo.getById(tc.tenantId, req.params.id);
     if (!row) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
@@ -824,11 +869,10 @@ apiRouter.get('/v2/tenants/:table/:id', requirePermission(ModuleName.CUSTOMERS, 
   }
 });
 
-apiRouter.post('/v2/tenants/:table', requirePermission(ModuleName.CUSTOMERS, PermissionAction.CREATE), async (req: Request, res: Response) => {
-  const tc = (req as any).tenantContext as TenantContext | undefined;
-  const repo = getTenantRepo(req.params.table);
-  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
-  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+apiRouter.post('/v2/tenants/:table', requireTenantTablePermission(PermissionAction.CREATE), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
   try {
     const created = await repo.create(tc.tenantId, req.body || {});
     res.status(201).json({ success: true, data: created });
@@ -837,11 +881,10 @@ apiRouter.post('/v2/tenants/:table', requirePermission(ModuleName.CUSTOMERS, Per
   }
 });
 
-apiRouter.put('/v2/tenants/:table/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
-  const tc = (req as any).tenantContext as TenantContext | undefined;
-  const repo = getTenantRepo(req.params.table);
-  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
-  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+apiRouter.put('/v2/tenants/:table/:id', requireTenantTablePermission(PermissionAction.EDIT), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
   try {
     const updated = await repo.update(tc.tenantId, req.params.id, req.body || {});
     if (!updated) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
@@ -851,15 +894,34 @@ apiRouter.put('/v2/tenants/:table/:id', requirePermission(ModuleName.CUSTOMERS, 
   }
 });
 
-apiRouter.delete('/v2/tenants/:table/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
-  const tc = (req as any).tenantContext as TenantContext | undefined;
-  const repo = getTenantRepo(req.params.table);
-  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
-  if (!repo) return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+apiRouter.delete('/v2/tenants/:table/:id', requireTenantTablePermission(PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
+  const table = req.params.table;
   try {
-    if (req.params.table === 'auditLog' || req.params.table === 'payment' || req.params.table === 'checkRecord') {
-      // Financial/audit deletion is business-rule guarded (Step 12 preserves existing
-      // payment/check deletion guards; audit logs are append-only). Use soft delete.
+    // Step 11B-FIX — Step 5 financial guards. The JSON-store guards live in
+    // server/db.ts and are NOT on this code path, so the PG route must apply
+    // them itself: a settled payment/check is refused, and an unsettled one is
+    // only ever status-transitioned, never removed.
+    const protectedStatuses = protectedStatusesFor(table);
+    if (protectedStatuses) {
+      const row = await repo.getById(tc.tenantId, req.params.id);
+      if (!row) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
+      if (protectedStatuses.has(String(row.status || '').toUpperCase())) {
+        return res.status(409).json({
+          success: false,
+          error: 'FINANCIAL_RECORD_PROTECTED',
+          message: table === 'payment'
+            ? 'حذف پرداخت تأییدشده مجاز نیست.'
+            : 'حذف چک وصول‌شده مجاز نیست.',
+        });
+      }
+      const updated = await repo.update(tc.tenantId, req.params.id, { status: 'DELETED' });
+      return res.json({ success: true, data: updated });
+    }
+    // Audit logs are append-only: a status transition, not a deletion.
+    if (APPEND_ONLY_TABLES.has(table)) {
       const updated = await repo.update(tc.tenantId, req.params.id, { status: 'DELETED' });
       return res.json({ success: true, data: updated });
     }
