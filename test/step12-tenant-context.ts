@@ -1,3 +1,4 @@
+import 'dotenv/config';
 // Step 12: tenant context resolution smoke test
 import { resolveTenantContext } from '../server/tenantContext';
 import { pool } from '../server/pg';

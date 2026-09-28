@@ -1,229 +1,185 @@
-# MMBA — Production Deployment (Step 12)
+# MMBA — Production Deployment (Step 12 FIX)
 
-## Architecture Overview
+## Architecture
 
-MMBA runs as a **single Express process** with **PostgreSQL** as the authoritative data store. Every business entity is tenant-scoped; platform administration is separate.
+MMBA is a single Express process with **PostgreSQL as the authoritative data
+store**. Platform administration and tenant administration are separate
+authorities, and every tenant-owned row carries a `tenantId`.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Reverse Proxy (nginx / Cloudflare / ALB)                  │
-│  - Terminates TLS                                           │
-│  - Sets X-Forwarded-* (TRUST_PROXY=true)                   │
-│  - Passes Host header verbatim                              │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  MMBA Node.js Process (port 3000)                          │
-│  - Express API (routes.ts)                                  │
-│  - JWT auth + tokenVersion revocation                       │
-│  - resolveTenantMiddleware (Host → TenantDomain → Tenant)  │
-│  - pg pool → PostgreSQL                                     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│  PostgreSQL 15+ (primary)                                   │
-│  - Tenant, Membership, TenantDomain, License, AuditLog     │
-│  - All business entities carry tenantId                     │
-│  - No multi-DB, no schema-per-tenant                        │
-└─────────────────────────────────────────────────────────────┘
+Reverse proxy (TLS, X-Forwarded-*)
+        │
+        ▼
+MMBA Node.js process
+  ├── requireAuth            JWT + tokenVersion (PostgreSQL identity)
+  ├── resolveTenantMiddleware  Host → TenantDomain → Tenant → Membership
+  ├── legacyJsonTenantGate   §17/§18 — blocks the global-JSON surface
+  ├── /v2/platform/*         platform admin only (PlatformAdmin row)
+  ├── /v2/tenant/*           membership admin for the resolved tenant
+  └── /v2/tenants/*          tenant-scoped CRUD via pg, always tenantId-filtered
+        │
+        ▼
+PostgreSQL 15+  — 46 tables, 42 FKs, 176 indexes, 29 unique constraints
 ```
 
 ## Required Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `JWT_SECRET` | **YES** | 64+ char random string. No default in prod. |
-| `DATABASE_URL` | **YES** | `postgresql://user:pass@host:5432/db?schema=public` |
-| `TENANT_PARENT_DOMAINS` | **YES** | Comma-separated: `app.example.com,example.com` |
-| `ALLOWED_ORIGINS` | **YES** | CORS allowlist: `https://app.example.com` |
-| `TRUST_PROXY` | **YES** | Must be `true` behind a reverse proxy |
-| `VAPID_PUBLIC_KEY` | Optional | For Web Push (set together with private) |
-| `VAPID_PRIVATE_KEY` | Optional | For Web Push |
-| `VAPID_SUBJECT` | Optional | `mailto:admin@example.com` |
-| `PORT` | Optional | Default 3000 |
+| Variable | Required | Notes |
+|---|---|---|
+| `DATABASE_URL` | **yes** | `postgresql://user:pass@host:5432/db?schema=public` |
+| `JWT_SECRET` | **yes** | 64+ char random string. Startup refuses without it. |
+| `TENANT_PARENT_DOMAINS` | **yes** | Comma-separated. The first entry is the canonical parent for new subdomains. |
+| `ALLOWED_ORIGINS` | **yes** | CORS allowlist. No wildcards. |
+| `NODE_ENV` | **yes** | Must be `production`. Enables the legacy-JSON gate. |
+| `TRUST_PROXY` | when behind a proxy | `true` |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | optional | Must be set **together** |
+| `PORT` | optional | Default 3000 |
+| `ALLOW_LEGACY_JSON_TENANT_PATHS` | **leave unset** | `1` disables the §17/§18 gate |
 
-**Startup refuses** if any required variable is missing or empty.
+## Deployment
 
-## Database Provisioning
-
-### 1. Provision PostgreSQL
-- Managed: RDS, Cloud SQL, Azure Database, Neon, Supabase
-- Self-hosted: PostgreSQL 15+ with `pg_trgm` for ILIKE indexes
-- **Do not expose publicly** — only the app server should connect
-
-### 2. Run Migrations
 ```bash
-# From the built artifact or source checkout
-DATABASE_URL=... npx prisma migrate deploy
-```
-This is **idempotent** and safe to re-run.
+npm ci
+npm run build
 
-### 3. Seed Platform Data (once)
+DATABASE_URL=... NODE_ENV=production npm run db:migrate    # schema
+DATABASE_URL=... NODE_ENV=production npm run db:seed       # platform reference data
+DATABASE_URL=... NODE_ENV=production npm run db:migrate:legacy  # only if migrating from JSON
+NODE_ENV=production npm start
+```
+
+`db:migrate` is idempotent — re-run it on every deploy. `db:seed` is
+idempotent and creates no default credentials. **Neither performs a production
+data migration**; that is `db:migrate:legacy`, run once and separately.
+
+Verify after migrating:
+
 ```bash
-DATABASE_URL=... npx tsx scripts/seed-platform.ts
+npm run db:status     # "Up to date"
+npm run db:verify     # live schema matches the contract
 ```
-Creates:
-- 7 `BusinessCategory` rows
-- 4 `Plan` rows (FREE, PRO, GROWTH, ENTERPRISE) + `Entitlement` matrix
-- Links the `initial` tenant (if it exists) to PRO plan + hostname
 
-### 4. Create First Tenant (Platform Admin)
+## First Tenant
+
 ```bash
 curl -X POST https://api.example.com/api/v2/platform/tenants \
   -H "Authorization: Bearer <platform-admin-token>" \
   -H "Content-Type: application/json" \
-  -d '{"name":"Acme Corp","slug":"acme","adminUserId":"usr-platform-admin"}'
+  -d '{"name":"Acme Corp","slug":"acme"}'
 ```
-Returns `{tenant: {id, slug, status: "ACTIVE", ...}, repeated: false}`.
 
-### 5. Configure DNS
-| Record | Value |
-|--------|-------|
-| `acme.app.example.com` | CNAME → your load balancer |
-| `acme.example.com` (custom) | CNAME → same LB + verify in platform admin |
+- `201` — created.
+- `200` with `"repeated": true` — that slug already has a tenant. Nothing was
+  created. Under concurrent requests exactly one caller gets 201; the rest get
+  200. That is the database uniqueness constraint working, not a race.
 
-## Tenant Lifecycle
+Requires a `PlatformAdmin` row. A tenant admin receives 403.
 
-| State | Transitions To | Meaning |
-|-------|----------------|---------|
-| `PROVISIONING` | `ACTIVE`, `FAILED` | Initial creation in progress |
-| `ACTIVE` | `SUSPENDED`, `DEACTIVATED` | Normal operation |
-| `SUSPENDED` | `ACTIVE`, `DEACTIVATED` | Paused — no tenant-scoped access |
-| `DEACTIVATED` | `PROVISIONING` | Retired — recovery via re-provisioning |
-| `FAILED` | `PROVISIONING` | Provisioning errored — retry safe |
+## Domains
 
-**Platform admin only:**
+| Kind | Example | Trust | Becomes routable |
+|---|---|---|---|
+| Platform subdomain | `acme.example.com` | Platform owns the parent zone | Immediately (`VERIFIED`) |
+| Custom domain | `crm.acme.com` | Customer owns DNS | Only after `POST .../domain/verify` |
+
 ```bash
-POST /api/v2/platform/tenants/:id/activate
-POST /api/v2/platform/tenants/:id/suspend
-POST /api/v2/platform/tenants/:id/deactivate
+# Inspect a tenant's domain and what to publish
+curl -H "Authorization: Bearer <pa>" \
+  https://api.example.com/api/v2/platform/tenants/<id>/domain
+
+# Verify (custom domains require a proof from a real control check)
+curl -X POST -H "Authorization: Bearer <pa>" -H "Content-Type: application/json" \
+  -d '{"proof":{"method":"DNS_TXT","token":"<value-from-the-dns-check>"}}' \
+  https://api.example.com/api/v2/platform/tenants/<id>/domain/verify
 ```
 
-## Reverse Proxy Configuration (nginx Example)
+A `PENDING` domain does **not** route: requests to it return 404. A client
+cannot assert its own domain is verified — the `verified` field is not read
+from the request body at all.
 
-```nginx
-server {
-  listen 443 ssl http2;
-  server_name ~^(?<tenant_slug>[^.]+)\.app\.example\.com$;
+## Identity Authority
 
-  ssl_certificate /etc/ssl/certs/app.example.com.crt;
-  ssl_certificate_key /etc/ssl/private/app.example.com.key;
+**PostgreSQL is authoritative for users.** `user.passwordHash`, `status` and
+`tokenVersion` are read from PostgreSQL on every request; the JSON store is
+consulted only for fields the schema does not carry (per-user `permissions`,
+biometric devices).
 
-  location / {
-    proxy_pass http://mmba-app:3000;
-    proxy_http_version 1.1;
-    proxy_set_header Host $host;                     # CRITICAL: tenant resolution
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_read_timeout 60s;
-  }
-}
+- A `SUSPENDED`/`INACTIVE` user cannot log in, and any live token they hold is
+  revoked immediately (`tokenVersion` is bumped).
+- A membership always references a row in the PostgreSQL `user` table; the FK
+  is enforced and provisioning refuses a user that is not there.
+- Password reset and deactivation write to PostgreSQL first.
+
+## Legacy JSON Store
+
+**Not a production data path.** 25 tenant-owned API prefixes still read the
+global JSON store, which has no tenant column. In `NODE_ENV=production` the
+gate refuses them with `409 LEGACY_JSON_PATH_DISABLED`. The client-facing
+message names the PostgreSQL replacement (`/api/v2/tenants/:table`).
+
+Startup logs the active state:
+
+```
+[legacy-json] 25 tenant-owned and 0 user-scoped API prefixes are refused for
+tenant requests (NODE_ENV=production).
 ```
 
-## Security Checklist
+Blocked prefixes include `/sync/all` (which returned the entire dataset),
+`/customers`, `/payments`, `/checks`, `/attachments`, `/conversations`,
+`/accounts`, `/journal-entries`. See `server/legacyJsonGuard.ts`.
 
-- [ ] `JWT_SECRET` is 64+ chars, unique per environment, never committed
-- [ ] `DATABASE_URL` uses a least-privilege DB user (not superuser)
-- [ ] PostgreSQL TLS enabled (`sslmode=require` in connection string)
-- [ ] `TRUST_PROXY=true` and proxy sets `X-Forwarded-*` correctly
-- [ ] `ALLOWED_ORIGINS` is an explicit list (no `*`)
-- [ ] Rate limits active (auth: 10/min, general: 60/sec, sensitive: 5/min)
-- [ ] Security headers present (CSP, HSTS, X-Frame-Options, etc.)
-- [ ] `DEV_TENANT_SLUG` is **unset** in production
-- [ ] Database backup/restore tested
-- [ ] Platform admin accounts are real users (no shared credentials)
+Do **not** set `ALLOW_LEGACY_JSON_TENANT_PATHS=1` in production. It exists only
+for a staged cutover against a single-tenant deployment.
 
-## Backup & Restore
+## Legacy Data Migration
 
-### Backup (pg_dump)
 ```bash
-# Full cluster (includes roles, tablespaces)
-pg_dumpall -U postgres -h <host> -p 5432 --clean --if-exists -f backup-$(date +%F).sql
-
-# Single database (faster, no globals)
-pg_dump -U postgres -h <host> -p 5432 -d mmba --clean --if-exists -f mmba-$(date +%F).sql
+npm run db:migrate:legacy:dry   # classify every entity, write nothing
+npm run db:migrate:legacy       # import + reconcile
 ```
 
-### Restore
-```bash
-# Stop app first
-psql -U postgres -h <host> -p 5432 -d mmba -f mmba-2026-09-27.sql
-```
-
-### Verification
-```bash
-# Row counts on key tables
-psql -c "SELECT COUNT(*) FROM tenant; SELECT COUNT(*) FROM membership;"
-# Spot-check tenant A isolation
-psql -c "SELECT * FROM customer WHERE \"tenantId\" = '<tenant-a-id>' LIMIT 1;"
-```
-
-**Documented but not automatically configured** — the operator must schedule and monitor backups.
+- All 33 legacy entities are classified in `ENTITY_PLAN`; an unclassified key
+  aborts the run before any write.
+- Re-running is safe: every insert is an upsert on a deterministic id.
+- The run **fails** on a missing, duplicated, orphaned or wrong-tenant record,
+  on a record that claims another tenant, and on a record missing a required
+  field — rather than silently dropping data or defaulting its owner.
+- Output ends with `RECONCILIATION PASS`. Anything else means exit code 1.
 
 ## Monitoring
 
-### Health Endpoints
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /healthz` | Liveness — process is up |
-| `GET /readyz` | Readiness — DB reachable, JSON store flushable |
+Startup refuses to run without `JWT_SECRET`, `DATABASE_URL`, or with only one
+VAPID key, naming the missing variable and never its value.
 
-### Key Metrics
-- HTTP 4xx/5xx rate by route
-- `resolveTenantMiddleware` latency (Host → tenant)
-- `pg` pool utilization
-- JWT tokenVersion revocation events
+Health endpoints (`/health`, `/healthz`, `/readyz`) are exempt from the general
+rate limiter so uptime monitors still work.
 
-## Rollback Procedure
+## Backup / Restore
 
-1. **Code rollback**: `git revert` + rebuild + deploy (or blue/green)
-2. **Schema rollback**: Never. Migrations are forward-only.
-   - If a migration is bad: fix forward with a new migration.
-   - DB restores from backup are point-in-time, not migration rollbacks.
+**Not production-ready.** `server/backupService.ts` backs up and restores the
+**JSON store**, not PostgreSQL. The backup routes are platform-admin only and
+are not a substitute for a database backup.
 
-## Incident Response
+Back up PostgreSQL with `pg_dump` / managed-service snapshots:
 
-| Scenario | Action |
-|----------|--------|
-| Tenant reports cross-tenant data leak | 1. Verify via `/v2/tenants/<table>/<id>` as tenant user 2. Check `tenantId` on the row 3. If confirmed: audit all generic routes for missing tenant predicate |
-| Platform admin credential compromise | 1. Revoke JWT: `POST /api/auth/sessions/revoke-all` 2. Rotate `JWT_SECRET` 3. Audit `platformAdmin` table for unexpected rows |
-| Database outage | 1. Failover to replica / restore from backup 2. App restarts → `prisma migrate deploy` runs automatically |
-
-## Scaling Notes
-
-- **Horizontal**: Run multiple app instances behind the LB. They share the same PostgreSQL.
-- **pg pool**: Default `max=10`. Tune via `PG_POOL_MAX`.
-- **Web Push**: Each instance schedules notifications — deduplicated by VAPID key + endpoint.
-- **Session store**: JWT is stateless. No sticky sessions needed.
-- **File uploads**: Currently base64 in JSON/DB. Move to S3 before high volume.
-
-## Known Limitations (Step 12)
-
-| Area | Limitation | Next Step |
-|------|------------|-----------|
-| Custom domains | Schema supports, no UI/verification flow | Step 13+ |
-| Billing/subscription | `Plan`/`License` exist, no payment integration | Step 13 |
-| Email invitations | Membership created, no email sent | Step 13 |
-| Chat/attachment isolation | PG data isolated; JSON store still global | Migration |
-| Legacy JSON | Coexistence only, not fully removed | Step 13+ |
-| Prisma Studio auth | No built-in auth — restrict via network | Operations |
-
-## Appendix: Environment Example
-
-```env
-# Production
-NODE_ENV=production
-JWT_SECRET=K7x9mP2vN5qR8wE3tY6uI1oA4sD7fG0hJ3kL6zX9cV2bN5mQ8wE3rT6yU1iO
-DATABASE_URL=postgresql://mmba_app:strongpass@db.internal:5432/mmba?schema=public&sslmode=require
-TENANT_PARENT_DOMAINS=app.example.com,example.com
-ALLOWED_ORIGINS=https://app.example.com
-TRUST_PROXY=true
-VAPID_PUBLIC_KEY=...
-VAPID_PRIVATE_KEY=...
-VAPID_SUBJECT=mailto:ops@example.com
-PORT=3000
+```bash
+pg_dump "$DATABASE_URL" --format=custom --file=mmba-$(date +%F).dump
+pg_restore --dbname="$DATABASE_URL" --clean --if-exists mmba-YYYY-MM-DD.dump
 ```
+
+Restoring PostgreSQL restores every tenant, membership, domain and business
+record. It does not restore the JSON overlay; re-run
+`npm run db:migrate:legacy` if that is also required.
+
+## Known Limitations
+
+- 25 legacy JSON tenant prefixes are blocked in production rather than migrated.
+  The capabilities behind them (chat, attachments, notifications, accounting
+  CRUD) are reachable at `/api/v2/tenants/:table`.
+- `accountingPeriods` and `notificationSettings` are JSON-only; the Prisma
+  contract declares no `AccountingPeriod` model.
+- Custom-domain verification records the result of a control check but does not
+  perform the DNS lookup itself. Supply `proof` from a check you have actually
+  run.
+- `npm run typecheck` reports 14 pre-existing errors in `ErrorBoundary.tsx`,
+  `webAuthn.ts` and `pushService.ts` — unchanged by Step 12 FIX.

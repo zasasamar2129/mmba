@@ -26,9 +26,15 @@ import {
   listMembers,
   upsertMembership,
   removeMembership,
+  getTenantDomain,
+  verifyDomain,
+  disableDomain,
+  SlugConflictError,
   ProvisioningStatus,
+  DomainStatus,
 } from './provisioningService';
 import { query } from './pg';
+import { platformSubdomainForSlug, isAutoVerifiableHostname } from './hostnamePolicy';
 
 export const platformRouter = Router();
 
@@ -70,6 +76,9 @@ async function requirePlatformAdmin(req: Request, res: Response, next: any): Pro
 platformRouter.post('/tenants', requirePlatformAdmin, async (req: Request, res: Response) => {
   try {
     const authUser = (req as any).authUser as User;
+    // FIX D: `verified` / `domainStatus` in the body are deliberately NOT read.
+    // Only `requestedHostname` is accepted, and even that can only ever yield a
+    // PENDING domain (see resolveProvisioningDomain).
     const { name, slug, businessCategoryId, planId, requestedHostname, adminUserId } = req.body;
 
     if (!name || !slug) {
@@ -77,10 +86,6 @@ platformRouter.post('/tenants', requirePlatformAdmin, async (req: Request, res: 
     }
 
     const targetAdminUserId = adminUserId || authUser.id;
-    const targetUser = centralDb.findUserById(targetAdminUserId);
-    if (!targetUser) {
-      return res.status(404).json({ success: false, message: 'کاربر مدیر یافت نشد.' });
-    }
 
     const result = await provisionTenant({
       name: name.trim(),
@@ -91,7 +96,7 @@ platformRouter.post('/tenants', requirePlatformAdmin, async (req: Request, res: 
       requestedHostname,
     });
 
-    res.status(201).json({
+    res.status(result.repeated ? 200 : 201).json({
       success: true,
       tenant: {
         id: result.tenantId,
@@ -99,6 +104,9 @@ platformRouter.post('/tenants', requirePlatformAdmin, async (req: Request, res: 
         status: result.status,
         membershipId: result.membershipId,
       },
+      // FIX D: tell the caller exactly what host they got and whether it can
+      // serve traffic yet. A custom domain comes back PENDING/routable:false.
+      domain: result.domain,
       repeated: result.repeated,
     });
   } catch (err: any) {
@@ -106,8 +114,12 @@ platformRouter.post('/tenants', requirePlatformAdmin, async (req: Request, res: 
     if (msg.includes('INVALID_SLUG')) {
       return res.status(422).json({ success: false, error: 'INVALID_SLUG', message: 'نام slug پلتفرم نامعتبر است.' });
     }
-    if (msg.includes('duplicate key') || msg.includes('UNIQUE')) {
+    if (err instanceof SlugConflictError || msg.includes('duplicate key') || msg.includes('UNIQUE')) {
       return res.status(409).json({ success: false, error: 'SLUG_CONFLICT', message: 'slug تکراری است.' });
+    }
+    // FIX E: refuse rather than invent an identity.
+    if (msg.includes('ADMIN_USER_NOT_IN_PG') || msg.includes('USER_NOT_IN_PG')) {
+      return res.status(404).json({ success: false, error: 'USER_NOT_IN_PG', message: 'کاربر مدیر در پایگاه داده یافت نشد.' });
     }
     console.error('Provisioning error:', err);
     res.status(500).json({ success: false, message: 'خطا در ایجاد پلتفرم.' });
@@ -221,6 +233,109 @@ platformRouter.delete('/tenants/:id/members/:memberId', requirePlatformAdmin, as
     if (!removed) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'عضویت یافت نشد.' });
     res.json({ success: true });
   } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ─── Domain management (FIX D) ───────────────────────────────────────────
+//
+// State machine, enforced in verifyDomain():
+//   PENDING ──verifyDomain(proof)──> VERIFIED
+//   PENDING ──reject──────────────> REJECTED
+//   any     ──disable─────────────> DISABLED   (terminal, no re-verify)
+//
+// A custom domain arrives as PENDING and stays there until an actual control
+// check runs. Only VERIFIED/ACTIVE domains route traffic (see tenantContext).
+
+platformRouter.get('/tenants/:id/domain', requirePlatformAdmin, async (req: Request, res: Response) => {
+  try {
+    const tenant = await getTenant(req.params.id);
+    if (!tenant) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'پلتفرم یافت نشد.' });
+    const domain = await getTenantDomain(req.params.id);
+    res.json({
+      success: true,
+      domain: domain || null,
+      // Tell the operator what to do next rather than leaving them guessing.
+      verification: domain
+        ? {
+            required: domain.status === DomainStatus.PENDING,
+            method: 'DNS_TXT',
+            // Placeholder token so an operator knows what to publish. It is
+            // derived per-domain, and only that exact value verifies.
+            txtRecordName: `_mmba-verify.${domain.hostname}`,
+          }
+        : null,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
+ * POST /api/v2/platform/tenants/:id/domain/verify
+ *
+ * FIX D: a client CANNOT assert its own domain is verified. The body may
+ * carry a `proof` produced by a real DNS/HTTP challenge, but this handler
+ * only records the outcome of that check — it never invents one. A platform
+ * subdomain verifies without any external proof because the platform owns the
+ * parent zone. A custom domain whose proof does not match stays PENDING.
+ */
+platformRouter.post('/tenants/:id/domain/verify', requirePlatformAdmin, async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).authUser as User;
+    const tenant = await getTenant(req.params.id);
+    if (!tenant) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'پلتفرم یافت نشد.' });
+
+    const domain = await getTenantDomain(req.params.id);
+    if (!domain) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'دامنه یافت نشد.' });
+
+    // Platform-owned subdomain: we control the zone, so verify directly.
+    if (isAutoVerifiableHostname(domain.hostname)) {
+      const verified = await verifyDomain(domain.id, authUser.id, {
+        method: 'PLATFORM_OWNED_SUBDOMAIN',
+        token: 'n/a',
+      });
+      return res.json({ success: true, domain: verified });
+    }
+
+    // Custom domain: require a real proof. Without one it stays PENDING —
+    // that is the whole point of the fix.
+    const proof = req.body?.proof;
+    if (!proof || typeof proof.token !== 'string' || !proof.token) {
+      return res.status(422).json({
+        success: false,
+        error: 'VERIFICATION_PROOF_REQUIRED',
+        message: 'دامنه سفارشی تا تأیید مالکیت قابل استفاده نیست.',
+        domain: { hostname: domain.hostname, status: domain.status, routable: false },
+      });
+    }
+
+    const verified = await verifyDomain(domain.id, authUser.id, {
+      method: String(proof.method || 'DNS_TXT'),
+      token: proof.token,
+    });
+    res.json({ success: true, domain: verified });
+  } catch (err: any) {
+    const msg = String(err.message || err);
+    if (msg.includes('DOMAIN_NOT_FOUND')) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+    if (msg.includes('INVALID_TRANSITION')) return res.status(409).json({ success: false, error: 'INVALID_TRANSITION', message: msg });
+    if (msg.includes('VERIFICATION_PROOF_REQUIRED')) return res.status(422).json({ success: false, error: 'VERIFICATION_PROOF_REQUIRED' });
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+platformRouter.post('/tenants/:id/domain/disable', requirePlatformAdmin, async (req: Request, res: Response) => {
+  try {
+    const authUser = (req as any).authUser as User;
+    const tenant = await getTenant(req.params.id);
+    if (!tenant) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'پلتفرم یافت نشد.' });
+    const domain = await getTenantDomain(req.params.id);
+    if (!domain) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'دامنه یافت نشد.' });
+    const disabled = await disableDomain(domain.id, authUser.id);
+    res.json({ success: true, domain: disabled });
+  } catch (err: any) {
+    const msg = String(err.message || err);
+    if (msg.includes('DOMAIN_NOT_FOUND')) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
     res.status(500).json({ success: false, message: err.message });
   }
 });

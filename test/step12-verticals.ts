@@ -1,3 +1,4 @@
+import 'dotenv/config';
 // Step 12: generic vertical isolation test across multiple tables
 import { getTenantRepo } from '../server/tenantVerticals';
 import { pool } from '../server/pg';

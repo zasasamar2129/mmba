@@ -1,3 +1,4 @@
+import 'dotenv/config';
 // Step 12: cross-tenant isolation smoke test (run: npx tsx test/step12-isolation.ts)
 import { customerRepository } from '../server/customerRepository';
 import { pool } from '../server/pg';

@@ -112,12 +112,24 @@ const DEFAULT_SETTINGS = {
   updatedAt: new Date().toISOString(),
 };
 
+/**
+ * Placeholder admin record, used ONLY when the JSON store contains no admin at
+ * all. Step 12 FIX: it carries NO usable credential.
+ *
+ * It previously held the plaintext password "123", which was a hardcoded
+ * default credential in the repository — forbidden by Step 12 FIX §15. An
+ * empty string cannot match any bcrypt verification, and since Step 12 FIX E
+ * authentication reads the authoritative PostgreSQL `user` table anyway, this
+ * row could never authenticate regardless. The real bootstrap path is
+ * `npm run db:migrate:legacy`, which hashes the JSON store's own password.
+ */
 const SEED_USERS: User[] = [
   {
     id: 'usr-admin',
     name: 'مدیر کل سامانه (Admin)',
     username: 'admin',
-    password: '123',
+    // Intentionally empty: no default password ships with the repository.
+    password: '',
     email: 'admin@mmba.ir',
     mobile: '09120000000',
     role: UserRole.SUPER_ADMIN,

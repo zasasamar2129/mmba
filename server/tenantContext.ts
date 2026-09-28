@@ -7,9 +7,16 @@
 //
 // Never trusts req.body.tenantId / req.query.tenantId / headers. DEV tenants
 // can be selected via a single explicit env-guarded shortcut (DEV ONLY).
+//
+// Step 12 FIX D: hostname classification and trust live in hostnamePolicy.ts
+// so resolution and provisioning can never disagree. Resolution additionally
+// refuses to route a domain whose status is PENDING/REJECTED/DISABLED — an
+// unverified custom domain must never resolve to a tenant, or "PENDING" would
+// be decorative.
 // ---------------------------------------------------------------------------
 import { Request, Response, NextFunction } from 'express';
 import { query, Row } from './pg';
+import { normalizeHostname, classifyHostname, isRoutableDomainStatus } from './hostnamePolicy';
 
 export interface TenantContext {
   tenantId: string;
@@ -30,31 +37,7 @@ declare global {
   }
 }
 
-const RESERVED_HOSTS = new Set(['www', 'api', 'admin', 'app', 'mail', 'support', 'status', 'billing', 'cdn']);
-
-/** Normalize a hostname: lowercase, strip trailing dot, strip :port, strip www. */
-export function normalizeHostname(raw: string | undefined): string {
-  if (!raw) return '';
-  let h = raw.trim().toLowerCase();
-  const colon = h.lastIndexOf(':');
-  if (colon > 0 && !h.startsWith('[')) h = h.slice(0, colon);
-  h = h.replace(/\.$/, '');
-  if (h.startsWith('www.')) h = h.slice(4);
-  return h;
-}
-
-/** Extract tenant slug from a platform-tenant subdomain <slug>.parent. */
-function slugFromHostname(hostname: string, parentDomains: string[]): string | null {
-  for (const parent of parentDomains) {
-    if (hostname.endsWith('.' + parent)) {
-      const slug = hostname.slice(0, -(parent.length + 1));
-      if (slug && !slug.includes('.')) return slug;
-    }
-  }
-  return null;
-}
-
-const PARENT_DOMAINS = (process.env.TENANT_PARENT_DOMAINS || 'mmba.example,localhost').split(',').map((s) => s.trim()).filter(Boolean);
+export { normalizeHostname };
 
 async function findTenantBySlug(slug: string) {
   const rows = await query<Row>('SELECT id, name, slug, status FROM tenant WHERE slug = $1 LIMIT 1', [slug]);
@@ -74,9 +57,18 @@ async function findActiveMembership(tenantId: string, userId: string) {
   return rows[0] || null;
 }
 
-async function findDomain(hostname: string) {
+/**
+ * Look up a domain by exact hostname. FIX D: only a domain in a routable
+ * status (VERIFIED / ACTIVE) may resolve. PENDING, REJECTED and DISABLED all
+ * return nothing, so an unverified custom domain is unreachable rather than
+ * quietly active.
+ */
+async function findRoutableDomain(hostname: string) {
   const rows = await query<Row>('SELECT id, "tenantId", hostname, status FROM "tenantDomain" WHERE hostname = $1 LIMIT 1', [hostname]);
-  return rows[0] || null;
+  const domain = rows[0];
+  if (!domain) return null;
+  if (!isRoutableDomainStatus(domain.status)) return null;
+  return domain;
 }
 
 /**
@@ -89,7 +81,8 @@ export async function resolveTenantContext(req: Request, userId?: string): Promi
   // --- DEV ONLY: explicit tenant selection for local development ---
   const devSlug = process.env.DEV_TENANT_SLUG;
   if (devSlug && process.env.NODE_ENV !== 'production') {
-    const slug = slugFromHostname(hostname, PARENT_DOMAINS) || hostname.split('.')[0] || devSlug;
+    const classified = classifyHostname(hostname);
+    const slug = classified.slug || hostname.split('.')[0] || devSlug;
     const tenant = await findTenantBySlug(slug);
     if (tenant) {
       const membership = userId ? await findActiveMembership(tenant.id, userId) : null;
@@ -124,11 +117,17 @@ export async function resolveTenantContext(req: Request, userId?: string): Promi
     }
   }
 
-  // --- TenantDomain lookup via exact hostname, or subdomain slug ---
-  let tenant = hostname ? await findDomain(hostname).then((d) => (d ? findTenantById(d.tenantId) : null)) : null;
+  // --- TenantDomain lookup via exact hostname, or platform subdomain slug ---
+  // FIX D: a PENDING (unverified) custom domain is not routable, so
+  // findRoutableDomain returns nothing for it and we fall through to 404.
+  let tenant = hostname ? await findRoutableDomain(hostname).then((d) => (d ? findTenantById(d.tenantId) : null)) : null;
   if (!tenant && hostname) {
-    const slug = slugFromHostname(hostname, PARENT_DOMAINS);
-    if (slug && !RESERVED_HOSTS.has(slug)) tenant = await findTenantBySlug(slug);
+    // Only a host the platform OWNS may be matched by slug. A custom domain
+    // that happens to contain a tenant slug proves nothing.
+    const classified = classifyHostname(hostname);
+    if (classified.kind === 'PLATFORM_SUBDOMAIN' && classified.slug) {
+      tenant = await findTenantBySlug(classified.slug);
+    }
   }
 
   if (!tenant) return { ctx: null, status: 404 }; // unknown host → no tenant enumeration

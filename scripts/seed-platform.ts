@@ -6,9 +6,10 @@
 // TenantDomain linkage for the initial tenant. Safe to re-run (ON CONFLICT
 // DO NOTHING on every natural key).
 //
-// Run: npx tsx scripts/seed-platform.ts
+// Run: npm run db:seed
 // Env: DATABASE_URL (required), MIGRATE_TENANT_ID (default 'ten-initial')
 // ---------------------------------------------------------------------------
+import 'dotenv/config';
 import crypto from 'crypto';
 import { query, pool } from '../server/pg';
 

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 // Step 12 — Provisioning + Lifecycle + Slug + Isolation unit+DB tests
 // Run: npx tsx test/step12-provisioning.ts
 //

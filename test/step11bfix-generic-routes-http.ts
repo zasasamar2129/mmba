@@ -1,3 +1,4 @@
+import 'dotenv/config';
 // ---------------------------------------------------------------------------
 // Step 11B-FIX — End-to-end HTTP authorization tests for /v2/tenants/:table
 //

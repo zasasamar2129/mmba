@@ -1,3 +1,4 @@
+import 'dotenv/config';
 // ---------------------------------------------------------------------------
 // Step 12 — End-to-end HTTP tests for the provisioning / platform-admin /
 // tenant-admin surface, plus the cross-tenant attack matrix.
@@ -234,7 +235,10 @@ async function main() {
     const a = await call('POST', '/api/v2/platform/tenants', paTok, T_HOST, { name: 'Retry Co', slug: retrySlug, adminUserId: PA_ID });
     const b = await call('POST', '/api/v2/platform/tenants', paTok, T_HOST, { name: 'Retry Co', slug: retrySlug, adminUserId: PA_ID });
     check('first provision creates', a.status === 201, `status=${a.status}`);
-    check('second provision is idempotent', b.status === 201 && b.body?.repeated === true, `status=${b.status} repeated=${b.body?.repeated}`);
+    // Step 12 FIX: a repeat is a 200 OK, not a second 201 — nothing was
+    // created, so claiming "created" would be a lie. `repeated: true` is the
+    // explicit marker.
+    check('second provision is idempotent', b.status === 200 && b.body?.repeated === true, `status=${b.status} repeated=${b.body?.repeated}`);
     check('same tenantId across retries', a.body?.tenant?.id === b.body?.tenant?.id);
 
     const rows = await query<{ c: number }>('SELECT COUNT(*)::int AS c FROM tenant WHERE slug = $1', [retrySlug]);

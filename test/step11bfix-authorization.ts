@@ -1,3 +1,4 @@
+import 'dotenv/config';
 // ---------------------------------------------------------------------------
 // Step 11B-FIX — Generic tenant route authorization regression tests
 //
