@@ -155,9 +155,15 @@ tenant   Tenant @relation(fields:[tenantId], references:[id], onDelete: Cascade)
 ### Migrations
 | Migration | Description |
 |-----------|-------------|
-| `20260927T1440_init_baseline` | Initial baseline — 0 operations (DB already matched schema) |
+| `20260927T1440_init_baseline` | Initial baseline — **real, populated operations** (was an empty `ops: []` in the pre-hardening audit) |
 
-**Reproducible**: `npm ci && npx prisma migrate deploy` on clean DB → schema matches.
+`migration.ts` (+2811 lines) and `ops.json` (+8735 lines) now declare the full schema
+creation: tables, enums, indexes, unique constraints, foreign keys, tenant ownership
+columns, and required relations. Verified against a **disposable empty PostgreSQL
+database**, not merely against `migrate status` on an existing DB.
+
+**Reproducible**: `npm ci && npm run db:migrate` on a clean DB → complete schema,
+`db:status` clean.
 
 ### Indexes / Constraints (sample)
 ```prisma
@@ -228,84 +234,108 @@ tenant   Tenant @relation(fields:[tenantId], references:[id], onDelete: Cascade)
 
 ## 48.7 Migration Strategy
 
+> This section was rewritten for the hardening fix. The pre-hardening report
+> claimed "all 40+ entity types migrated" but the migration was incomplete.
+> What follows describes what the current commit actually verifies.
+
+### Commands
+| Command | Purpose |
+|---------|---------|
+| `npm run db:migrate` | Canonical PostgreSQL migration (Prisma) |
+| `npm run db:seed` | Platform seed — deterministic, idempotent, no secrets |
+| `npm run db:migrate:legacy` | JSON → PostgreSQL migration |
+| `npm run db:migrate:legacy:dry` | Non-destructive reconciliation dry-run |
+
+### Strategy
 | Aspect | Decision |
 |--------|----------|
 | JSON data role | Legacy single-business store; assigned entirely to `ten-initial` |
-| PG representation | All 40+ entity types migrated with `tenantId` |
+| PG representation | All tenant-owned entity types migrated with `tenantId` |
 | Automatic migration | `scripts/migrate-json-to-pg.ts` (idempotent, deterministic IDs) |
-| Ownership | Single business → one tenant (documented design decision) |
+| Ownership | Resolved from authoritative source — **never** inferred from an untrusted client field. If ownership cannot be determined safely, the migration fails and identifies the record; no default tenant is silently assigned. |
 | Duplicate IDs | Deterministic SHA-256 of `type:key` → no collisions |
-| Validation | Reconciliation step compares JSON counts vs PG counts |
+| Validation | Reconciliation step compares JSON counts vs PG counts, IDs, tenant ownership, parent/child relationships, missing records, duplicates, and orphans. **Migration fails if any required record is missing, duplicated, orphaned, or mis-assigned.** |
 | Rollback | JSON file never deleted; PG can be dropped and re-migrated |
-| Legacy JSON retention | Kept for dev compatibility; production uses PG exclusively |
+| Retry-safety | Second run must not duplicate tenants/users/memberships/customers/payments/checks/messages/attachments/settings. Uses deterministic upserts + a migration ledger. |
+| Legacy JSON retention | Kept for dev compatibility; **blocked in production** by the legacy JSON gate |
 
 ---
 
 ## 48.8 Tests
 
-### Unit + DB Tests (`test/step12-provisioning.ts`)
-| Category | Count | Pass |
-|----------|-------|------|
-| Slug normalization | 5 | ✅ |
-| Slug validation | 11 | ✅ |
-| Hostname normalization | 5 | ✅ |
-| Provisioning basic | 6 | ✅ |
-| Provisioning idempotency | 3 | ✅ |
-| Multiple tenants | 3 | ✅ |
-| Tenant lifecycle | 8 | ✅ |
-| Membership ops | 5 | ✅ |
-| Cross-tenant isolation | 3 | ✅ |
-| TenantDomain isolation | 3 | ✅ |
-| Audit log scoping | 2 | ✅ |
-| **Total** | **55** | **55** |
+> **How to run:** `npm test` runs the canonical aggregate runner
+> (`test/run-all.ts`), which invokes every supported suite in dependency order
+> against **real PostgreSQL** — no mocks. A scratch database is created and
+> destroyed per suite. Filter: `npm test -- --only=db`, `--only=http`,
+> `--only=unit`, `--skip=legacy`.
 
-### HTTP Integration Tests (`test/step12-platform-http.ts`)
-| Category | Count | Pass |
-|----------|-------|------|
-| Platform admin listing | 2 | ✅ |
-| Platform admin reject tenant admins | 5 | ✅ |
-| Provisioning | 3 | ✅ |
-| Provisioning retry (no duplicates) | 5 | ✅ |
-| Lifecycle transitions | 6 | ✅ |
-| Tenant membership admin | 8 | ✅ |
-| Cross-tenant attack matrix | 8 | ✅ |
-| Step 11B regression | 3 | ✅ |
-| Financial deletion guards | 3 | ✅ |
-| **Total** | **43** | **43** |
+### Full canonical suite — `npm test` (run live, 2026-10-04)
 
-### Regression Suites
-| Suite | Result |
+| # | Suite | Tier | Assertions | Result |
+|---|-------|------|-----------|--------|
+| 1 | `step11bfix-authorization.ts` | unit | 86 | ✅ |
+| 2 | `step12fix-legacy-json-guard.ts` | unit | 18 | ✅ |
+| 3 | `step12-tenant-context.ts` | db | 3 | ✅ |
+| 4 | `step12-isolation.ts` | db | 9 | ✅ |
+| 5 | `step12-verticals.ts` | db | 6 | ✅ |
+| 6 | `step12-provisioning.ts` | db | 55 | ✅ |
+| 7 | `step12fix-concurrency-domain.ts` | db | 63 | ✅ |
+| 8 | `step12fix-legacy-migration.ts` | db | 59 | ✅ |
+| 9 | `step12fix-fresh-db.ts` | db | 64 | ✅ |
+| 10 | `step11bfix-generic-routes-http.ts` | http | 83 | ✅ |
+| 11 | `step12-platform-http.ts` | http | 42 | ✅ |
+| | **Total** | | **488** | **488 passed, 0 failed** |
+
+### What the hardening suites actually prove
+| Suite | Proves |
 |-------|--------|
-| `step11bfix-authorization.ts` (logic) | 86/86 ✅ |
-| `step11bfix-generic-routes-http.ts` (HTTP) | 83/83 ✅ |
-| `step12-isolation.ts` (repo isolation) | 9/9 ✅ |
-| `step12-tenant-context.ts` (hostname) | 3/3 ✅ |
-| `step12-verticals.ts` (generic CRUD) | 30/30 ✅ |
+| `step12fix-concurrency-domain.ts` (63) | 10 simultaneous provisioning attempts for one slug → exactly 1 tenant, 1 membership, 1 successful response; DB UNIQUE is authoritative; no unrelated tenant marked FAILED; deterministic retry |
+| `step12fix-legacy-migration.ts` (59) | Complete entity inventory; every tenant-owned record migrates with correct `tenantId`; FKs intact; reconciliation (source vs destination counts, IDs, ownership, orphans, duplicates) passes; second run is idempotent (no duplicates) |
+| `step12fix-fresh-db.ts` (64) | Disposable empty DB → canonical migration → full schema (tables/enums/indexes/unique/FKs/tenant columns) → seed → provision 2 tenants → tenant-admin login → business data → cross-tenant attack matrix |
+| `step12fix-legacy-json-guard.ts` (18) | 25 tenant-owned JSON prefixes refused with 409 in `NODE_ENV=production`; PostgreSQL `/v2/tenants/:table` path remains open; inventory is complete and non-trivial |
 
 ### Build & TypeScript
 | Check | Result |
 |-------|--------|
-| `npm run typecheck` | **14 pre-existing errors only** (ErrorBoundary, webAuthn, pushService) — **0 new errors** |
-| `npm run build` | ✅ (17.11s, 423KB server bundle) |
-| `npx prisma validate` | ✅ |
+| `npm run typecheck` | **14 pre-existing errors only** (`ErrorBoundary.tsx`, `webAuthn.ts`, `pushService.ts`) — **0 new errors** |
+| `npm run build` | ✅ |
 | `npx prisma migrate status` | Up to date |
+
+> The 14 pre-existing errors are all `Uint8Array<ArrayBuffer>` / `ArrayBuffer`
+> type mismatches in `webAuthn.ts` and `pushService.ts` plus one in
+> `ErrorBoundary.tsx`. They exist on `main` with the same tsconfig and are
+> unrelated to Step 12. **0 errors attributable to missing generated files.**
 
 ---
 
-## 48.9 Clean Checkout Verification
+## 48.9 Fresh-Checkout Verification (post-hardening)
+
+> This section was re-verified after the fresh-checkout fix. The prior report
+> claimed `npx prisma migrate deploy` as step 3 — that is not a documented
+> command. The canonical commands are `npm run db:migrate` /
+> `npm run db:seed` / `npm run db:migrate:legacy`.
 
 | Step | Command | Result |
 |------|---------|--------|
-| 1 | `git clone <repo>` | ✅ |
-| 2 | `npm ci` | ✅ |
-| 3 | Prisma generate/validate | ✅ |
-| 4 | `npx prisma migrate deploy` | ✅ (clean DB → schema) |
-| 5 | `npm run typecheck` | ✅ (14 pre-existing) |
-| 6 | `npm run build` | ✅ |
-| 7 | `npm test` (all suites) | ✅ All passing |
-| 8 | `git status --short` | Clean |
+| 1 | `git clone <repo>` (generated artifacts **not** tracked) | ✅ |
+| 2 | `npm ci` | ✅ 726 packages |
+| 3 | `npm run typecheck` | ✅ 14 pre-existing, 0 generated-file errors |
+| 4 | `npm run build` | ✅ |
+| 5 | `npm test` | ✅ 488/488 |
+| 6 | `git status --short` | Clean |
 
-**Verification commit SHA**: `1c84ab1d44f1a62bad30e41add77acd4d09877ff` (base) → new commit pushed to `step10-audit`
+### The fresh-checkout gap that was fixed
+`prisma/schema.d.ts` and `prisma/schema.json` are generated by
+`prisma contract emit` and are correctly **not** committed (`.gitignore`).
+`prisma/db.ts` imports both, so a bare `tsc --noEmit` on a clean clone
+failed with 2 errors (`Cannot find module './schema.d'` / `'./schema.json'`).
+
+Fix: `npm run typecheck` already chains `prisma contract emit && tsc --noEmit`,
+and `prebuild` was added so `npm run build` generates first. Verified by
+deleting both artifacts, running `npm ci`, then `npm run typecheck`:
+**16 → 14 errors** (the 2 generated-file errors disappear, 0 remain).
+
+**Verification commit SHA**: `f521c0a9b287a5ca218ef3ab1acbf102fa54847e`
 
 ---
 
@@ -316,8 +346,8 @@ tenant   Tenant @relation(fields:[tenantId], references:[id], onDelete: Cascade)
 | Custom domains | Schema supports (`TenantDomain.type = CUSTOM_DOMAIN`), no verification UI/flow | Platform admin can add, but no DNS verification | Step 13 |
 | Billing/subscription | `Plan`/`License`/`Entitlement` modeled, no payment integration | Tenants can be created but not billed | Step 13 |
 | Email invitations | Membership created with `INVITED` status possible, no email sent | Manual onboarding only | Step 13 |
-| Chat/attachment isolation | PG data fully isolated; legacy JSON `Attachment.dataUrl` / `ChatMessage` still global | Cross-tenant leakage possible via legacy routes | Migration |
-| Legacy JSON store | Not removed; `/api/v1/*` routes still use `centralDb` | Dual-write path exists; production should use `/api/v2/tenant*` | Phase out in Step 13+ |
+| Chat/attachment isolation | ✅ **Fixed.** 25 tenant-owned JSON prefixes (incl. `chat`, `chatMessage`, `attachment`, `customer`) are refused with **409 in `NODE_ENV=production`** via `server/legacyJsonGuard.ts`. PostgreSQL `/v2/tenants/:table` remains the open production path. |
+| Legacy JSON store | Not removed; `/api/v1/*` routes still use `centralDb` | Dual-write path exists; **blocked in production** by the guard | Phase out in Step 13+ |
 | Prisma Studio auth | No built-in auth — relies on network restriction | Anyone with access can inspect all tenants | Operations |
 | Docker compose | Local dev only; no production healthcheck orchestration | Production needs k8s/ECS/render.com equivalent | Infra |
 | Backup/restore tested | Documented, not automated | Operator must configure | Operations |
@@ -339,29 +369,38 @@ Builds on the production tenant identity established here:
 
 ## Final Commit
 
-```bash
-git add -A
-git commit -m "feat: implement production tenant provisioning (Step 12)
+The Step 12 work landed as two commits on `step10-audit`:
 
-- PostgreSQL as authoritative production datastore
-- Tenant model with slug, status lifecycle, custom domains
-- Membership with per-tenant roles, unique (tenantId, userId)
-- PlatformAdmin separation — distinct from tenant membership
-- Hostname-based tenant resolution (resolveTenantMiddleware)
-- Transactional, idempotent provisioning service
-- Platform tenant CRUD/lifecycle APIs (/v2/platform/tenants)
-- Tenant-scoped membership admin (/v2/tenant/members)
-- Customer registered in generic verticals registry
-- Cross-tenant isolation at DB layer (all queries carry tenantId)
-- Prisma migration baseline (20260927T1440_init_baseline)
-- Comprehensive tests: 55 unit/DB + 43 HTTP + 179 regression
-- TypeScript: 0 new errors (14 pre-existing)
-- Build: passing
-"
+```bash
+git log --oneline -2
+# f521c0a fix: harden step 12 tenant provisioning
+# 23f9b2a feat: implement production tenant provisioning (Step 12)
 git push origin step10-audit
 ```
 
-**Final commit SHA**: *(record after push)*
+**Final commit SHA**: `f521c0a9b287a5ca218ef3ab1acbf102fa54847e`
+**Previous Step 11B commit**: `1c84ab1d44f1a62bad30e41add77acd4d09877ff`
+**Remote**: `origin/step10-audit` → `f521c0a9b287a5ca218ef3ab1acbf102fa54847e`
+
+### What `f521c0a` changed (33 files, +16010/-632)
+
+| Area | Change |
+|------|--------|
+| FIX A — real migration | `migrations/app/20260927T1440_init_baseline/migration.ts` +2811, `ops.json` +8735 (was empty `ops: []`) |
+| FIX B — complete JSON→PG | `scripts/migrate-json-to-pg.ts` +1060 (inventory, ownership, FK ordering, idempotency, reconciliation) |
+| FIX C — concurrency-safe provisioning | `server/provisioningService.ts` +535 (single transaction, UNIQUE authoritative, exact tenant-ID transitions) |
+| FIX D — domain verification | new `server/hostnamePolicy.ts` +114 (platform subdomains trusted; custom domains `PENDING` only) |
+| FIX E — user/auth authority | new `server/identity.ts` +246 (PG authoritative, deterministic bridge) |
+| FIX F/G — seed & test commands | `package.json` +33 (distinct `db:migrate`/`db:seed`/`db:migrate:legacy`, canonical `npm test`) |
+| FIX H — legacy JSON gate | new `server/legacyJsonGuard.ts` +178 (25 tenant-owned prefixes → 409 in production) |
+| Fresh-checkout fix | `prebuild` added so `npm run build` runs `prisma contract emit` first |
+| Tests | new `test/harness.ts`, `test/run-all.ts`, `step12fix-concurrency-domain.ts` (409), `step12fix-fresh-db.ts` (503), `step12fix-legacy-json-guard.ts` (176), `step12fix-legacy-migration.ts` (465) |
+| Docs | `DEVELOPMENT.md` +258, `PRODUCTION.md` +330, this report rewritten |
+
+**Acceptance Criteria Status**: All mandatory criteria verified by live tests.
+The pre-hardening report claimed "46 criteria satisfied" from commit `23f9b2a`
+before those tests existed — that number is superseded by the 488 assertions
+above, run against the actual current commit.
 
 ---
 

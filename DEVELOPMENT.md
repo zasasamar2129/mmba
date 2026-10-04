@@ -74,10 +74,16 @@ DATABASE_URL="postgresql://.../mmbadb" npm run db:seed
 
 ```bash
 npm run dev        # Vite HMR + tsx
-npm run build      # vite build + esbuild server bundle
+npm run build      # prebuild (prisma contract emit) + vite build + esbuild bundle
 npm start          # run the built server
 npm run typecheck  # prisma contract emit && tsc --noEmit
 ```
+
+> `prisma/schema.d.ts` and `prisma/schema.json` are **generated, not tracked**
+> (`.gitignore`). `prisma/db.ts` imports both, so on a clean clone they must be
+> regenerated first. `npm run typecheck` and `npm run build` both do this
+> automatically (`prebuild` + the `contract:emit` prefix on `typecheck`). If you
+> run `tsc --noEmit` directly, run `npm run contract:emit` first.
 
 ## Tests
 
