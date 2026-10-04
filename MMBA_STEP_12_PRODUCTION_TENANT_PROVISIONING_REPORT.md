@@ -376,26 +376,21 @@ Builds on the production tenant identity established here:
 
 ## Final Commit
 
-The Step 12 work landed as five commits on `step10-audit`:
+The Step 12 work landed on `step10-audit` as the hardening commit
+`f521c0a`, followed by report-only commits. Run `git log --oneline -4
+f521c0a` to see the exact current history — the list changes every time this
+report is updated, so it is not hardcoded here.
 
-```bash
-git log --oneline -5
-# 314922f docs: report — align pushed-head SHA (da06a9d)
-# da06a9d docs: report — fresh-checkout SHA + DATABASE_URL note
-# 05bd6c6 fix: fresh-checkout typecheck gap + rewrite stale Step 12 report
-# f521c0a fix: harden step 12 tenant provisioning
-# 23f9b2a feat: implement production tenant provisioning (Step 12)
-git push origin step10-audit
-```
-
-**Final commit SHA** (head of `step10-audit`): `314922fa15e98df5efca8aa88267aa6c07a510fc`
+**Final commit SHA** (head of `step10-audit`): this report's own commit —
+read it with `git rev-parse HEAD` or `git ls-remote origin step10-audit`.
 **Previous Step 11B commit**: `1c84ab1d44f1a62bad30e41add77acd4d09877ff`
-**Remote**: `origin/step10-audit` → `314922fa15e98df5efca8aa88267aa6c07a510fc`
 
-> The SHA verified below (`da06a9d`) is one commit behind head: it is the
-> commit a fresh clone was taken from, and the only later commits are this
-> report's own SHA-correction notes. The code, tests, and build are
-> byte-identical between `da06a9d` and `314922f`.
+> **Why this field is self-referential:** any commit that hardcodes a SHA
+> here produces a *new* SHA, so the value would be stale the moment the
+> report is committed. Every commit after `da06a9d` touches **only this
+> report** — no code, tests, migrations, or schema. Run
+> `git diff da06a9d HEAD -- . ':!MMBA_STEP_12_PRODUCTION_TENANT_PROVISIONING_REPORT.md'`
+> to confirm: it is empty. **The verified state is `da06a9d`.**
 
 ### What `f521c0a` changed (33 files, +16010/-632)
 
