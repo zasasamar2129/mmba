@@ -321,7 +321,7 @@ database**, not merely against `migrate status` on an existing DB.
 | 2 | `npm ci` | ✅ 726 packages |
 | 3 | `npm run typecheck` | ✅ 14 pre-existing, 0 generated-file errors |
 | 4 | `npm run build` | ✅ |
-| 5 | `npm test` | ✅ 488/488 |
+| 5 | `npm test` | ✅ 488/488 (needs `DATABASE_URL` — `.env` is gitignored, copy `.env.example`) |
 | 6 | `git status --short` | Clean |
 
 ### The fresh-checkout gap that was fixed
@@ -335,7 +335,7 @@ and `prebuild` was added so `npm run build` generates first. Verified by
 deleting both artifacts, running `npm ci`, then `npm run typecheck`:
 **16 → 14 errors** (the 2 generated-file errors disappear, 0 remain).
 
-**Verification commit SHA**: `f521c0a9b287a5ca218ef3ab1acbf102fa54847e`
+**Verification commit SHA**: `05bd6c6550394c3bc65ea23daf1632fa244b4ddd`
 
 ---
 
@@ -369,18 +369,19 @@ Builds on the production tenant identity established here:
 
 ## Final Commit
 
-The Step 12 work landed as two commits on `step10-audit`:
+The Step 12 work landed as three commits on `step10-audit`:
 
 ```bash
-git log --oneline -2
+git log --oneline -3
+# 05bd6c6 fix: fresh-checkout typecheck gap + rewrite stale Step 12 report
 # f521c0a fix: harden step 12 tenant provisioning
 # 23f9b2a feat: implement production tenant provisioning (Step 12)
 git push origin step10-audit
 ```
 
-**Final commit SHA**: `f521c0a9b287a5ca218ef3ab1acbf102fa54847e`
+**Final commit SHA**: `05bd6c6550394c3bc65ea23daf1632fa244b4ddd`
 **Previous Step 11B commit**: `1c84ab1d44f1a62bad30e41add77acd4d09877ff`
-**Remote**: `origin/step10-audit` → `f521c0a9b287a5ca218ef3ab1acbf102fa54847e`
+**Remote**: `origin/step10-audit` → `05bd6c6550394c3bc65ea23daf1632fa244b4ddd`
 
 ### What `f521c0a` changed (33 files, +16010/-632)
 
