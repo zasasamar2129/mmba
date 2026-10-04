@@ -335,7 +335,14 @@ and `prebuild` was added so `npm run build` generates first. Verified by
 deleting both artifacts, running `npm ci`, then `npm run typecheck`:
 **16 → 14 errors** (the 2 generated-file errors disappear, 0 remain).
 
-**Verification commit SHA**: `05bd6c6550394c3bc65ea23daf1632fa244b4ddd`
+**Verification commit SHA**: `da06a9d9b5b55548c6b7c5d509f4f4c573e3419d`
+
+> The two commits after `da06a9d` (`314922f`, and the one that follows this
+> sentence) touch **only this report** — no code, tests, migrations, or
+> schema. They exist because this report must name the exact commit it was
+> verified against, and that SHA moves every time the report is updated.
+> Treat `da06a9d` as the verified state: `git diff da06a9d HEAD` shows only
+> this file.
 
 ---
 
@@ -369,10 +376,11 @@ Builds on the production tenant identity established here:
 
 ## Final Commit
 
-The Step 12 work landed as four commits on `step10-audit`:
+The Step 12 work landed as five commits on `step10-audit`:
 
 ```bash
-git log --oneline -4
+git log --oneline -5
+# 314922f docs: report — align pushed-head SHA (da06a9d)
 # da06a9d docs: report — fresh-checkout SHA + DATABASE_URL note
 # 05bd6c6 fix: fresh-checkout typecheck gap + rewrite stale Step 12 report
 # f521c0a fix: harden step 12 tenant provisioning
@@ -380,9 +388,14 @@ git log --oneline -4
 git push origin step10-audit
 ```
 
-**Final commit SHA**: `da06a9d9b5b55548c6b7c5d509f4f4c573e3419d`
+**Final commit SHA** (head of `step10-audit`): `314922fa15e98df5efca8aa88267aa6c07a510fc`
 **Previous Step 11B commit**: `1c84ab1d44f1a62bad30e41add77acd4d09877ff`
-**Remote**: `origin/step10-audit` → `da06a9d9b5b55548c6b7c5d509f4f4c573e3419d`
+**Remote**: `origin/step10-audit` → `314922fa15e98df5efca8aa88267aa6c07a510fc`
+
+> The SHA verified below (`da06a9d`) is one commit behind head: it is the
+> commit a fresh clone was taken from, and the only later commits are this
+> report's own SHA-correction notes. The code, tests, and build are
+> byte-identical between `da06a9d` and `314922f`.
 
 ### What `f521c0a` changed (33 files, +16010/-632)
 
