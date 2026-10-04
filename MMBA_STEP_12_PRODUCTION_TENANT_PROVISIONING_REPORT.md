@@ -369,19 +369,20 @@ Builds on the production tenant identity established here:
 
 ## Final Commit
 
-The Step 12 work landed as three commits on `step10-audit`:
+The Step 12 work landed as four commits on `step10-audit`:
 
 ```bash
-git log --oneline -3
+git log --oneline -4
+# da06a9d docs: report — fresh-checkout SHA + DATABASE_URL note
 # 05bd6c6 fix: fresh-checkout typecheck gap + rewrite stale Step 12 report
 # f521c0a fix: harden step 12 tenant provisioning
 # 23f9b2a feat: implement production tenant provisioning (Step 12)
 git push origin step10-audit
 ```
 
-**Final commit SHA**: `05bd6c6550394c3bc65ea23daf1632fa244b4ddd`
+**Final commit SHA**: `da06a9d9b5b55548c6b7c5d509f4f4c573e3419d`
 **Previous Step 11B commit**: `1c84ab1d44f1a62bad30e41add77acd4d09877ff`
-**Remote**: `origin/step10-audit` → `05bd6c6550394c3bc65ea23daf1632fa244b4ddd`
+**Remote**: `origin/step10-audit` → `da06a9d9b5b55548c6b7c5d509f4f4c573e3419d`
 
 ### What `f521c0a` changed (33 files, +16010/-632)
 
