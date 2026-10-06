@@ -5,6 +5,7 @@ import { createServer as createViteServer } from 'vite';
 import { apiRouter } from './server/routes';
 import { notificationScheduler } from './server/notificationScheduler';
 import { centralDb } from './server/db';
+import { describeLegacySurface } from './server/legacyJsonGuard';
 import { securityHeaders, healthExemptGeneral } from './server/security';
 import { assertRequiredEnv } from './server/config';
 import {
@@ -31,6 +32,38 @@ function validateOptionalSecrets(): string[] {
     errors.push('VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be set together (or both unset).');
   }
   return errors;
+}
+
+/**
+ * Step 12 FIX §17/§18 — print the legacy-JSON surface state at startup.
+ *
+ * The gate can be silently overridden with ALLOW_LEGACY_JSON_TENANT_PATHS=1,
+ * and in development it is open by design. Either way, an operator should not
+ * have to read the source to learn which is in effect.
+ */
+function reportLegacyJsonSurface(): void {
+  const s = describeLegacySurface();
+  const detail = {
+    prefixesTotal: s.total,
+    tenantOwned: s.tenantOwned,
+    userScoped: s.userScoped,
+    blocked: s.blockedInThisEnv,
+    reason: s.reason,
+  };
+  if (s.blockedInThisEnv) {
+    console.warn(
+      `[legacy-json] ${s.tenantOwned} tenant-owned and ${s.userScoped} user-scoped API prefixes ` +
+      `are refused for tenant requests (${s.reason}). Use /api/v2/tenants/*.\n` +
+      `[legacy-json] ${JSON.stringify(detail)}`,
+    );
+  } else {
+    console.warn(
+      `[legacy-json] WARNING: the legacy global-JSON tenant surface is OPEN in this ` +
+      `environment (${s.reason}). It is not tenant-scoped — do not expose this ` +
+      `deployment publicly.\n` +
+      `[legacy-json] ${JSON.stringify(detail)}`,
+    );
+  }
 }
 
 async function startServer() {
@@ -122,6 +155,7 @@ async function startServer() {
   const httpServer = app.listen(PORT, '0.0.0.0', () => {
     structuredLog({ level: 'info', event: 'server_start', job: 'http', message: `listening on 0.0.0.0:${PORT}`, env: process.env.NODE_ENV || 'development' });
     notificationScheduler.start(15000);
+    reportLegacyJsonSurface();
   });
 
   installGracefulShutdown({

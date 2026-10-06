@@ -1,9 +1,12 @@
 import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
 import { centralDb, normalizePhone, PhoneDuplicateError } from './db';
+import { query } from './pg';
 import { backupService } from './backupService';
 import { webPushService } from './webPushService';
 import { notificationScheduler } from './notificationScheduler';
 import * as auth from './auth';
+import * as identity from './identity';
 import {
   User, UserRole, UserStatus, ModuleName, Customer, Call, Task,
   Contract, Payment, Check, SimCard, Repair, Attachment, Notification,
@@ -14,6 +17,18 @@ import {
 import { isAdmin, hasPermission } from '../src/lib/permissions';
 import { PermissionAction } from '../src/types';
 import { authLimiter, loginLimiter, sensitiveLimiter } from './security';
+import { resolveTenantMiddleware, TenantContext } from './tenantContext';
+import { legacyJsonTenantGate, describeLegacySurface } from './legacyJsonGuard';
+import { customerRepository } from './customerRepository';
+import { getTenantRepo } from './tenantVerticals';
+import {
+  getTenantTableModule,
+  protectedStatusesFor,
+  APPEND_ONLY_TABLES,
+} from './tenantTableModules';
+import { platformRouter } from './platformRoutes';
+import { tenantAdminRouter } from './tenantAdminRoutes';
+import { licensingRouter } from './licensingRoutes';
 
 export const apiRouter = Router();
 
@@ -22,6 +37,11 @@ export const apiRouter = Router();
 apiRouter.use(['/auth/biometric-challenge', '/auth/biometric-login', '/auth/password', '/auth/profile'], authLimiter);
 
 // Middleware: Extract user from Authorization Header or query parameter
+//
+// Step 12 FIX E: the user record is read from PostgreSQL, not from the legacy
+// JSON store. Authorization already consults PG memberships, so reading
+// identity from JSON meant a deactivated user could still hold a live session
+// if the two stores disagreed. PG is the single authority now.
 async function getAuthUser(req: Request): Promise<User | undefined> {
   let token = '';
   const authHeader = req.headers.authorization;
@@ -36,18 +56,50 @@ async function getAuthUser(req: Request): Promise<User | undefined> {
   const decoded = auth.verifyToken(token);
   if (!decoded) return undefined;
 
-  const user = centralDb.findUserById(decoded.payload.userId);
-  if (!user || user.status === UserStatus.INACTIVE || user.status === UserStatus.SUSPENDED) {
-    return undefined;
-  }
+  const pgUser = await identity.findUserById(decoded.payload.userId);
+  if (!pgUser) return undefined;
+  if (pgUser.status !== 'ACTIVE') return undefined;
+
   // Session revocation (Step 3, Option A): a token is only valid if its
-  // embedded tokenVersion matches the user's current one.
-  const storedVersion = user.tokenVersion || 0;
+  // embedded tokenVersion matches the authoritative user's current one.
+  const storedVersion = pgUser.tokenVersion || 0;
   const tokenVersion = decoded.payload.tokenVersion || 0;
   if (tokenVersion !== storedVersion) {
     return undefined;
   }
-  return user;
+
+  // The JSON store is consulted only for the profile overlay PG does not
+  // carry (legacy per-user `permissions`). Identity fields come from PG.
+  const legacy = centralDb.findUserById(pgUser.id);
+  return mergeIdentity(pgUser, legacy);
+}
+
+/** Combine the authoritative PG identity with legacy profile-only fields. */
+function mergeIdentity(pgUser: import('./identity').PgUser, legacy?: User | null): User {
+  const base: User = {
+    id: pgUser.id,
+    name: pgUser.name,
+    username: pgUser.username,
+    password: '',
+    email: pgUser.email || undefined,
+    mobile: pgUser.mobile || undefined,
+    role: (pgUser.role as UserRole) || UserRole.READ_ONLY,
+    status: (pgUser.status as UserStatus) || UserStatus.ACTIVE,
+    avatar: pgUser.avatar || undefined,
+    department: pgUser.department || undefined,
+    tokenVersion: pgUser.tokenVersion,
+    createdAt: pgUser.createdAt,
+    updatedAt: pgUser.updatedAt,
+    lastLoginAt: pgUser.lastLoginAt || undefined,
+  } as User;
+  if (legacy) {
+    // permissions/permissionsRaw are not part of the PG schema.
+    const l = legacy as any;
+    if (l.permissions) (base as any).permissions = l.permissions;
+    if (l.permissionsRaw) (base as any).permissionsRaw = l.permissionsRaw;
+    if (l.trustedBiometricDevices) (base as any).trustedBiometricDevices = l.trustedBiometricDevices;
+  }
+  return base;
 }
 
 
@@ -76,6 +128,37 @@ function requireAuth(req: Request, res: Response, next: any) {
 
 // Apply authentication middleware to ALL routes
 apiRouter.use(requireAuth);
+
+// Step 12 — resolve the effective tenant (hostname → TenantDomain → Tenant) and
+// verify membership for the authenticated user. req.tenantContext is attached
+// for every subsequent route so that tenant-scoped routes (below) can derive
+// the tenant without ever trusting a client-supplied value. Platform routes
+// (/v2/platform/*) ignore this context and enforce platform-admin checks
+// themselves; tenant routes below use it as the sole authority.
+apiRouter.use(resolveTenantMiddleware);
+
+// Step 12 FIX §17/§18 — Legacy JSON tenant-path gate.
+//
+// Mounted after resolveTenantMiddleware (it needs req.tenantContext to tell a
+// tenant-facing request from a platform one) and before every legacy handler.
+// The ~160 routes still reading the single global JSON store have no tenant
+// column, so each one is a cross-tenant read; in production they are refused
+// with 409 rather than served. See server/legacyJsonGuard.ts for the full
+// inventory and the escape hatch.
+apiRouter.use(legacyJsonTenantGate);
+
+// Step 12 — Platform control plane. Mounted after requireAuth + resolveTenant.
+// These paths never collide with the /v2/tenants/:table catch-all, and each
+// route inside enforces its own platform-admin check via the PlatformAdmin
+// database row — tenant admins cannot invoke them merely by knowing a tenant ID.
+apiRouter.use('/v2/platform', platformRouter);
+apiRouter.use('/v2/platform', licensingRouter);
+
+// Step 12 — Tenant-scoped membership administration for the CURRENT tenant
+// (resolved via hostname). No tenantId parameter: the tenant is always
+// req.tenantContext from the server-resolved hostname. Cross-tenant
+// membership operations must use /v2/platform/tenants/:id/members.
+apiRouter.use('/v2/tenant', tenantAdminRouter);
 
 function sanitizeUser(user: User): Omit<User, 'password'> {
   const { password: _pw, ...safe } = user;
@@ -147,55 +230,43 @@ apiRouter.post('/auth/login', loginLimiter, async (req: Request, res: Response) 
       return res.status(400).json({ success: false, message: 'نام کاربری/ایمیل و رمز عبور الزامی است.' });
     }
 
-    const user = centralDb.findUserByCredential(usernameOrEmail);
+    // Step 12 FIX E: authenticate against PostgreSQL, the authoritative
+    // identity store. The JSON store is no longer an authentication input.
+    const user = await identity.authenticate(usernameOrEmail, password);
     if (!user) {
-      return res.status(401).json({ success: false, message: 'کاربری با این نام کاربری، ایمیل یا شماره موبایل یافت نشد.' });
-    }
-
-    if (user.status === UserStatus.INACTIVE || user.status === UserStatus.SUSPENDED) {
-      return res.status(403).json({ success: false, message: 'حساب کاربری شما غیرفعال یا معلق می‌باشد. لطفاً با مدیر سیستم تماس بگیرید.' });
-    }
-
-    // Verify the password against the stored hash (never plaintext compare)
-    const storedPassword = user.password || '';
-    const passwordValid = await auth.verifyPassword(password, storedPassword);
-    if (!passwordValid) {
       await centralDb.logAudit({
-        userId: user.id,
-        userName: user.name,
-        userRole: user.role,
+        userId: '-',
+        userName: String(usernameOrEmail),
+        userRole: 'UNKNOWN',
         action: 'تلاش ناموفق برای ورود به سیستم',
         module: ModuleName.USERS,
-        details: `رمز عبور اشتباه برای کاربر ${user.username}`,
+        details: `ورود ناموفق برای ${usernameOrEmail}`,
         ipAddress: req.ip,
       });
-      return res.status(401).json({ success: false, message: 'رمز عبور وارد شده نادرست است.' });
+      // One message for "no such user", "wrong password" and "inactive": the
+      // response must not tell an attacker which of the three applied.
+      return res.status(401).json({ success: false, message: 'نام کاربری/ایمیل یا رمز عبور نادرست است.' });
     }
 
-    const now = new Date().toISOString();
-    const updatedUser: User = {
-      ...user,
-      lastLoginAt: now,
-    };
-    // NOTE: saveUser passes the existing password through unchanged — it does NOT
-    // re-hash it. Only the four dedicated write sites hash on save.
-    await centralDb.saveUser(updatedUser);
+    await identity.recordLogin(user.id);
 
+    const legacyForAudit = centralDb.findUserById(user.id);
     await centralDb.logAudit({
-      userId: updatedUser.id,
-      userName: updatedUser.name,
-      userRole: updatedUser.role,
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role as any,
       action: 'ورود موفق به سیستم متمرکز MMBA',
       module: ModuleName.USERS,
-      details: `ورود موفق کاربر ${updatedUser.name} (${updatedUser.username}) از دستگاه`,
+      details: `ورود موفق کاربر ${user.name} (${user.username}) از دستگاه`,
       ipAddress: req.ip,
     });
 
-    const token = auth.signToken(updatedUser.id, updatedUser.tokenVersion);
+    const token = auth.signToken(user.id, user.tokenVersion);
+    const loginUser = mergeIdentity({ ...user, lastLoginAt: new Date().toISOString() }, legacyForAudit);
     res.json({
       success: true,
       token,
-      user: sanitizeUser(updatedUser),
+      user: sanitizeUser(loginUser),
       serverRevision: centralDb.getRevisionInfo().revision,
     });
   } catch (error: any) {
@@ -706,9 +777,221 @@ apiRouter.post('/customers/bulk-delete', sensitiveLimiter, requirePermission(Mod
   }
 });
 
-// ----------------------------------------------------
-// Calls & Voice Notes CRUD
-// ----------------------------------------------------
+// ---------------------------------------------------------------------------
+// Step 12 — TENANT-SCOPED CUSTOMERS (Prisma/PostgreSQL)
+//
+// These routes opt in to the PostgreSQL datapath. Every query carries the
+// server-derived tenantId from req.tenantContext (never client-supplied).
+// The legacy centralDb routes above remain for the unconverted path.
+//   GET  /api/v2/tenants/customers          → tenant-scoped list
+//   GET  /api/v2/tenants/customers/:id      → tenant-scoped getById
+//   POST /api/v2/tenants/customers          → tenant-scoped create
+//   PUT  /api/v2/tenants/customers/:id      → tenant-scoped update
+//   DELETE /api/v2/tenants/customers/:id    → tenant-scoped soft delete
+// ---------------------------------------------------------------------------
+apiRouter.use('/v2/tenants/customers', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW));
+
+apiRouter.get('/v2/tenants/customers', async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  try {
+    const { rows, total, page, pageSize } = await customerRepository.list(tc.tenantId, req.query as any) as any;
+    res.json({ success: true, customers: rows, total, page, pageSize });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.get('/v2/tenants/customers/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.VIEW), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  const customer = await customerRepository.getById(tc.tenantId, req.params.id);
+  if (!customer) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'مشتری یافت نشد.' });
+  res.json({ success: true, customer });
+});
+
+apiRouter.post('/v2/tenants/customers', requirePermission(ModuleName.CUSTOMERS, PermissionAction.CREATE), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  try {
+    const saved = await customerRepository.create(tc.tenantId, req.body);
+    // tenantId is server-derived; any client-supplied tenantId in body is ignored by the repository
+    res.status(201).json({ success: true, customer: saved });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.put('/v2/tenants/customers/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  try {
+    const updated = await customerRepository.update(tc.tenantId, req.params.id, req.body);
+    if (!updated) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'مشتری یافت نشد.' });
+    res.json({ success: true, customer: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.delete('/v2/tenants/customers/:id', requirePermission(ModuleName.CUSTOMERS, PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) return res.status(403).json({ success: false, message: 'Tenant context required.' });
+  try {
+    const affected = await customerRepository.remove(tc.tenantId, req.params.id);
+    res.json({ success: affected > 0 });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Step 12 — GENERIC TENANT-SCOPED VERTICALS (Prisma/PostgreSQL)
+//
+// One router covers every tenant-owned table (from tenantVerticals registry).
+//   GET    /api/v2/tenants/:table           → tenant-scoped list (filters in query)
+//   GET    /api/v2/tenants/:table/:id       → tenant-scoped getById
+//   POST   /api/v2/tenants/:table           → tenant-scoped create
+//   PUT    /api/v2/tenants/:table/:id       → tenant-scoped update
+//   DELETE /api/v2/tenants/:table/:id       → tenant-scoped delete/soft-delete
+//
+// tenantId is always req.tenantContext.tenantId (server-derived). A client
+// tenantId in body/query/header is ignored by the repository.
+//
+// Step 11B-FIX — authorization is per-vertical, not per-route. The module is
+// derived from the server-owned TENANT_TABLE_MODULES map via
+// requireTenantTablePermission(); it is NEVER hardcoded to CUSTOMERS and never
+// accepted from the client. An unknown table fails closed.
+// ---------------------------------------------------------------------------
+
+/**
+ * Dynamic authorization for the generic tenant routes: the required module is
+ * resolved from the URL's :table via the server-owned map. An unrecognised
+ * table is rejected with 404 before any permission decision is made, so it can
+ * never inherit a default module.
+ */
+function requireTenantTablePermission(action: PermissionAction) {
+  return (req: Request, res: Response, next: any) => {
+    const table = req.params.table;
+    const module = getTenantTableModule(table);
+    if (!module) {
+      return res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+    }
+    const user = (req as any).authUser as User;
+    if (!hasPermission(user, module, action)) {
+      return res.status(403).json({ success: false, message: 'دسترسی غیرمجاز: نقش شما مجوز این عملیات را ندارد.' });
+    }
+    next();
+  };
+}
+
+/** Shared handler preamble: tenant context + registered repository, or error out. */
+function resolveGenericTarget(req: Request, res: Response): { tc: TenantContext; repo: NonNullable<ReturnType<typeof getTenantRepo>> } | null {
+  const tc = (req as any).tenantContext as TenantContext | undefined;
+  if (!tc) {
+    res.status(403).json({ success: false, message: 'Tenant context required.' });
+    return null;
+  }
+  const repo = getTenantRepo(req.params.table);
+  if (!repo) {
+    res.status(404).json({ success: false, error: 'UNKNOWN_TABLE', message: 'Vertical not found.' });
+    return null;
+  }
+  return { tc, repo };
+}
+
+apiRouter.get('/v2/tenants/:table', requireTenantTablePermission(PermissionAction.VIEW), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
+  try {
+    const { rows, total, page, pageSize } = await repo.list(tc.tenantId, req.query as any);
+    res.json({ success: true, data: rows, total, page, pageSize });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.get('/v2/tenants/:table/:id', requireTenantTablePermission(PermissionAction.VIEW), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
+  try {
+    const row = await repo.getById(tc.tenantId, req.params.id);
+    if (!row) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
+    res.json({ success: true, data: row });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.post('/v2/tenants/:table', requireTenantTablePermission(PermissionAction.CREATE), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
+  try {
+    const created = await repo.create(tc.tenantId, req.body || {});
+    res.status(201).json({ success: true, data: created });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.put('/v2/tenants/:table/:id', requireTenantTablePermission(PermissionAction.EDIT), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
+  try {
+    const updated = await repo.update(tc.tenantId, req.params.id, req.body || {});
+    if (!updated) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
+    res.json({ success: true, data: updated });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+apiRouter.delete('/v2/tenants/:table/:id', requireTenantTablePermission(PermissionAction.ARCHIVE), async (req: Request, res: Response) => {
+  const target = resolveGenericTarget(req, res);
+  if (!target) return;
+  const { tc, repo } = target;
+  const table = req.params.table;
+  try {
+    // Step 11B-FIX — Step 5 financial guards. The JSON-store guards live in
+    // server/db.ts and are NOT on this code path, so the PG route must apply
+    // them itself: a settled payment/check is refused, and an unsettled one is
+    // only ever status-transitioned, never removed.
+    const protectedStatuses = protectedStatusesFor(table);
+    if (protectedStatuses) {
+      const row = await repo.getById(tc.tenantId, req.params.id);
+      if (!row) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
+      if (protectedStatuses.has(String(row.status || '').toUpperCase())) {
+        return res.status(409).json({
+          success: false,
+          error: 'FINANCIAL_RECORD_PROTECTED',
+          message: table === 'payment'
+            ? 'حذف پرداخت تأییدشده مجاز نیست.'
+            : 'حذف چک وصول‌شده مجاز نیست.',
+        });
+      }
+      const updated = await repo.update(tc.tenantId, req.params.id, { status: 'DELETED' });
+      return res.json({ success: true, data: updated });
+    }
+    // Audit logs are append-only: a status transition, not a deletion.
+    if (APPEND_ONLY_TABLES.has(table)) {
+      const updated = await repo.update(tc.tenantId, req.params.id, { status: 'DELETED' });
+      return res.json({ success: true, data: updated });
+    }
+    // Ensure the record exists in THIS tenant before reporting "deleted".
+    // If not found, return 404 — this prevents cross-tenant ID guessing from
+    // learning which tenant owns the record.
+    const exists = await repo.getById(tc.tenantId, req.params.id);
+    if (!exists) return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'رکورد یافت نشد.' });
+    const affected = await repo.remove(tc.tenantId, req.params.id);
+    res.json({ success: affected > 0 });
+  } catch (err: any) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 apiRouter.get('/calls', requirePermission(ModuleName.CALLS, PermissionAction.VIEW), (req: Request, res: Response) => {
   res.json({ calls: centralDb.getState().calls });
 });
@@ -1671,15 +1954,44 @@ apiRouter.get('/users', requirePermission(ModuleName.USERS, PermissionAction.VIE
 apiRouter.post('/users', sensitiveLimiter, requirePermission(ModuleName.USERS, PermissionAction.EDIT), async (req: Request, res: Response) => {
   try {
     const user: User = req.body;
-
-    // Hash the password before saving (write site #1: user creation)
-    if (user.password) {
-      user.password = await auth.hashPassword(user.password);
+    if (!user?.username || !user?.name) {
+      return res.status(400).json({ success: false, message: 'نام کاربری و نام الزامی است.' });
     }
 
-    const saved = await centralDb.saveUser(user);
+    // Step 12 FIX E: the account is created in PostgreSQL, the authoritative
+    // identity store. The JSON store is then updated as a profile overlay
+    // (permissions, legacy fields) — never as the credential of record.
+    const created = await identity.ensurePgUser({
+      id: user.id || `usr-${crypto.randomUUID().slice(0, 20)}`,
+      username: user.username,
+      name: user.name,
+      password: user.password,
+      email: user.email,
+      mobile: user.mobile,
+      role: user.role,
+      department: user.department,
+      status: user.status,
+      avatar: user.avatar,
+      tokenVersion: user.tokenVersion,
+    });
+
+    // Mirror into the JSON store so the overlay (permissions) is preserved.
+    const hashedPassword = (await query<{ passwordHash: string }>(
+      'SELECT "passwordHash" FROM "user" WHERE id = $1 LIMIT 1',
+      [created.user.id],
+    ))[0]?.passwordHash;
+    const saved = await centralDb.saveUser({
+      ...user,
+      id: created.user.id,
+      password: hashedPassword || (user.password ? await auth.hashPassword(user.password) : ''),
+    });
+
     res.json({ success: true, user: sanitizeUser(saved), revision: centralDb.getRevisionInfo().revision });
   } catch (err: any) {
+    const msg = String(err.message || err);
+    if (msg.includes('duplicate key') || msg.includes('23505')) {
+      return res.status(409).json({ success: false, message: 'نام کاربری یا ایمیل تکراری است.' });
+    }
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -1691,17 +2003,47 @@ apiRouter.put('/users/:id', requirePermission(ModuleName.USERS, PermissionAction
       return res.status(403).json({ success: false, message: 'تنها مدیران ارشد مجاز به ویرایش مشخصات کاربران هستند.' });
     }
 
-    const existing = centralDb.findUserById(req.params.id);
+    // FIX E: resolve against PG first — that is the record being edited.
+    const pgExisting = await identity.findUserById(req.params.id);
+    const existing = pgExisting
+      ? mergeIdentity(pgExisting, centralDb.findUserById(req.params.id))
+      : centralDb.findUserById(req.params.id);
     if (!existing) {
       return res.status(404).json({ success: false, message: 'کاربر مورد نظر یافت نشد.' });
     }
 
     const incoming = req.body || {};
-    let passwordToSave = existing.password;
 
-    // Hash the password if a new one is being set (write site #2: admin edit)
+    // Write the authoritative fields to PG.
+    if (pgExisting) {
+      await query(
+        `UPDATE "user"
+            SET name = $1, username = $2, email = $3, mobile = $4, role = $5,
+                department = $6, status = $7, avatar = $8, "updatedAt" = NOW()
+          WHERE id = $9`,
+        [
+          incoming.name ?? pgExisting.name,
+          incoming.username ?? pgExisting.username,
+          incoming.email ?? pgExisting.email ?? null,
+          incoming.mobile ?? pgExisting.mobile ?? null,
+          incoming.role ?? pgExisting.role,
+          incoming.department ?? pgExisting.department ?? null,
+          incoming.status ?? pgExisting.status,
+          incoming.avatar ?? pgExisting.avatar ?? null,
+          req.params.id,
+        ],
+      );
+    }
+
+    // Status change to a non-ACTIVE value revokes live sessions (Step 9).
+    if (incoming.status && incoming.status !== 'ACTIVE' && pgExisting && pgExisting.status === 'ACTIVE') {
+      await identity.revokeSessions(req.params.id);
+    }
+
+    let passwordToSave = existing.password;
     if (incoming.password || incoming.newPassword) {
       const rawNew = String(incoming.password || incoming.newPassword).trim();
+      await identity.setPassword(req.params.id, rawNew);
       passwordToSave = await auth.hashPassword(rawNew);
     }
 
@@ -1751,12 +2093,21 @@ apiRouter.post('/users/:id/reset-password', requirePermission(ModuleName.USERS, 
       });
     }
 
-    const targetUser = centralDb.findUserById(req.params.id) || centralDb.findUserByCredential(req.params.id);
+    // FIX E: resolve the target from the authoritative store first.
+    const pgTarget = await identity.findUserById(req.params.id)
+      || await identity.findUserByCredential(req.params.id);
+    const targetUser = pgTarget
+      ? mergeIdentity(pgTarget, centralDb.findUserById(pgTarget.id))
+      : centralDb.findUserById(req.params.id) || centralDb.findUserByCredential(req.params.id);
     if (!targetUser) {
       return res.status(404).json({ success: false, message: 'کاربر مورد نظر جهت تغییر رمز عبور یافت نشد.' });
     }
 
-    // Hash the new password before storing (write site #4: admin reset)
+    // Hash the new password in the authoritative store first. A password that
+    // only reached the JSON overlay would still leave the old PG hash live.
+    if (pgTarget) {
+      await identity.setPassword(pgTarget.id, newPassword.trim());
+    }
     const hashedPassword = await auth.hashPassword(newPassword.trim());
     const updated = await centralDb.resetUserPassword(targetUser.id, hashedPassword);
 
@@ -1794,7 +2145,13 @@ apiRouter.delete('/users/:id', requirePermission(ModuleName.USERS, PermissionAct
     }
 
     const targetId = req.params.id;
-    const targetUser = centralDb.findUserById(targetId);
+    // FIX E: delete from the authoritative store, not just the JSON overlay.
+    // Deleting only the JSON row would leave a live PG identity that can still
+    // authenticate and still back an ACTIVE membership.
+    const pgTarget = await identity.findUserById(targetId);
+    const targetUser = pgTarget
+      ? mergeIdentity(pgTarget, centralDb.findUserById(targetId))
+      : centralDb.findUserById(targetId);
     if (!targetUser) {
       return res.status(404).json({ success: false, message: 'کاربر مورد نظر یافت نشد.' });
     }
@@ -1813,6 +2170,10 @@ apiRouter.delete('/users/:id', requirePermission(ModuleName.USERS, PermissionAct
       });
     }
 
+    // Cascade removes memberships and sessions (FK ON DELETE CASCADE).
+    if (pgTarget) {
+      await query('DELETE FROM "user" WHERE id = $1', [pgTarget.id]);
+    }
     const deleted = await centralDb.deleteUser(targetId);
 
     if (deleted) {
@@ -3340,22 +3701,29 @@ apiRouter.post('/auth/biometric-login', async (req: Request, res: Response) => {
       });
     }
 
-    const user = centralDb.findUserById(device.userId);
-    if (!user || user.status === UserStatus.INACTIVE || user.status === UserStatus.SUSPENDED) {
+    // Step 12 FIX E: biometric login resolves the user from PostgreSQL. The
+    // credential→user binding still lives in the JSON store, but the user it
+    // points at must be ACTIVE in the authoritative store — otherwise a
+    // deactivated user keeps a working key.
+    const user = await identity.findUserById(device.userId);
+    if (!user) {
+      return res.status(403).json({ success: false, message: 'حساب کاربری کاربر غیرفعال یا معلق است.' });
+    }
+    if (user.status !== 'ACTIVE') {
       return res.status(403).json({ success: false, message: 'حساب کاربری کاربر غیرفعال یا معلق است.' });
     }
 
     await centralDb.updateBiometricDeviceLastUsed(credentialId);
+    await identity.recordLogin(user.id);
 
     const token = auth.signToken(user.id, user.tokenVersion);
-    const now = new Date().toISOString();
-    const updatedUser = { ...user, lastLoginAt: now };
-    await centralDb.saveUser(updatedUser);
+    const legacyForAudit = centralDb.findUserById(user.id);
+    const loginUser = mergeIdentity({ ...user, lastLoginAt: new Date().toISOString() }, legacyForAudit);
 
     res.json({
       success: true,
       token,
-      user: sanitizeUser(updatedUser),
+      user: sanitizeUser(loginUser),
       message: 'ورود موفق با احراز هویت بیومتریک',
     });
   } catch (err: any) {
