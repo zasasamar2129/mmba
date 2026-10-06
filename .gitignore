@@ -17,6 +17,8 @@ apply_*.cjs
 server/apply_*.cjs
 *.config.yaml
 .env
+# Agent tooling isolation (git worktrees)
+.claude/worktrees/
 # Step 11 local dev PostgreSQL cluster (WSL-free Windows initdb)
 
 .pgdata/
