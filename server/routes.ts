@@ -28,6 +28,7 @@ import {
 } from './tenantTableModules';
 import { platformRouter } from './platformRoutes';
 import { tenantAdminRouter } from './tenantAdminRoutes';
+import { licensingRouter } from './licensingRoutes';
 
 export const apiRouter = Router();
 
@@ -151,6 +152,7 @@ apiRouter.use(legacyJsonTenantGate);
 // route inside enforces its own platform-admin check via the PlatformAdmin
 // database row — tenant admins cannot invoke them merely by knowing a tenant ID.
 apiRouter.use('/v2/platform', platformRouter);
+apiRouter.use('/v2/platform', licensingRouter);
 
 // Step 12 — Tenant-scoped membership administration for the CURRENT tenant
 // (resolved via hostname). No tenantId parameter: the tenant is always

@@ -68,7 +68,9 @@ model Plan {
   name         String
   description  String?
   isActive     Boolean                    @default(true)
+  archivedAt   TimestamptzString?
   sortOrder    Int                        @default(0)
+  updatedBy    String? // ID of the admin who updated this plan
 
   entitlements Entitlement[]
   licenses     License[]
@@ -181,12 +183,16 @@ model License {
   planId         String
   plan           Plan                       @relation(fields:[planId], references:[id])
   licenseKeyHash String? // SHA-256 of license key; never plaintext
-  status         String                     @default("TRIAL") // TRIAL | ACTIVE | SUSPENDED | EXPIRED | REVOKED
+  status         String                     @default("TRIAL") // PENDING | TRIAL | ACTIVE | GRACE | SUSPENDED | EXPIRED | REVOKED | CANCELLED
   issuedAt       TimestamptzString          @default(now())
   startsAt       TimestamptzString          @default(now())
   expiresAt      TimestamptzString?
+  graceStartedAt TimestamptzString?
   suspendedAt    TimestamptzString?
   revokedAt      TimestamptzString?
+  cancelledAt    TimestamptzString?
+  reason         String? // reason for suspension/revocation/cancellation
+  auditMetadata  Json? // audit information
 
   createdAt      TimestamptzString          @default(now())
   updatedAt      temporal.updatedAtString()
